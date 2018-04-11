@@ -24,7 +24,7 @@ except ImportError:
 LOGFILE = None
 LOGFILENAME = ""
 TILESIZE = 35
-VERSION = "1.4"
+VERSION = "1.5"
 
 class MsgAbout:
     def __init__(self,  parent):

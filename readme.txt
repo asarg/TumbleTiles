@@ -1,7 +1,7 @@
 ################################################################################
 # Tumble Tiles
-# Version 1.4
-# Manual Version 0.9
+# Version 1.5
+# Manual Version 0.10
 # Author: Tim Wylie
 # Description: Implements the tumble tile model as designed by Robert Schweller and Tim Wylie.
 ################################################################################
@@ -247,3 +247,4 @@ Section 6 - Changelog
 ## 6.5 Version 1.4
     - Fixed a small bug in the can join glue function. It was camparing the wrong glue and so loaded files might be missing it and get a key error.
     - Updated the xml loading code 
+    - Fixed a bug with N/S glues being compared wrong in CanJoin 

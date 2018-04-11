@@ -63,10 +63,7 @@ class Polyomino:
         #glues go n,e,s,w = 0,1,2,3
         try:
             gluestrength = 0
-            N = 0
-            E = 1
-            S = 2
-            W = 3
+            N,E,S,W = 0,1,2,3
             for t in self.Tiles:
                 for pt in poly.Tiles:
                     #pt on left, t on right
