@@ -63,24 +63,29 @@ class Polyomino:
         #glues go n,e,s,w = 0,1,2,3
         try:
             gluestrength = 0
+            N = 0
+            E = 1
+            S = 2
+            W = 3
             for t in self.Tiles:
                 for pt in poly.Tiles:
                     #pt on left, t on right
-                    if t.x - pt.x == 1 and t.y == pt.y:
-                        if t.glues[3] != " " and t.glues[3] == pt.glues[1]:
-                            gluestrength += int(GLUEFUNC[pt.glues[1]])
+                    if pt.glues[E] != None and t.x - pt.x == 1 and pt.glues[E] != " " and len(pt.glues[E]) > 0 and t.y == pt.y:
+                        if t.glues[W] != None and t.glues[W] != " " and t.glues[W] == pt.glues[E]:
+                            gluestrength += int(GLUEFUNC[pt.glues[E]])
                     #t on left, pt on right
-                    if pt.x - t.x == 1 and t.y == pt.y:
-                        if t.glues[1] != " " and t.glues[1] == pt.glues[3]:
-                            gluestrength += int(GLUEFUNC[pt.glues[3]])
+                    if pt.glues[W] != None and pt.x - t.x == 1 and pt.glues[W] != " " and len(pt.glues[W]) > 0 and t.y == pt.y:
+                        if  t.glues[E] != None and t.glues[E] != " " and t.glues[E] == pt.glues[W]:
+                            gluestrength += int(GLUEFUNC[pt.glues[W]])
                     #t on top, pt on bottom
-                    if t.x  == pt.x and t.y - pt.y == 1:
-                        if t.glues[2] != " " and t.glues[2] == pt.glues[0]:
-                            gluestrength += int(GLUEFUNC[pt.glues[0]])
+                    if pt.glues[N] != None and t.x  == pt.x and pt.glues[N] != " " and len(pt.glues[N]) > 0 and t.y - pt.y == -1:
+                        if t.glues[S] != None and t.glues[S] != " " and t.glues[S] == pt.glues[N]:
+                            gluestrength += int(GLUEFUNC[pt.glues[N]])
                     #pt on top, t on bottom
-                    if t.x  == pt.x and pt.y - t.y == 1:
-                        if t.glues[0] != " " and t.glues[0] == pt.glues[2]:
-                            gluestrength += int(GLUEFUNC[pt.glues[2]])
+                    if pt.glues[S] != None and t.x  == pt.x and pt.glues[S] != " " and len(pt.glues[S]) > 0 and pt.y - t.y == -1:
+                        if t.glues[N] != None and t.glues[N] != " " and t.glues[N] == pt.glues[S]:
+                            gluestrength += int(GLUEFUNC[pt.glues[S]])
+                    #print t.glues,t.x,t.y,pt.glues,pt.x,pt.y,gluestrength
             if gluestrength >= TEMP:
                 return True
             else:
