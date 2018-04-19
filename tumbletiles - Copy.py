@@ -49,8 +49,7 @@ class Polyomino:
         self.HasMoved = False
         
     def Join(self, poly):
-        #sym = self.Tiles[0].symbol
-        sym = self.id
+        sym = self.Tiles[0].symbol
         color = self.Tiles[0].color
         self.Tiles.extend(poly.Tiles)
         self.NumTiles = len(self.Tiles)
@@ -128,7 +127,7 @@ class Polyomino:
         
 class Board:
     def __init__(self,R,C):
-        self.poly_id_c = 0
+        self.polyomino_id_counter = 0
         self.Rows = R
         self.Cols = C
         self.Board = [[' ' for x in range(self.Cols)] for y in range(self.Rows)] #[[' ']*self.Cols]*self.Rows
@@ -141,9 +140,7 @@ class Board:
     
     def Add(self, p):
         self.Polyominoes.append(p)
-        #self.LookUp[p.Tiles[0].symbol] = len(self.Polyominoes) - 1
-        self.LookUp[self.poly_id_c] = len(self.Polyominoes) - 1
-        self.poly_id_c += 1
+        self.LookUp[p.Tiles[0].symbol] = len(self.Polyominoes) - 1
         #print self.Polyominoes[0].Tiles[0].x
         
     def GridDraw(self):
@@ -166,8 +163,7 @@ class Board:
         for p in self.Polyominoes:
             p.HasMoved = False
             for t in p.Tiles:
-                #self.Board[t.y][t.x] = t.symbol
-                self.Board[t.y][t.x] = p.id
+                self.Board[t.y][t.x] = t.symbol
     
     def ResizeGrid(self, nheight, nwidth):
         self.Rows = nheight
@@ -179,8 +175,7 @@ class Board:
         #remove 2nd poly from list
         #p1 = self.Polyominoes[pin1]
         #p2 = self.Polyominoes[pin2]
-        #p2sym = self.Polyominoes[pin2].Tiles[0].symbol
-        p2sym = self.Polyominoes[pin2].id
+        p2sym = self.Polyominoes[pin2].Tiles[0].symbol
         self.Polyominoes[pin1].Join(self.Polyominoes[pin2])
         
         #self.Polyominoes.remove(p2)
@@ -194,8 +189,7 @@ class Board:
         
         #since a polyomino was removed, the indices in the lookup may be bad, reconfigure
         for p in range(len(self.Polyominoes)):
-            #self.LookUp[self.Polyominoes[p].Tiles[0].symbol] = p
-            self.LookUp[self.Polyominoes[p].id] = p
+            self.LookUp[self.Polyominoes[p].Tiles[0].symbol] = p
         
     def ActivateGlues(self):
         try:
@@ -216,6 +210,7 @@ class Board:
                                 #if they can bond
                                 if self.Polyominoes[we1in].CanJoin(self.Polyominoes[we2in]):
                                     #combine
+                                    print "This shouldn't be happening w/e"
                                     self.CombinePolys(we1in,we2in)
                                     Changed = True
                 #search n/s neighbors
@@ -232,6 +227,7 @@ class Board:
                                 #if they can bond
                                 if self.Polyominoes[ns1in].CanJoin(self.Polyominoes[ns2in]):
                                     #combine
+                                    print "This shouldn't be happening n/s"
                                     self.CombinePolys(ns1in,ns2in)
                                     Changed = True
         except Exception as e:
