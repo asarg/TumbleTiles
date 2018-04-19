@@ -10,6 +10,9 @@ import xml.etree.ElementTree as ET
 import random
 import time
 import tumbletiles as TT
+import tumbleEdit as TE
+from getFile import getFile, parseFile
+from boardgui import redrawCanvas, drawGrid
 import os,sys
 #https://pypi.python.org/pypi/pyscreenshot
 
@@ -161,7 +164,8 @@ class tumblegui:
         self.menubar = Menu(self.root, relief=FLAT)
         filemenu = Menu(self.menubar, tearoff=0)
         filemenu.add_command(label="Example", command=self.CreateInitial)
-        filemenu.add_command(label="Load", command=self.getfile)
+        #filemenu.add_command(label="Generate Tiles", command=self.openTileEditDial)
+        filemenu.add_command(label="Load", command = lambda: self.loadTileSet())
         
         self.tkLOG = BooleanVar()
         self.tkLOG.set(False)
@@ -193,9 +197,9 @@ class tumblegui:
         settingsmenu.add_checkbutton(label="Glue on Step", onvalue=True, offvalue=False, variable=self.tkGLUESTEP) #,state=DISABLED)
         settingsmenu.add_separator()
         settingsmenu.add_command(label="Background Color", command=self.changecanvas)
-        settingsmenu.add_checkbutton(label="Show Grid", onvalue=True, offvalue=False, variable=self.tkDRAWGRID, command=self.RedrawCanvas)
+        settingsmenu.add_checkbutton(label="Show Grid", onvalue=True, offvalue=False, variable=self.tkDRAWGRID, command = lambda: self.callCanvasRedraw())
         settingsmenu.add_command(label="Grid Color", command=self.changegridcolor)
-        settingsmenu.add_checkbutton(label="Show Locations", onvalue=True, offvalue=False, variable=self.tkSHOWLOC, command=self.RedrawCanvas)
+        settingsmenu.add_checkbutton(label="Show Locations", onvalue=True, offvalue=False, variable=self.tkSHOWLOC, command = lambda: self.callCanvasRedraw())
         settingsmenu.add_separator()
         settingsmenu.add_command(label="Board Options", command=self.changetile)
         
@@ -234,25 +238,29 @@ class tumblegui:
         self.gridcolor = "#000000"
         self.textcolor = "#000000"
         
-        self.drawgrid()
+        self.callGridDraw()
         self.CreateInitial()
     
     def changetile(self):
         global TILESIZE
         
         Sbox = Settings(self.root, self.tkLOG.get())
+        self.resizeBoardAndCanvas()
+        self.tkTempText.set(TT.TEMP)
+
+    def resizeBoardAndCanvas(self):
         #expand grid
         self.board.ResizeGrid(TT.BOARDHEIGHT,  TT.BOARDWIDTH)
         #resize canvas
         self.w.config(width=TT.BOARDWIDTH*TILESIZE, height=TT.BOARDHEIGHT*TILESIZE)
         self.tkWidthText.set(TT.BOARDWIDTH)
         self.tkHeightText.set(TT.BOARDHEIGHT)
-        self.tkTempText.set(TT.TEMP)
         #resize window #wxh
         toolbarframeheight = 24
         self.root.geometry(str(TT.BOARDWIDTH*TILESIZE)+'x'+str(TT.BOARDHEIGHT*TILESIZE+toolbarframeheight))
         #redraw
-        self.RedrawCanvas()
+        self.callCanvasRedraw()
+
     
     def key(self, event):
         if event.keysym == "Up":
@@ -287,12 +295,12 @@ class tumblegui:
             #normal
             if direction != "" and self.tkSTEPVAR.get() == False and self.tkGLUESTEP.get()==False:
                 self.board.Tumble(direction)
-                self.RedrawCanvas()
+                self.callCanvasRedraw()
                 self.Log("T"+direction+", ")
             #normal with glues 
             elif direction != "" and self.tkSTEPVAR.get() == False and self.tkGLUESTEP.get() == True:
                 self.board.TumbleGlue(direction)
-                self.RedrawCanvas()
+                self.callCanvasRedraw()
                 self.Log("TG"+direction+", ")
             #single step
             elif direction != "" and self.tkSTEPVAR.get() == True:
@@ -306,7 +314,7 @@ class tumblegui:
                 if s == False and self.tkGLUESTEP.get()==False:
                     self.board.ActivateGlues()
                     self.Log("G, ")
-                self.RedrawCanvas()
+                self.callCanvasRedraw()
         except Exception as e:
             print e
             print sys.exc_info()[0]
@@ -326,86 +334,63 @@ class tumblegui:
         except Exception as e:
             print "Could not print for some reason"
             #print e
-    
-    def getfile(self):
-        fname = tkFileDialog.askopenfilename()
-        #print "doing stuff with "+fname
-        try:
-            tree = ET.parse(fname)
-            treeroot = tree.getroot()
-            self.Log("\nLoad "+fname+"\n")
-            gluefun = treeroot[0]
-            
-            #flush board
-            del self.board.Polyominoes[:]
-            self.board.LookUp = {}
-            TT.GLUEFUNC = {}
-            self.board = TT.Board(TT.BOARDHEIGHT,  TT.BOARDWIDTH)
+
+    def loadTileSet(self):
+        #flush board
+        filename = getFile()
+
+        if filename == "":
+            return
+        #self.Log("\nLoad "+filename+"\n")
+        new_tileset_data = parseFile(filename)
+
+        del self.board.Polyominoes[:]
+        self.board.LookUp = {}
+        TT.GLUEFUNC = {}
+        self.board = TT.Board(TT.BOARDHEIGHT,  TT.BOARDWIDTH)
+
+        #preview_board = TT.Board(TT.BOARDHEIGHT, TT.BOARDWIDTH)
+
+        for label in new_tileset_data["glueFunc"]:
+            TT.GLUEFUNC[label] = int(new_tileset_data["glueFunc"][label])
+
+        for td in new_tileset_data["tileData"]:
+            ntile = TT.Tile(td["label"],
+                td["location"]["x"], 
+                td["location"]["y"],
+                [td["northGlue"], td["eastGlue"], td["southGlue"], td["westGlue"]],
+                td["color"])
+            #ntile = TT.Tile(ntlab, ntlocx, ntlocy,[ntnort,nteast,ntsouth,ntwest],ntcol)
+            if TT.BOARDWIDTH < int(td["location"]["x"]):
+                offset = TT.BOARDWIDTH % 5
+                TT.BOARDWIDTH = (int(td["location"]["x"])) + (5 - offset)
+                self.resizeBoardAndCanvas()
+
+            if TT.BOARDHEIGHT < int(td["location"]["y"]):
+                offset = TT.BOARDHEIGHT % 5
+                TT.BOARDHEIGHT = (int(td["location"]["y"])) + (5 - offset)
+                self.resizeBoardAndCanvas()
+
+            self.board.Add(TT.Polyomino(ntile, self.board.poly_id_c))
+            #preview_board.Add(TT.Polyomino(ntile))
+
+        p_tiles = None
+
+        if len(new_tileset_data["prevTiles"]) > 0:
+            p_tiles = new_tileset_data["prevTiles"]
+        #Call the board editor
+        self.openBoardEditDial(self.root, TT.BOARDWIDTH, TT.BOARDHEIGHT, TILESIZE, new_tileset_data["tileData"], new_tileset_data["glueFunc"], p_tiles)
         
-            for fun in gluefun:
-                TT.GLUEFUNC[fun.find('Labels').attrib['L1']] = int(fun.find('Strength').text)
-            
-            for tt in treeroot[1:]:
-                
-                ntlocx = 0
-                ntlocy = 0
-                if tt[0].find('Location') != None:
-                    ntlocx = int(tt[0].find('Location').attrib['x'])
-                    ntlocy = int(tt[0].find('Location').attrib['y'])
-                ntcol = "#555555"
-                if tt[0].find('Color') != None:
-                    ntcol = "#" + tt[0].find('Color').text
-                ntnort = " "
-                if tt[0].find('NorthGlue') != None:
-                    ntnort = tt[0].find('NorthGlue').text
-                nteast = " "
-                if tt[0].find('EastGlue') != None:
-                    nteast = tt[0].find('EastGlue').text
-                ntsouth = " "
-                if tt[0].find('SouthGlue') != None:
-                    ntsouth = tt[0].find('SouthGlue').text
-                ntwest = " "
-                if tt[0].find('WestGlue') != None:
-                    ntwest = tt[0].find('WestGlue').text
-                ntlab = "X"
-                if tt[0].find('label') != None:
-                    ntlab = tt[0].find('label').text
-                
-                
-                ntile = TT.Tile(ntlab, ntlocx, ntlocy,[ntnort,nteast,ntsouth,ntwest],ntcol)
-                self.board.Add(TT.Polyomino(ntile))
-                self.board.SetGrid()
-                self.RedrawCanvas()
-                #board.GridDraw()
-            #print TT.GLUEFUNC
-        except:
-            print "Problem with file: " + fname
-            print sys.exc_info()[0]
-            
-    def RedrawCanvas(self):
+        #self.board.SetGrid()
+        self.callCanvasRedraw()
+
+    def callCanvasRedraw(self):
         global TILESIZE
-        
-        self.w.delete(ALL)
-        self.board.SetGrid()
-        self.drawgrid()
-        for row in range(self.board.Rows): #self.Board:
-            for col in range(self.board.Cols):#row:
-                if self.board.Board[row][col] != ' ':
-                    pin = self.board.LookUp[self.board.Board[row][col]]
-                    color = self.board.Polyominoes[pin].Tiles[0].color
-                    self.w.create_rectangle(TILESIZE*col, TILESIZE*row, TILESIZE*col + TILESIZE, TILESIZE*row + TILESIZE, fill=color)
-                    textcolor = self.textcolor
-                    for t in self.board.Polyominoes[pin].Tiles:
-                        if t.x == col and t.y == row:
-                            #north
-                            self.w.create_text(TILESIZE*col + TILESIZE/2, TILESIZE*row + TILESIZE/5, text = t.glues[0], fill=self.textcolor, font=('',TILESIZE/5) )
-                            #east
-                            self.w.create_text(TILESIZE*col + TILESIZE - TILESIZE/5, TILESIZE*row + TILESIZE/2, text = t.glues[1], fill=self.textcolor, font=('',TILESIZE/5))
-                            #south
-                            self.w.create_text(TILESIZE*col + TILESIZE/2, TILESIZE*row + TILESIZE - TILESIZE/5, text = t.glues[2], fill=self.textcolor, font=('',TILESIZE/5) )
-                            #west
-                            self.w.create_text(TILESIZE*col + TILESIZE/5, TILESIZE*row + TILESIZE/2, text = t.glues[3], fill=self.textcolor, font=('',TILESIZE/5) )
-                
+        redrawCanvas(self.board, TT.BOARDWIDTH, TT.BOARDHEIGHT, self.w, TILESIZE, self.textcolor, self.gridcolor, self.tkDRAWGRID.get(), self.tkSHOWLOC.get())
+
+    def callGridDraw(self):
+        global TILESIZE
+        drawGrid(self.board, TT.BOARDWIDTH, TT.BOARDHEIGHT, self.w, TILESIZE, self.gridcolor, self.tkDRAWGRID.get(), self.tkSHOWLOC.get())
         
     def about(self):
         global VERSION
@@ -426,10 +411,12 @@ class tumblegui:
             result = tkColorChooser.askcolor(title="Grid Color")
             if result[0] != None:
                 self.gridcolor = result[1]
-                self.RedrawCanvas()
+                self.callCanvasRedraw()
         except:
             pass
 
+    def openBoardEditDial(self, root, boardwidth, boardheight, tilesize, tiledata, gluedata, prevTiles):
+        TGBox = TE.TileEditorGUI(root, boardwidth, boardheight, tilesize, tiledata, gluedata, prevTiles)
 
     def CreateInitial(self):
         
@@ -453,18 +440,18 @@ class tumblegui:
             colorb = "#"+ str(hex(random.randint(0,16))[2:]) + str(hex(random.randint(0,16))[2:]) + str(hex(random.randint(0,16))[2:])
             if len(colorb) > 4:
                 colorb = colorb[:4]
-            p = TT.Polyomino(TT.Tile(chr(ord('A')+i), 0, bh-i-2, ['N','E','S','W'],colorb))
+            p = TT.Polyomino(TT.Tile(chr(ord('A')+i), 0, bh-i-2, ['N','E','S','W'],colorb), self.board.poly_id_c)
             self.board.Add(p)
             #left tiles
             #colorl = str(colorl[0]+chr(ord(colorl[1])-1)+colorl[2:])
             colorl = "#"+ str(hex(random.randint(0,16))[2:]) + str(hex(random.randint(0,16))[2:]) + str(hex(random.randint(0,16))[2:]) 
             if len(colorl) > 4:
                 colorl = colorl[:4]
-            p = TT.Polyomino(TT.Tile(chr(ord('a')+i), i+1, bh-1, ['S','W','N','E'],colorl))
+            p = TT.Polyomino(TT.Tile(chr(ord('a')+i), i+1, bh-1, ['S','W','N','E'],colorl), self.board.poly_id_c)
             self.board.Add(p)
         
         self.board.SetGrid()
-        self.RedrawCanvas()
+        self.callCanvasRedraw()
 
     def EnableLogging(self):
         global LOGFILE
