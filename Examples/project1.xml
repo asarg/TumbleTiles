@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<TileConfiguration>
+    <GlueFunction>
+        <Function>
+            <Labels L1="X" L2="X"/>
+            <Strength>2</Strength>
+        </Function>
+        <Function>
+            <Labels L1="Y" L2="Y"/>
+            <Strength>2</Strength>
+        </Function>
+    </GlueFunction>
+	    <TileType Label="L" Color="994D66">
+        <Tile>
+            <Location x="3" y="2"/>
+            <Color>994D66</Color>
+            <NorthGlue>Y</NorthGlue>
+            <EastGlue></EastGlue>
+            <SouthGlue></SouthGlue>
+            <WestGlue></WestGlue>
+            <label>3,3</label>
+        </Tile>
+    </TileType>
+	<TileType Label="L" Color="664DB3">
+        <Tile>
+            <Location x="0" y="0"/>
+            <Color>664DB3</Color>
+            <NorthGlue></NorthGlue>
+            <EastGlue>X</EastGlue>
+            <SouthGlue>X</SouthGlue>
+            <WestGlue></WestGlue>
+            <label>0,0</label>
+        </Tile>
+    </TileType>
+	<TileType Label="L" Color="664DB3">
+        <Tile>
+            <Location x="0" y="1"/>
+            <Color>664DB3</Color>
+            <NorthGlue>X</NorthGlue>
+            <EastGlue></EastGlue>
+            <SouthGlue>X</SouthGlue>
+            <WestGlue></WestGlue>
+            <label>0,1</label>
+        </Tile>
+    </TileType>
+		<TileType Label="L" Color="664DB3">
+        <Tile>
+            <Location x="0" y="2"/>
+            <Color>664DB3</Color>
+            <NorthGlue>X</NorthGlue>
+            <EastGlue>X</EastGlue>
+            <SouthGlue></SouthGlue>
+            <WestGlue></WestGlue>
+            <label>0,2</label>
+        </Tile>
+    </TileType>
+		<TileType Label="L" Color="664DB3">
+        <Tile>
+            <Location x="1" y="0"/>
+            <Color>664DB3</Color>
+            <NorthGlue></NorthGlue>
+            <EastGlue>X</EastGlue>
+            <SouthGlue></SouthGlue>
+            <WestGlue>X</WestGlue>
+            <label>1,0</label>
+        </Tile>
+    </TileType>
+		<TileType Label="L" Color="664DB3">
+        <Tile>
+            <Location x="1" y="2"/>
+            <Color>664DB3</Color>
+            <NorthGlue></NorthGlue>
+            <EastGlue>X</EastGlue>
+            <SouthGlue></SouthGlue>
+            <WestGlue>X</WestGlue>
+            <label>1,2</label>
+        </Tile>
+    </TileType>
+		<TileType Label="L" Color="664DB3">
+        <Tile>
+            <Location x="2" y="0"/>
+            <Color>664DB3</Color>
+            <NorthGlue></NorthGlue>
+            <EastGlue></EastGlue>
+            <SouthGlue>Y</SouthGlue>
+            <WestGlue>X</WestGlue>
+            <label>2,0</label>
+        </Tile>
+    </TileType>
+		<TileType Label="L" Color="664DB3">
+        <Tile>
+            <Location x="2" y="2"/>
+            <Color>664DB3</Color>
+            <NorthGlue></NorthGlue>
+            <EastGlue></EastGlue>
+            <SouthGlue></SouthGlue>
+            <WestGlue>X</WestGlue>
+            <label>2,2</label>
+        </Tile>
+    </TileType>
+</TileConfiguration>
