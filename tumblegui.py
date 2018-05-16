@@ -433,6 +433,7 @@ class tumblegui:
         #CreateTiles(board)
         colorb = "#000"
         colorl = "#fff"
+        colorg = "#686868"
         NumTiles = 10
         for i in range(NumTiles):
             #bottom tiles
@@ -440,15 +441,20 @@ class tumblegui:
             colorb = "#"+ str(hex(random.randint(0,16))[2:]) + str(hex(random.randint(0,16))[2:]) + str(hex(random.randint(0,16))[2:])
             if len(colorb) > 4:
                 colorb = colorb[:4]
-            p = TT.Polyomino(TT.Tile(chr(ord('A')+i), 0, bh-i-2, ['N','E','S','W'],colorb), self.board.poly_id_c)
+            p = TT.Polyomino(TT.Tile(chr(ord('A')+i), 0, bh-i-2, ['N','E','S','W'],colorb, False), self.board.poly_id_c)
             self.board.Add(p)
             #left tiles
             #colorl = str(colorl[0]+chr(ord(colorl[1])-1)+colorl[2:])
             colorl = "#"+ str(hex(random.randint(0,16))[2:]) + str(hex(random.randint(0,16))[2:]) + str(hex(random.randint(0,16))[2:]) 
             if len(colorl) > 4:
                 colorl = colorl[:4]
-            p = TT.Polyomino(TT.Tile(chr(ord('a')+i), i+1, bh-1, ['S','W','N','E'],colorl), self.board.poly_id_c)
+            p = TT.Polyomino(TT.Tile(chr(ord('a')+i), i+1, bh-1, ['S','W','N','E'],colorl, False), self.board.poly_id_c)
             self.board.Add(p)
+
+            #test add a concrete tile
+            self.board.AddConc(TT.Tile('C', 5, 5, [] ,colorg, True))
+
+
         
         self.board.SetGrid()
         self.callCanvasRedraw()

@@ -7,7 +7,7 @@ def redrawCanvas(board, boardwidth, boardheight, canvas, tilesize, textcolor = "
 
 	for row in range(board.Rows):
 		for col in range(board.Cols):
-			if board.Board[row][col] != ' ':
+			if board.Board[row][col] != ' ' and board.Board[row][col] != 'C':
 				pin = board.LookUp[board.Board[row][col]]
 				color = board.Polyominoes[pin].Tiles[0].color
 				canvas.create_rectangle(tilesize*col, tilesize*row, tilesize*col + tilesize, tilesize*row + tilesize, fill = color)
@@ -22,6 +22,10 @@ def redrawCanvas(board, boardwidth, boardheight, canvas, tilesize, textcolor = "
 						canvas.create_text(tilesize*col + tilesize/2, tilesize*row + tilesize - tilesize/5, text = t.glues[2], fill=textcolor, font=('',tilesize/5) )
 						#west
 						canvas.create_text(tilesize*col + tilesize/5, tilesize*row + tilesize/2, text = t.glues[3], fill=textcolor, font=('',tilesize/5) )
+			
+			elif board.Board[row][col] == 'C':
+				canvas.create_rectangle(tilesize*col, tilesize*row, tilesize*col + tilesize, tilesize*row + tilesize, fill = board.ConcreteColor)
+				canvas.create_text(tilesize*col + tilesize/2, tilesize*row + tilesize/2, text = "C", fill="#000", font=('',tilesize/3))
 
 def drawGrid(board, boardwidth, boardheight, canvas, tilesize, gridcolor = "#000000", b_drawGrid = False, b_drawLoc = False):
 
