@@ -36,18 +36,23 @@ class Tile:
         
 #tiles must be part of a polyomino
 class Polyomino:
+
+    #creates an empty polyomino with no tiles
     def __init__(self, p_id):
         self.id = p_id
         self.Tiles = []
         self.NumTiles = 0
         self.HasMoved = False
-        
+    
+
+    #Takes a tile and an id, sets the tile as the only tile in the polyomino
     def __init__(self, t, p_id):
         self.id = p_id
         self.Tiles = [t]
         self.NumTiles = 1
         self.HasMoved = False
-        
+    
+    #Takes two polyominos, adds all the tiles from poly into the tile array in (self), adjusts the number of tiles
     def Join(self, poly):
         #sym = self.Tiles[0].symbol
         sym = self.id
@@ -58,7 +63,9 @@ class Polyomino:
             t.symbol = sym
             t.color = color
             
-            
+    #Checks for possible connections between every pair of tiles in two polynomials (self) and poly
+    #if glue connections are found the strength is added to gluestrength and if gluestrength is
+    #larger than TEMP the polyominos can be joined
     def CanJoin(self, poly):
         global TEMP
         global GLUEFUNC
@@ -93,7 +100,8 @@ class Polyomino:
         except Exception as e:
             #print "CANJOIN"
             print sys.exc_info()[0]        
-        
+    
+    #moves every tile in the polyomino by one in the indicated direction
     def Move(self, direction):
         dx = 0
         dy = 0
@@ -112,6 +120,8 @@ class Polyomino:
         
         self.HasMoved = True
     
+
+    #this method is never called
     def Closest(self, direction, x, y):
         closest = True
         for t in self.Tiles:
@@ -127,8 +137,9 @@ class Polyomino:
         return closest
         
 class Board:
+    #constructor for polyomino, assigns the size of Rows and Colums and creates an empty board
     def __init__(self,R,C):
-        self.poly_id_c = 0
+        self.poly_id_c = 0  #the number of seperate polyominos?
         self.Rows = R
         self.Cols = C
         self.Board = [[' ' for x in range(self.Cols)] for y in range(self.Rows)] #[[' ']*self.Cols]*self.Rows
@@ -139,13 +150,15 @@ class Board:
         #the symbol's a bad idea in the case of duplicate tile types
         self.LookUp = {}
     
+    #Adds a polyomino the the list
     def Add(self, p):
         self.Polyominoes.append(p)
         #self.LookUp[p.Tiles[0].symbol] = len(self.Polyominoes) - 1
         self.LookUp[self.poly_id_c] = len(self.Polyominoes) - 1
         self.poly_id_c += 1
         #print self.Polyominoes[0].Tiles[0].x
-        
+    
+    #Prints out every character at their respective position on the grid   
     def GridDraw(self):
         self.SetGrid()
         for row in range(self.Rows): #self.Board:
@@ -153,11 +166,13 @@ class Board:
                 print self.Board[row][col],
             print "\n",
 
+    #Sets all position of the grid to ' '
     def ClearGrid(self):
         for row in range(self.Rows):
             for col in range(self.Cols):
                 self.Board[row][col] = ' '
-                    
+    
+    #Sets the values of each position in the grid to their respective polyomino ID             
     def SetGrid(self):
         #reset board to blanks
         self.ClearGrid()
@@ -168,13 +183,15 @@ class Board:
             for t in p.Tiles:
                 #self.Board[t.y][t.x] = t.symbol
                 self.Board[t.y][t.x] = p.id
-    
+
     def ResizeGrid(self, nheight, nwidth):
         self.Rows = nheight
         self.Cols = nwidth
         self.Board = [[' ' for x in range(self.Cols)] for y in range(self.Rows)] 
         self.SetGrid()
-        
+    
+    #Joins two polyominos, deletes the 2nd redundant polyomino, calls setGrid() to make the character grid
+    #accurately represent the new polyominos.
     def CombinePolys(self, pin1, pin2):
         #remove 2nd poly from list
         #p1 = self.Polyominoes[pin1]
@@ -196,29 +213,31 @@ class Board:
         for p in range(len(self.Polyominoes)):
             #self.LookUp[self.Polyominoes[p].Tiles[0].symbol] = p
             self.LookUp[self.Polyominoes[p].id] = p
-        
+     
+    #This method will check to see if loop through every position in the board and if two polyominoes are 
+    #touching it will check if they can be joined and if so, it will join them
     def ActivateGlues(self):
         try:
             Changed = True
             while Changed == True:
                 Changed = False
-                #search w/e neighbors
+                #search west / east neighbors
                 for row in range(self.Rows):
                     for we in range(self.Cols-1):
                         #if something here
-                        we1sym = self.Board[row][we]
+                        we1sym = self.Board[row][we] #we1sym = the char at Board[row][we]
                         if we1sym != ' ':
                             #if different poly than east neighbor
                             we2sym = self.Board[row][we+1]
                             if we2sym != ' ' and we1sym != we2sym:
-                                we1in = self.LookUp[we1sym]
-                                we2in = self.LookUp[we2sym]
+                                we1in = self.LookUp[we1sym] #we1in = id of 1st polyomino
+                                we2in = self.LookUp[we2sym] #we2in = id of 2nd polyomino
                                 #if they can bond
                                 if self.Polyominoes[we1in].CanJoin(self.Polyominoes[we2in]):
                                     #combine
                                     self.CombinePolys(we1in,we2in)
                                     Changed = True
-                #search n/s neighbors
+                #search north /south neighbors
                 for col in range(self.Cols):
                     for ns in range(self.Rows-1):
                         #if something here
@@ -227,8 +246,8 @@ class Board:
                             #if different poly than east neighbor
                             ns2sym = self.Board[ns+1][col]
                             if ns2sym != ' ' and ns1sym != ns2sym:
-                                ns1in = self.LookUp[ns1sym]
-                                ns2in = self.LookUp[ns2sym]
+                                ns1in = self.LookUp[ns1sym] #ns1in = id of 1st polyomino
+                                ns2in = self.LookUp[ns2sym] #ns2in = id of 2nd polyomino
                                 #if they can bond
                                 if self.Polyominoes[ns1in].CanJoin(self.Polyominoes[ns2in]):
                                     #combine
@@ -236,7 +255,8 @@ class Board:
                                     Changed = True
         except Exception as e:
             print sys.exc_info()[0]                     
-                            
+    
+    #Repeatedly calls Step() in a direction until Step() returns false, then Activates the glues and sets the grid again
     def Tumble(self, direction):
         if direction == "N" or direction == "S" or direction == "E" or direction == "W":
             StepTaken = self.Step(direction)
@@ -248,6 +268,7 @@ class Board:
         self.ActivateGlues()
         self.SetGrid()
 
+    #Functions the same as Tumble() but it activates glues after every step
     def TumbleGlue(self, direction):
         if direction == "N" or direction == "S" or direction == "E" or direction == "W":
             StepTaken = self.Step(direction)
@@ -263,7 +284,7 @@ class Board:
  
         
     
-    
+    #
     def Step(self, direction):
         for p in self.Polyominoes:
             p.HasMoved = False
@@ -313,17 +334,19 @@ class Board:
                 for pin in range(len(self.Polyominoes)):
                     if self.Polyominoes[pin].HasMoved == False:
                         for t in self.Polyominoes[pin].Tiles:
+                            #checks if any polyominoes are touching a wall, if so it marks them as moved
                             if t.y + dy < 0 or t.y + dy == self.Rows or t.x + dx < 0 or t.x + dx == self.Cols:
                                 self.Polyominoes[pin].HasMoved = True
                                 nonemarked = False
                             else:
+                                #checks if it is touching a polyominoe that will not move, if so mark hasMoved as true
                                 symmove = self.Board[t.y + dy][t.x + dx]
                                 if symmove != ' ' and symmove != t.symbol:
                                     nei = self.LookUp[symmove]
                                     if self.Polyominoes[nei].HasMoved == True:
                                         self.Polyominoes[pin].HasMoved = True
                                         nonemarked = False
-                                    
+                
                 if nonemarked == True:
                     for pin in range(len(self.Polyominoes)):
                         if self.Polyominoes[pin].HasMoved == False:
