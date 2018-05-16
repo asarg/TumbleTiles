@@ -355,24 +355,30 @@ class tumblegui:
             TT.GLUEFUNC[label] = int(new_tileset_data["glueFunc"][label])
 
         for td in new_tileset_data["tileData"]:
-            ntile = TT.Tile(td["label"],
-                td["location"]["x"], 
-                td["location"]["y"],
-                [td["northGlue"], td["eastGlue"], td["southGlue"], td["westGlue"]],
-                td["color"])
-            #ntile = TT.Tile(ntlab, ntlocx, ntlocy,[ntnort,nteast,ntsouth,ntwest],ntcol)
-            if TT.BOARDWIDTH < int(td["location"]["x"]):
-                offset = TT.BOARDWIDTH % 5
-                TT.BOARDWIDTH = (int(td["location"]["x"])) + (5 - offset)
-                self.resizeBoardAndCanvas()
+            
+            #if its concrete dont add it to a polyomino, just dirently add it to the list of concrete tiles
+            if td["concrete"] == "True":
+                self.board.AddConc(TT.Tile(td["label"], td["location"]["x"], td["location"]["y"], [td["northGlue"], 
+                    td["eastGlue"], td["southGlue"], td["westGlue"]], td["color"], td["concrete"]))
+            else:
+                ntile = TT.Tile(td["label"],
+                    td["location"]["x"], 
+                    td["location"]["y"],
+                    [td["northGlue"], td["eastGlue"], td["southGlue"], td["westGlue"]],
+                    td["color"], td["concrete"])
+                #ntile = TT.Tile(ntlab, ntlocx, ntlocy,[ntnort,nteast,ntsouth,ntwest],ntcol)
+                if TT.BOARDWIDTH < int(td["location"]["x"]):
+                    offset = TT.BOARDWIDTH % 5
+                    TT.BOARDWIDTH = (int(td["location"]["x"])) + (5 - offset)
+                    self.resizeBoardAndCanvas()
 
-            if TT.BOARDHEIGHT < int(td["location"]["y"]):
-                offset = TT.BOARDHEIGHT % 5
-                TT.BOARDHEIGHT = (int(td["location"]["y"])) + (5 - offset)
-                self.resizeBoardAndCanvas()
+                if TT.BOARDHEIGHT < int(td["location"]["y"]):
+                    offset = TT.BOARDHEIGHT % 5
+                    TT.BOARDHEIGHT = (int(td["location"]["y"])) + (5 - offset)
+                    self.resizeBoardAndCanvas()
 
-            self.board.Add(TT.Polyomino(ntile, self.board.poly_id_c))
-            #preview_board.Add(TT.Polyomino(ntile))
+                self.board.Add(TT.Polyomino(ntile, self.board.poly_id_c))
+                #preview_board.Add(TT.Polyomino(ntile))
 
         p_tiles = None
 
@@ -453,6 +459,14 @@ class tumblegui:
 
             #test add a concrete tile
             self.board.AddConc(TT.Tile('C', 5, 5, [] ,colorg, True))
+            self.board.AddConc(TT.Tile('C', 5, 6, [] ,colorg, True))
+            self.board.AddConc(TT.Tile('C', 5, 7, [] ,colorg, True))
+            self.board.AddConc(TT.Tile('C', 5, 8, [] ,colorg, True))
+            self.board.AddConc(TT.Tile('C', 5, 9, [] ,colorg, True))
+
+
+
+
 
 
         

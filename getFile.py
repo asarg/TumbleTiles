@@ -50,6 +50,7 @@ def parseFile(filename):
         new_tile_data["westGlue"] = " "
         new_tile_data["eastGlue"] = " "
         new_tile_data["label"] = "X"
+        new_tile_data["concrete"] = " "
 
 
         if tt[0].find('Location') != None:
@@ -57,7 +58,10 @@ def parseFile(filename):
             new_tile_data["location"]["y"] = int(tt[0].find('Location').attrib['y'])
 
         if tt[0].find('Color') != None:
-            new_tile_data["color"] = "#" + tt[0].find('Color').text
+            if tt[0].find('Concrete').text == "True":
+                new_tile_data["color"] = "#686868"
+            else:
+                new_tile_data["color"] = "#" + tt[0].find('Color').text
 
         if tt[0].find('NorthGlue') != None:
             new_tile_data["northGlue"] = tt[0].find('NorthGlue').text
@@ -73,6 +77,9 @@ def parseFile(filename):
 
         if tt[0].find('label') != None:
             new_tile_data["label"] = tt[0].find('label').text
+
+        if tt[0].find('Concrete') != None:
+            new_tile_data["concrete"] = tt[0].find('Concrete').text
         
         tile_set_data["tileData"].append(new_tile_data)
 

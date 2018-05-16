@@ -106,7 +106,7 @@ class TileEditorGUI:
                 td["location"]["x"], 
                 td["location"]["y"],
                 [td["northGlue"], td["eastGlue"], td["southGlue"], td["westGlue"]],
-                td["color"])
+                td["color"], False)
 
 			b.Add(TT.Polyomino(tile, b.poly_id_c))
 			c = Canvas(f, width = self.tile_size * 3, height = self.tile_size * 3,  name = str(index))
@@ -134,7 +134,7 @@ class TileEditorGUI:
 					td["location"]["x"], 
 					td["location"]["y"],
 					[td["northGlue"], td["eastGlue"], td["southGlue"], td["westGlue"]],
-					td["color"])
+					td["color"], False)
 
 				self.board.Add(TT.Polyomino(tile, self.board.poly_id_c))
 

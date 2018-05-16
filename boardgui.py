@@ -25,7 +25,8 @@ def redrawCanvas(board, boardwidth, boardheight, canvas, tilesize, textcolor = "
 			
 			elif board.Board[row][col] == 'C':
 				canvas.create_rectangle(tilesize*col, tilesize*row, tilesize*col + tilesize, tilesize*row + tilesize, fill = board.ConcreteColor)
-				canvas.create_text(tilesize*col + tilesize/2, tilesize*row + tilesize/2, text = "C", fill="#000", font=('',tilesize/3))
+				# for i in range (1,11):
+				# 	canvas.create_line(col*tilesize + i * tilesize / 10, tilesize*row, col*tilesize + i * tilesize / 10, tilesize*row + tilesize, fill="#000", width=.25)
 
 def drawGrid(board, boardwidth, boardheight, canvas, tilesize, gridcolor = "#000000", b_drawGrid = False, b_drawLoc = False):
 
