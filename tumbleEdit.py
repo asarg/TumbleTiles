@@ -9,6 +9,12 @@ import random
 import time
 import os,sys
 
+#the x and y coordinate that the preview tiles will begin to be drawn on
+PREVTILESTARTX = 20
+PREVTILESTARTY = 1
+
+PREVTILESIZE = 70
+
 class TileEditorGUI:
 	def __init__(self, parent, board_width, board_height, tile_size, tile_data, glue_data, preview_tile_data):
 
@@ -89,30 +95,44 @@ class TileEditorGUI:
 		# 	End Window 2 config
 		#/////////////////
 
-	def callback(self, event):
-		print "clicked at", event.x, event.y
+	def selected(i):
+		data = self.preview_tile_data
 
+
+	#fills the canvas with preview tiles
 	def popWinTiles(self):
 
 		data = self.preview_tile_data
 
-		# tile = TT.Tile(td["label"],
-  #           td["location"]["x"], 
-  #           td["location"]["y"],
-  #           [td["northGlue"], td["eastGlue"], td["southGlue"], td["westGlue"]],
-  #           td["color"], False)
-
 		
 		tilePrevCanvas = Canvas(self.tileEditorFrame, width = self.tile_size * 3, height = self.height)
-		tilePrevCanvas.bind("<Button-1>", self.callback)
 		tilePrevCanvas.pack(side=TOP)
-		tilePrevCanvas.create_rectangle(0, 0, 70, 70, fill = "#FFF")
+		
+		buttonArray = []
 
+		#loop through the list of tiles and draw a rectangle for each one
 		for i in range(len(data)):
 		 	tile = data[i]
 		 	print(tile)
-		 	tilePrevCanvas.create_rectangle(0, 0, 70, 70, fill = tile["color"])
 
+		 	x = PREVTILESTARTX
+		 	y = PREVTILESTARTY + 80 * i
+		 	size = PREVTILESIZE
+
+		 	prevTileButton = tilePrevCanvas.create_rectangle(x, y, x + size, y + size, fill = tile["color"])
+		 	tilePrevCanvas.tag_bind("prevTileButton", "<Button-1>", lambda event, a=i: self.selected(a))
+		 	buttonArray.append(prevTileButton)
+
+		 	print tile["northGlue"], tile["southGlue"], tile["eastGlue"]
+		 	#Print Glues
+		 	#north
+			tilePrevCanvas.create_text(x + size/2, y + size/5, text = tile["northGlue"], fill="#000", font=('', size/5) )
+			#east
+			tilePrevCanvas.create_text(x + size - size/5, y + size/2, text = tile["eastGlue"], fill="#000", font=('', size/5))
+			#south
+			tilePrevCanvas.create_text(x + size/2, y + size - size/5, text = tile["southGlue"], fill="#000", font=('', size/5) )
+			#west
+			tilePrevCanvas.create_text(x + size/5, y + size/2, text = tile["westGlue"], fill="#000", font=('',size/5) )
 
 	def populateArray(self):
 		for td in self.tile_data:

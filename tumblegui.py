@@ -354,20 +354,20 @@ class tumblegui:
         for label in new_tileset_data["glueFunc"]:
             TT.GLUEFUNC[label] = int(new_tileset_data["glueFunc"][label])
 
-        print(TT.GLUEFUNC)
+
         for td in new_tileset_data["tileData"]:
 
             #if its concrete dont add it to a polyomino, just directly add it to the list of concrete tiles
             if td["concrete"] == "True":
                 self.board.AddConc(TT.Tile(td["label"], td["location"]["x"], td["location"]["y"], [td["northGlue"], 
-                    td["eastGlue"], td["southGlue"], td["westGlue"]], td["color"], td["concrete"]))
+                    td["eastGlue"], td["southGlue"], td["westGlue"]], td["color"], True))
             else:
                 ntile = TT.Tile(td["label"],
                     td["location"]["x"], 
                     td["location"]["y"],
                     [td["northGlue"], td["eastGlue"], td["southGlue"], td["westGlue"]],
-                    td["color"], td["concrete"])
-                #ntile = TT.Tile(ntlab, ntlocx, ntlocy,[ntnort,nteast,ntsouth,ntwest],ntcol)
+                    td["color"], False)
+               
                 if TT.BOARDWIDTH < int(td["location"]["x"]):
                     offset = TT.BOARDWIDTH % 5
                     TT.BOARDWIDTH = (int(td["location"]["x"])) + (5 - offset)
@@ -385,6 +385,7 @@ class tumblegui:
 
         if len(new_tileset_data["prevTiles"]) > 0:
             p_tiles = new_tileset_data["prevTiles"]
+
         #Call the board editor
         self.openBoardEditDial(self.root, TT.BOARDWIDTH, TT.BOARDHEIGHT, TILESIZE, new_tileset_data["tileData"], new_tileset_data["glueFunc"], p_tiles)
         
