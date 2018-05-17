@@ -17,117 +17,122 @@ def parseFile(filename):
     treeroot = tree.getroot()
     #self.Log("\nLoad "+filename+"\n")
 
-    preview_tiles_exist = False
+
+    glueFuncExists = False
+    previewTilesExist = False
+    tileDataExists = False
+
+    #check if the xml attributes are found
+    if tree.find("GlueFunction") != None:
+        glueFuncExists = True
+
     if tree.find("PreviewTiles") != None:
-        glue_index = False
-        preview_tiles_exist = True
+        previewTilesExist = True
 
-    gluefun = treeroot[0]
+    if tree.find("TileData") != None:
+        tileDataExists = True
 
-    tile_set_data = {"prevTiles": [], "glueFunc": {}, "tileData": []}
+
+    #data set that will be passed back to tumblegui
+    tile_set_data = {"glueFunc": {}, "prevTiles": [], "tileData": []}
+
+    #add glue function to the data set
+    if glueFuncExists:
+        glueFuncTree = treeroot[1]
+        for fun in glueFuncTree:
+            tile_set_data["glueFunc"][fun.find('Labels').attrib['L1']] = (fun.find('Strength').text)
+    
+    #add preview tiles to the data set
+    if previewTilesExist:
+        prevTilesTree = treeroot[2];
+        for prev in prevTilesTree:
+
+            newPrevTile = {}
+
+            newPrevTile["color"] = "#555555"
+            newPrevTile["northGlue"] = " "
+            newPrevTile["southGlue"] = " "
+            newPrevTile["westGlue"] = " "
+            newPrevTile["eastGlue"] = " "
+            newPrevTile["label"] = "X"
+            newPrevTile["concrete"] = " "
 
     
-    #flush board
-    #del tumble_board.Polyominoes[:]
-    #tumble_board.LookUp = {}
-    #tumble_t.GLUEFUNC = {}
-    #tumble_board = tumble_t.Board(tumble_t.BOARDHEIGHT,  tumble_t.BOARDWIDTH)
-    #print "get glue function"
-    for fun in gluefun:
-        tile_set_data["glueFunc"][fun.find('Labels').attrib['L1']] = (fun.find('Strength').text)
-        #tumble_t.GLUEFUNC[fun.find('Labels').attrib['L1']] = int(fun.find('Strength').text)
-    
-    tile_index = 1
-    if preview_tiles_exist:
-        tile_index = 2
-    for tt in treeroot[tile_index:]:
-        new_tile_data = {}
 
-        new_tile_data["location"] = {'x': 0, 'y': 0}
-        new_tile_data["color"] = "#555555"
-        new_tile_data["northGlue"] = " "
-        new_tile_data["southGlue"] = " "
-        new_tile_data["westGlue"] = " "
-        new_tile_data["eastGlue"] = " "
-        new_tile_data["label"] = "X"
-        new_tile_data["concrete"] = " "
+            if prev.find('Color') != None:
+                if prev.find('Concrete').text == "True":
+                    newPrevTile["color"] = "#686868"
+                else:
+                    newPrevTile["color"] = "#" + prev.find('Color').text
+
+            if prev.find('NorthGlue') != None:
+                newPrevTile["northGlue"] = prev.find('NorthGlue').text
+
+            if prev.find('EastGlue') != None:
+                newPrevTile["eastGlue"] = prev.find('EastGlue').text
+
+            if prev.find('SouthGlue') != None:
+                newPrevTile["southGlue"] = prev.find('SouthGlue').text
+
+            if prev.find('WestGlue') != None:
+                newPrevTile["westGlue"] = prev.find('WestGlue').text
+
+            if prev.find('label') != None:
+                newPrevTile["label"] = prev.find('label').text
+
+            if prev.find('Concrete') != None:
+                newPrevTile["concrete"] = prev.find('Concrete').text
+
+            tile_set_data["prevTiles"].append(newPrevTile)
 
 
-        if tt[0].find('Location') != None:
-            new_tile_data["location"]["x"] = int(tt[0].find('Location').attrib['x'])
-            new_tile_data["location"]["y"] = int(tt[0].find('Location').attrib['y'])
+    #add tile data to the data set, these are the tiles that will actually be loaded onto the plane
+    if tileDataExists:
+        tileDataTree = treeroot[3]
+        for tile in tileDataTree:
 
-        if tt[0].find('Color') != None:
-            if tt[0].find('Concrete').text == "True":
-                new_tile_data["color"] = "#686868"
-            else:
-                new_tile_data["color"] = "#" + tt[0].find('Color').text
+            newTile = {}
 
-        if tt[0].find('NorthGlue') != None:
-            new_tile_data["northGlue"] = tt[0].find('NorthGlue').text
+            newTile["location"] = {'x': 0, 'y': 0}
+            newTile["color"] = "#555555"
+            newTile["northGlue"] = " "
+            newTile["southGlue"] = " "
+            newTile["westGlue"] = " "
+            newTile["eastGlue"] = " "
+            newTile["label"] = "X"
+            newTile["concrete"] = " "
 
-        if tt[0].find('EastGlue') != None:
-            new_tile_data["eastGlue"] = tt[0].find('EastGlue').text
+            if tile.find('Location') != None:
+                newTile["location"]["x"] = int(tile.find('Location').attrib['x'])
+                newTile["location"]["y"] = int(tile.find('Location').attrib['y'])
 
-        if tt[0].find('SouthGlue') != None:
-            new_tile_data["southGlue"] = tt[0].find('SouthGlue').text
-
-        if tt[0].find('WestGlue') != None:
-            new_tile_data["westGlue"] = tt[0].find('WestGlue').text
-
-        if tt[0].find('label') != None:
-            new_tile_data["label"] = tt[0].find('label').text
-
-        if tt[0].find('Concrete') != None:
-            new_tile_data["concrete"] = tt[0].find('Concrete').text
         
-        tile_set_data["tileData"].append(new_tile_data)
+            if tile.find('Color') != None:
+                if tile.find('Concrete').text == "True":
+                    newTile["color"] = "#686868"
+                else:
+                    newTile["color"] = "#" + tile.find('Color').text
 
-    if not preview_tiles_exist:
-        return tile_set_data
+            if tile.find('NorthGlue') != None:
+                newTile["northGlue"] = tile.find('NorthGlue').text
 
-    for tt in treeroot[1]:
-        new_p_tile_data = {}
+            if tile.find('EastGlue') != None:
+                newTile["eastGlue"] = tile.find('EastGlue').text
 
-        new_p_tile_data["location"] = {'x': 0, 'y': 0}
-        new_p_tile_data["color"] = "#555555"
-        new_p_tile_data["northGlue"] = " "
-        new_p_tile_data["southGlue"] = " "
-        new_p_tile_data["westGlue"] = " "
-        new_p_tile_data["eastGlue"] = " "
-        new_p_tile_data["label"] = "X"
+            if tile.find('SouthGlue') != None:
+                newTile["southGlue"] = tile.find('SouthGlue').text
 
+            if tile.find('WestGlue') != None:
+                newTile["westGlue"] = tile.find('WestGlue').text
 
-        if tt[0].find('Location') != None:
-            new_p_tile_data["location"]["x"] = int(tt[0].find('Location').attrib['x'])
-            new_p_tile_data["location"]["y"] = int(tt[0].find('Location').attrib['y'])
+            if tile.find('label') != None:
+                newTile["label"] = tile.find('label').text
 
-        if tt[0].find('Color') != None:
-            new_p_tile_data["color"] = "#" + tt[0].find('Color').text
-
-        if tt[0].find('NorthGlue') != None:
-            new_p_tile_data["northGlue"] = tt[0].find('NorthGlue').text
-
-        if tt[0].find('EastGlue') != None:
-            new_p_tile_data["eastGlue"] = tt[0].find('EastGlue').text
-
-        if tt[0].find('SouthGlue') != None:
-            new_p_tile_data["southGlue"] = tt[0].find('SouthGlue').text
-
-        if tt[0].find('WestGlue') != None:
-            new_p_tile_data["westGlue"] = tt[0].find('WestGlue').text
-
-        if tt[0].find('label') != None:
-            new_p_tile_data["label"] = tt[0].find('label').text
-
-        tile_set_data["prevTiles"].append(new_p_tile_data)
+            if tile.find('Concrete') != None:
+                newTile["concrete"] = tile.find('Concrete').text
         
-        #ntile = tumble_t.Tile(ntlab, ntlocx, ntlocy,[ntnort,nteast,ntsouth,ntwest],ntcol)
-        #self.board.Add(tumble_t.Polyomino(ntile))
-        #self.board.SetGrid()
-        #self.RedrawCanvas()
-        #board.GridDraw()
-    #print TT.GLUEFUNC
 
-    #print "returning tile set"
+            tile_set_data["tileData"].append(newTile)
+
+
     return tile_set_data

@@ -10,7 +10,7 @@ import time
 import os,sys
 
 class TileEditorGUI:
-	def __init__(self, parent, board_width, board_height, tile_size, tile_data, glue_data, preview_tile_data = None):
+	def __init__(self, parent, board_width, board_height, tile_size, tile_data, glue_data, preview_tile_data):
 
 		#open two windows
 		#`w1` will be the tile editor
@@ -51,70 +51,68 @@ class TileEditorGUI:
 		#/////////////////
 		#	Window 1 config
 		#////////////////
-		self.w1 = Toplevel(self.parent, width = self.width, height = self.height)
-		self.w1.wm_title("Tile Editor")
-		self.w1.resizable(True, True)
-		self.w1.protocol("WM_DELETE_WINDOW", lambda: self.closeGUI())
+		
+		
 
 		#populate the window with tiles
 		self.w1f = None
-		self.popWinTiles()
-		#//////////////////
-		#	End Window1 config
-		#/////////////////
+
 
 		#//////////////////
-		#	Window 2 config
+		#	Window Config
 		#/////////////////
-		self.w2 = Toplevel(self.parent)
-		self.w2.wm_title("Previewer")
-		self.w2.resizable(False, False)
-		self.w2.protocol("WM_DELETE_WINDOW", lambda: self.closeGUI())
-		self.w2.bind("<Button-1>", lambda event: self.onPreviewClick(event))
+		self.newWindow = Toplevel(self.parent)
+		self.newWindow.wm_title("Previewer")
+		self.newWindow.resizable(False, False)
+		self.newWindow.protocol("WM_DELETE_WINDOW", lambda: self.closeGUI())
+		self.newWindow.bind("<Button-1>", lambda event: self.onPreviewClick(event))
 		
-		#create a canvas for window 2
-		self.w2c = Canvas(self.w2, width = self.width, height = self.height)
-		self.w2c.pack()
-		Button(self.w2, text = "Remove tile", command = self.onRemoveState).pack()
-		Button(self.w2, text = "Resize board", command = self.boardResizeDial).pack()
-		Button(self.w2, text = "Save tile config", command = self.saveTileConfig).pack()
+		#Create two frames, one to hold the board and the buttons, and one to hold the tiles to be placed
+		self.tileEditorFrame = Frame(self.newWindow, width = self.width, height = self.height, borderwidth=1)
+		self.tileEditorFrame.pack(side=RIGHT)
+		
+		self.BoardFrame = Frame(self.newWindow, borderwidth=1, width = 500, height = 500)
+		self.BoardFrame.pack(side=LEFT)
+		
+		self.BoardCanvas = Canvas(self.BoardFrame, width = self.width, height = self.height)
+		self.BoardCanvas.pack(side=TOP)
+		
+
+		Button(self.BoardFrame, text = "Remove tile", command = self.onRemoveState).pack(side=BOTTOM)
+		Button(self.BoardFrame, text = "Resize board", command = self.boardResizeDial).pack(side=BOTTOM)
+		Button(self.BoardFrame, text = "Save tile config", command = self.saveTileConfig).pack(side=BOTTOM)
 
 		#draw the board on the canvas
+		self.popWinTiles()
 		self.redrawPrev()
 		#//////////////////
 		# 	End Window 2 config
 		#/////////////////
 
+	def callback(self, event):
+		print "clicked at", event.x, event.y
+
 	def popWinTiles(self):
 
-		if self.w1f != None:
-			self.w1f.destroy()
-
-		self.w1f = VerticalScrolledFrame(self.w1)
-		self.w1f.pack()
-
-		index = 0
 		data = self.preview_tile_data
 
-		if data == None:
-			data = self.tile_data
-		for td in data:
-			f = Frame(self.w1f)
-			f.pack()
-			b = TT.Board(1, 1)
-			tile = TT.Tile(td["label"],
-                td["location"]["x"], 
-                td["location"]["y"],
-                [td["northGlue"], td["eastGlue"], td["southGlue"], td["westGlue"]],
-                td["color"], False)
+		# tile = TT.Tile(td["label"],
+  #           td["location"]["x"], 
+  #           td["location"]["y"],
+  #           [td["northGlue"], td["eastGlue"], td["southGlue"], td["westGlue"]],
+  #           td["color"], False)
 
-			b.Add(TT.Polyomino(tile, b.poly_id_c))
-			c = Canvas(f, width = self.tile_size * 3, height = self.tile_size * 3,  name = str(index))
-			c.pack()
-			c.bind("<Button-1>", lambda event: self.onAddState(event))
-			redrawCanvas(b, 1, 1, c, self.tile_size * 3)
+		
+		tilePrevCanvas = Canvas(self.tileEditorFrame, width = self.tile_size * 3, height = self.height)
+		tilePrevCanvas.bind("<Button-1>", self.callback)
+		tilePrevCanvas.pack(side=TOP)
+		tilePrevCanvas.create_rectangle(0, 0, 70, 70, fill = "#FFF")
 
-			index+=1
+		for i in range(len(data)):
+		 	tile = data[i]
+		 	print(tile)
+		 	tilePrevCanvas.create_rectangle(0, 0, 70, 70, fill = tile["color"])
+
 
 	def populateArray(self):
 		for td in self.tile_data:
@@ -217,13 +215,13 @@ class TileEditorGUI:
 		ntile["southGlue"] = self.tile_to_add["southGlue"]
 		ntile["westGlue"] = self.tile_to_add["westGlue"]
 		ntile["color"] = self.tile_to_add["color"]
-
+		ntile["concrete"] = self.tile_to_add["concrete"]
 
 		self.coord2tile[x][y] = ntile
 
 		self.populateBoard()
 		self.redrawPrev()
-		self.onClearState()
+		#self.onClearState()
 
 	def getTileAtPos(self, x, y):
 		if x in self.coord2tile.keys():
@@ -233,7 +231,7 @@ class TileEditorGUI:
 		return None
 
 	def redrawPrev(self):
-		redrawCanvas(self.board, self.board_w, self.board_h, self.w2c, self.tile_size, b_drawGrid = True, b_drawLoc = True)
+		redrawCanvas(self.board, self.board_w, self.board_h, self.BoardCanvas, self.tile_size, b_drawGrid = True, b_drawLoc = True)
 
 	def saveTileConfig(self):
 		filename = tkFileDialog.asksaveasfilename()
@@ -326,8 +324,8 @@ class TileEditorGUI:
 
 
 	def closeGUI(self):
-		self.w1.destroy()
-		self.w2.destroy()
+		self.newWindow.destroy()
+		self.newWindow.destroy()
 
 
 	class WindowResizeDialogue:

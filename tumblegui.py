@@ -354,9 +354,10 @@ class tumblegui:
         for label in new_tileset_data["glueFunc"]:
             TT.GLUEFUNC[label] = int(new_tileset_data["glueFunc"][label])
 
+        print(TT.GLUEFUNC)
         for td in new_tileset_data["tileData"]:
-            
-            #if its concrete dont add it to a polyomino, just dirently add it to the list of concrete tiles
+
+            #if its concrete dont add it to a polyomino, just directly add it to the list of concrete tiles
             if td["concrete"] == "True":
                 self.board.AddConc(TT.Tile(td["label"], td["location"]["x"], td["location"]["y"], [td["northGlue"], 
                     td["eastGlue"], td["southGlue"], td["westGlue"]], td["color"], td["concrete"]))
@@ -380,7 +381,7 @@ class tumblegui:
                 self.board.Add(TT.Polyomino(ntile, self.board.poly_id_c))
                 #preview_board.Add(TT.Polyomino(ntile))
 
-        p_tiles = None
+        
 
         if len(new_tileset_data["prevTiles"]) > 0:
             p_tiles = new_tileset_data["prevTiles"]

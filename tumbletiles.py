@@ -34,6 +34,7 @@ class Tile:
         self.x = r
         self.y = c
 
+
         #concrete tiles wll have a symbol/id of -1
         if(isConcrete):
             g = []
