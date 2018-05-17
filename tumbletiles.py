@@ -35,13 +35,19 @@ class Tile:
         self.y = c
 
 
+        # Check for the case that isConcrete might be passed as a String if being read from an xml file
+        if isConcrete == True or isConcrete == "True":
+            self.isConcrete = True
+        else:
+            self.isConcrete = False
+
         #concrete tiles wll have a symbol/id of -1
-        if(isConcrete):
+        if(self.isConcrete):
             g = []
         else:
             self.glues = g
 
-        self.isConcrete = isConcrete
+        
 
         
 #tiles must be part of a polyomino
