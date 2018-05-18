@@ -118,9 +118,37 @@ class TileEditorGUI:
 		self.redrawPrev()
 		
 
-
+	# Called when you click to add a new tile. Will create a small window where you can insert the 4 glues, then add that tile to the
+	# preview tile window
 	def addNewPrevTile(self):
-		print("A")
+		self.addTileWindow = Toplevel(self.newWindow)
+
+		#Makes the new window open over the current editor window
+		self.addTileWindow.geometry('%dx%d+%d+%d' % (250, 250, self.newWindow.winfo_x() + self.newWindow.winfo_width() / 2, self.newWindow.winfo_y() + self.newWindow.winfo_height() / 2))
+
+		self.addTileWindow.wm_title("Create Tile")
+		self.addTileWindow.resizable(False, False)
+		self.addTileWindow.protocol("WM_DELETE_WINDOW", lambda: self.closeNewTileWindow())
+
+		#Frame that will hold the text boxes that the glues will be entered it
+		self.tileFrame = Frame(self.addTileWindow, borderwidth=1, relief=FLAT, width = self.tile_size * 3, height = self.tile_size * 3)
+		self.tileFrame.pack(side=TOP)
+
+		#Frame that till hold the two buttons cancel / create
+		self.buttonFrame = Frame(self.addTileWindow, borderwidth=1, relief=FLAT, width = self.tile_size * 3, height =  200)
+		self.buttonFrame.pack(side=BOTTOM)
+
+		self.createButton = Button(self.buttonFrame, text="Create Tile", width=10, command= self.createTile)
+		self.cancelButton = Button(self.buttonFrame, text="Cancel", width=10, command= self.cancelTileCreation)
+		self.createButton.pack(side=LEFT)
+		self.cancelButton.pack(side=RIGHT)
+
+
+	def createTile(self):
+		print(a)
+
+	def cancelTileCreation(self):
+		self.closeNewTileWindow()
 
 	def selected(self, i):
 		print(self.preview_tile_data[i])
@@ -222,9 +250,6 @@ class TileEditorGUI:
 
 	def onAddState(self):
 
-		#print "Clicked on ",tile_index
-		#print "Label: %s\n Location: (%i, %i)\n[NG: %s, EG: %s, SG: %s, WG: %s]\n, C: %s", self.tile_data[tile_index]["label"],self.tile_data[tile_index]["location"]["x"], self.tile_data[tile_index]["location"]["y"],self.tile_data[tile_index]["northGlue"], self.tile_data[tile_index]["eastGlue"], self.tile_data[tile_index]["southGlue"], self.tile_data[tile_index]["westGlue"],self.tile_data[tile_index]["color"]
-		#print "Click on a position in the board to add a tile"
 		print("In Add State")
 		self.remove_state = False
 		self.add_state = True
@@ -313,7 +338,7 @@ class TileEditorGUI:
 		if not self.randomizeColor:
 			ntile["color"] = self.preview_tile_data[self.selectedTileIndex]["color"]
 		else:
-			ntile["color"] = ('#%02X%02X%02X' % (r(),r(),r()))
+			ntile["color"] = ('#%02X%02X%02X' % (r(),r(),r())) #random color function mentioned above
 
 		ntile["concrete"] = self.preview_tile_data[self.selectedTileIndex]["concrete"]
 
@@ -430,6 +455,9 @@ class TileEditorGUI:
 	def closeGUI(self):
 		self.newWindow.destroy()
 		self.newWindow.destroy()
+
+	def closeNewTileWindow(self):
+		self.addTileWindow.destroy()
 
 
 	class WindowResizeDialogue:
