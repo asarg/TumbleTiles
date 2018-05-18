@@ -161,7 +161,7 @@ class tumblegui:
         
         #menu
         #menu - https://www.tutorialspoint.com/python/tk_menu.htm
-        self.menubar = Menu(self.root, relief=FLAT)
+        self.menubar = Menu(self.root, relief=RAISED)
         filemenu = Menu(self.menubar, tearoff=0)
         filemenu.add_command(label="Example", command=self.CreateInitial)
         #filemenu.add_command(label="Generate Tiles", command=self.openTileEditDial)
@@ -181,6 +181,8 @@ class tumblegui:
         
         aboutmenu = Menu(self.menubar, tearoff=0)
         aboutmenu.add_command(label="About", command=self.about)
+
+        
         
         self.tkSTEPVAR = BooleanVar()
         self.tkSTEPVAR.set(False)
@@ -202,10 +204,14 @@ class tumblegui:
         settingsmenu.add_checkbutton(label="Show Locations", onvalue=True, offvalue=False, variable=self.tkSHOWLOC, command = lambda: self.callCanvasRedraw())
         settingsmenu.add_separator()
         settingsmenu.add_command(label="Board Options", command=self.changetile)
+
+        editormenu = Menu(self.menubar, tearoff=0)
+        editormenu.add_command(label="Open Editor", command=self.editCurrentTiles)
         
         
         self.menubar.add_cascade(label="File", menu=filemenu)
         self.menubar.add_cascade(label="Settings", menu=settingsmenu)
+        self.menubar.add_cascade(label="Editor", menu=editormenu)
         self.menubar.add_cascade(label="Help", menu=aboutmenu)
         self.root.config(menu=self.menubar)
         
@@ -425,6 +431,16 @@ class tumblegui:
 
     def openBoardEditDial(self, root, boardwidth, boardheight, tilesize, tiledata, gluedata, prevTiles):
         TGBox = TE.TileEditorGUI(root, boardwidth, boardheight, tilesize, tiledata, gluedata, prevTiles)
+
+    def editCurrentTiles(self):
+        #TODO
+        #Add option to open editor and edit current tile configuration
+        print(TT.GLUEFUNC)
+        tile_set_data = {"glueFunc": {}, "prevTiles": [], "tileData": []}
+        tile_set_data["glueFunc"] = TT.GLUEFUNC
+
+
+
 
     def CreateInitial(self):
         

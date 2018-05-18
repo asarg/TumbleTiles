@@ -61,16 +61,6 @@ class TileEditorGUI:
 		#populate the board
 		self.populateBoard()
 
-		#/////////////////
-		#	Window 1 config
-		#////////////////
-		
-		
-
-		#populate the window with tiles
-		self.w1f = None
-
-
 		#//////////////////
 		#	Window Config
 		#/////////////////
@@ -78,6 +68,17 @@ class TileEditorGUI:
 		self.newWindow.wm_title("Previewer")
 		self.newWindow.resizable(False, False)
 		self.newWindow.protocol("WM_DELETE_WINDOW", lambda: self.closeGUI())
+
+		#Add Menu Bar
+		self.menuBar = Menu(self.newWindow, relief=RAISED, borderwidth=1)
+
+		optionsMenu = Menu(self.menuBar, tearoff=0)
+		optionsMenu.add_command(label="Save Configuration", command = lambda: self.saveTileConfig)
+		optionsMenu.add_command(label="Resize Board", command = lambda: self.boardResizeDial)
+
+
+		self.menuBar.add_cascade(label="Option", menu=optionsMenu)
+		self.newWindow.config(menu=self.menuBar)
 		
 		#Create two frames, one to hold the board and the buttons, and one to hold the tiles to be placed
 		self.tileEditorFrame = Frame(self.newWindow, width = self.width, height = self.height, relief=SUNKEN,borderwidth=1)
@@ -93,12 +94,12 @@ class TileEditorGUI:
 		self.BoardCanvas.bind("<Button-1>", lambda event: self.onBoardClick(event))
 		self.BoardCanvas.bind("<Button-3>", lambda event: self.onBoardClick(event))
 
-		
+
 		
 
-		Button(self.BoardFrame, text = "Remove tile", command = self.onRemoveState).pack(side=BOTTOM)
-		Button(self.BoardFrame, text = "Resize board", command = self.boardResizeDial).pack(side=BOTTOM)
-		Button(self.BoardFrame, text = "Save tile config", command = self.saveTileConfig).pack(side=BOTTOM)
+		#Button(self.BoardFrame, text = "Remove tile", command = self.onRemoveState).pack(side=BOTTOM)
+		#Button(self.BoardFrame, text = "Resize board", command = self.boardResizeDial).pack(side=BOTTOM)
+		#Button(self.BoardFrame, text = "Save tile config", command = self.saveTileConfig).pack(side=BOTTOM)
 
 		#draw the board on the canvas
 		self.popWinTiles()
