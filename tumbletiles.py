@@ -343,9 +343,12 @@ class Board:
                 if sym != ' ' and sym != 'C':
                     self.Polyominoes[self.LookUp[sym]].HasMoved = True
 
+
         for c in self.ConcreteTiles:
+            print(c.x - dx)
+            print "Cols", self.Cols
             #make sure adjacent tile is in bounds of the board, use - instead of + because we are checking relative to the concrete
-            if c.y - dy >= 0 and c.y - dy <= self.Rows and c.x - dx >= 0 and c.x - dx <= self.Cols: #first check if its OOB to avoid error
+            if c.y - dy >= 0 and c.y - dy < self.Rows and c.x - dx >= 0 and c.x - dx < self.Cols: #first check if its OOB to avoid error
                 sym = self.Board[c.y - dy][c.x - dx]
                 if c.y + dy >= 0 and c.y + dy <= self.Rows and sym != ' ' and sym != 'C':
                     self.Polyominoes[self.LookUp[sym]].HasMoved = True

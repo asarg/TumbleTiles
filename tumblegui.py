@@ -439,15 +439,59 @@ class tumblegui:
     def openBoardEditDial(self, root, boardwidth, boardheight, tilesize, tiledata, gluedata, prevTiles):
         TGBox = TE.TileEditorGUI(root, self, boardwidth, boardheight, tilesize, tiledata, gluedata, prevTiles)
 
+    #Opens the editor and loads the cuurent tiles from the simulator
     def editCurrentTiles(self):
-        #TODO
-        #Add option to open editor and edit current tile configuration
+
+        self.tile_data = self.getTileDataFromBoard()
+
         print(TT.GLUEFUNC)
         tile_set_data = {"glueFunc": {}, "prevTiles": [], "tileData": []}
         tile_set_data["glueFunc"] = TT.GLUEFUNC
+        tile_set_data["tileData"] = self.tile_data
+        tile_set_data["prevTiles"] = self.prev_tile_data
+        TGBox = TE.TileEditorGUI(self.root, self, TT.BOARDWIDTH, TT.BOARDHEIGHT, TILESIZE, tile_set_data["tileData"], tile_set_data["glueFunc"], tile_set_data["prevTiles"])
+    
+    #Turns the list of polyominoes and concrete tiles into a list of tiles including their position
+    #this is used to get the tile list that will be paseed to the editor
+    def getTileDataFromBoard(self):
+        new_tile_data = []
+
+        for p in self.board.Polyominoes:
+            for t in p.Tiles:
+
+                ntile = {}
+                ntile["label"] = t.symbol
+                ntile["location"] = {}
+                ntile["location"]["x"] = t.x
+                ntile["location"]["y"] = t.y
+                ntile["northGlue"] = t.glues[0]
+                ntile["eastGlue"] = t.glues[1]
+                ntile["southGlue"] = t.glues[2]
+                ntile["westGlue"] = t.glues[3]
+                ntile["color"] = t.color
+                ntile["concrete"] = "False"
+
+                new_tile_data.append(ntile)
+
+        for c in self.board.ConcreteTiles:
+
+                ntile = {}
+                ntile["label"] = c.symbol
+                ntile["location"] = {}
+                ntile["location"]["x"] = c.x
+                ntile["location"]["y"] = c.y
+                ntile["northGlue"] = 0
+                ntile["eastGlue"] = 0
+                ntile["southGlue"] = 0
+                ntile["westGlue"] = 0
+                ntile["color"] = c.color
+                ntile["concrete"] = "True"
+
+                print(ntile)
+                new_tile_data.append(ntile)
 
         
-                
+        return new_tile_data
 
     #This method will be called wben you want to export the tiles from the editor back to the simulation
     def setTilesFromEditor(self, tile_data, glue_data, prev_tiles):
@@ -459,7 +503,7 @@ class tumblegui:
             TT.GLUEFUNC[label] = int(glue_data[label])
             self.glue_data = glue_data
 
-        if len(prev_tiles) > 0:
+        if prev_tiles != None and len(prev_tiles) > 0:
             self.prev_tile_data = prev_tiles
 
         self.tile_data = tile_data

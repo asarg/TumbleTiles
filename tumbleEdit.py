@@ -145,6 +145,9 @@ class TileEditorGUI:
 		buttonArray = []
 
 		#loop through the list of tiles and draw a rectangle for each one
+		if data == None:
+			return
+
 		for i in range(len(data)):
 		 	tile = data[i]
 		 	print(tile)
