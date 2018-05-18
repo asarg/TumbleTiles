@@ -372,6 +372,7 @@ class tumblegui:
 
             #if its concrete dont add it to a polyomino, just directly add it to the list of concrete tiles
             if td["concrete"] == "True":
+
                 self.board.AddConc(TT.Tile(td["label"], td["location"]["x"], td["location"]["y"], [td["northGlue"], 
                     td["eastGlue"], td["southGlue"], td["westGlue"]], td["color"], True))
             else:
@@ -441,8 +442,9 @@ class tumblegui:
 
     #Opens the editor and loads the cuurent tiles from the simulator
     def editCurrentTiles(self):
-
+        
         self.tile_data = self.getTileDataFromBoard()
+       
 
         print(TT.GLUEFUNC)
         tile_set_data = {"glueFunc": {}, "prevTiles": [], "tileData": []}
@@ -487,17 +489,17 @@ class tumblegui:
                 ntile["color"] = c.color
                 ntile["concrete"] = "True"
 
-                print(ntile)
                 new_tile_data.append(ntile)
 
         
         return new_tile_data
 
     #This method will be called wben you want to export the tiles from the editor back to the simulation
-    def setTilesFromEditor(self, tile_data, glue_data, prev_tiles):
-        print("setting tiles")
-        print(tile_data)
+    def setTilesFromEditor(self, tile_data, glue_data, prev_tiles, width, height):
+        TT.BOARDHEIGHT = height
+        TT.BOARDWIDTH = width
         self.board = TT.Board(TT.BOARDHEIGHT,  TT.BOARDWIDTH)
+        self.resizeBoardAndCanvas()
 
         for label in glue_data:
             TT.GLUEFUNC[label] = int(glue_data[label])
@@ -511,7 +513,6 @@ class tumblegui:
 
             #if its concrete dont add it to a polyomino, just directly add it to the list of concrete tiles
             if td["concrete"] == "True":
-                print "adding", td,
                 self.board.AddConc(TT.Tile(td["label"], td["location"]["x"], td["location"]["y"], [td["northGlue"], 
                     td["eastGlue"], td["southGlue"], td["westGlue"]], td["color"], True))
             else:
@@ -575,11 +576,12 @@ class tumblegui:
             self.board.Add(p)
 
             #test add a concrete tile
-            self.board.AddConc(TT.Tile('C', 5, 5, [] ,colorg, True))
-            self.board.AddConc(TT.Tile('C', 5, 6, [] ,colorg, True))
-            self.board.AddConc(TT.Tile('C', 5, 7, [] ,colorg, True))
-            self.board.AddConc(TT.Tile('C', 5, 8, [] ,colorg, True))
-            self.board.AddConc(TT.Tile('C', 5, 9, [] ,colorg, True))
+
+        self.board.AddConc(TT.Tile('C', 5, 13, [] ,colorg, True))
+        self.board.AddConc(TT.Tile('C', 10, 1, [] ,colorg, True))
+        self.board.AddConc(TT.Tile('C', 8, 8, [] ,colorg, True))
+        self.board.AddConc(TT.Tile('C', 1, 10, [] ,colorg, True))
+        self.board.AddConc(TT.Tile('C', 13, 5, [] ,colorg, True))
 
 
 

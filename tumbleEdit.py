@@ -92,38 +92,35 @@ class TileEditorGUI:
 		self.tileEditorFrame = Frame(self.newWindow, width = self.width, height = self.height, relief=SUNKEN,borderwidth=1)
 		self.tileEditorFrame.pack(side=RIGHT, expand=True)
 
-		self.randomColorButton = Button(self.tileEditorFrame, text="Random Color", width=10, command= self.randomColorToggle)
-		self.randomColorButton.pack(side=TOP)
-		
 		self.BoardFrame = Frame(self.newWindow, borderwidth=1,relief=FLAT, width = 500, height = 500)
 		self.BoardFrame.pack(side=LEFT)
 		
+
+		#The button thats toggles randomizing the color of a placed tile
+		self.randomColorButton = Button(self.tileEditorFrame, text="Random Color", width=10, command= self.randomColorToggle)
+		self.randomColorButton.pack(side=TOP)
+
+		#Button that will allow user to add a new preview tile
+		self.addNewPrevTileButton = Button(self.tileEditorFrame, text="New Tile", width=10, command= self.addNewPrevTile)
+		self.addNewPrevTileButton.pack(side=TOP)
+		
+		#Canvas that tile and grid is drawn on
 		self.BoardCanvas = Canvas(self.BoardFrame, width = self.width, height = self.height)
 		self.BoardCanvas.pack(side=TOP)
 
 		#Used to tell when a tile is trying to be placed, will send the event to onBoardClick to determine the location
-		self.BoardCanvas.bind("<Button-1>", lambda event: self.onBoardClick(event))
-		self.BoardCanvas.bind("<Button-3>", lambda event: self.onBoardClick(event))
+		self.BoardCanvas.bind("<Button-1>", lambda event: self.onBoardClick(event)) # -- LEFT CLICK
+		self.BoardCanvas.bind("<Button-3>", lambda event: self.onBoardClick(event)) # -- RIGHT CLICK
 
-
-		
-
-		#Button(self.BoardFrame, text = "Remove tile", command = self.onRemoveState).pack(side=BOTTOM)
-		#Button(self.BoardFrame, text = "Resize board", command = self.boardResizeDial).pack(side=BOTTOM)
-		#Button(self.BoardFrame, text = "Save tile config", command = self.saveTileConfig).pack(side=BOTTOM)
 
 		#draw the board on the canvas
 		self.popWinTiles()
 		self.redrawPrev()
-		#//////////////////
-		# 	End Window 2 config
-		#/////////////////
+		
 
 
-	# this method takes the preview tile data that is passed into this class and creates an array of tiles that
-	# will be used to insert tiles in the board
-	def initiatePrevTileArray(self):
-		print()
+	def addNewPrevTile(self):
+		print("A")
 
 	def selected(self, i):
 		print(self.preview_tile_data[i])
@@ -233,22 +230,18 @@ class TileEditorGUI:
 		self.add_state = True
 		
 	def onRemoveState(self):
-		#print "Click on a position in the board to remove a tile"
-		print("In Remove State")
 		self.remove_state = True
 		self.add_state = False
 		self.selectedTileIndex = -1
 
 
 	def onClearState(self):
-		print("In Clear State")
 		self.remove_state = False
 		self.add_state = False
 		self.tile_to_add = None
 
 	def boardResizeDial(self):
-		print("in boardResizeDial")
-		wr = self.WindowResizeDialogue(self.w2, self.board_w, self.board_h)
+		wr = self.WindowResizeDialogue(self.newWindow, self.board_w, self.board_h)
 		
 		if wr.pressed_apply:
 			print "Resizing"
@@ -260,8 +253,8 @@ class TileEditorGUI:
 			print self.board_h
 
 			#self.w2.config(width=self.board_w*self.tile_size, height=self.board_h*self.tile_size)
-			self.w2.geometry(str(self.board_w*self.tile_size)+'x'+str(self.board_h*self.tile_size+76))
-			self.w2c.config(width=self.board_w*self.tile_size, height=self.board_h*self.tile_size)
+			self.newWindow.geometry(str(self.board_w*self.tile_size)+'x'+str(self.board_h*self.tile_size+76))
+			self.BoardCanvas.config(width=self.board_w*self.tile_size, height=self.board_h*self.tile_size)
 
 			self.populateBoard()
 			self.redrawPrev()
@@ -274,8 +267,8 @@ class TileEditorGUI:
 
 	def onBoardClick(self, event):
 		#Determine the position on the board the player clicked
-		print "x: ", (event.x/self.tile_size)
-		print "y: ", (event.y/self.tile_size)
+		#print "x: ", (event.x/self.tile_size)
+		#print "y: ", (event.y/self.tile_size)
 
 		if self.remove_state or event.num == 3:
 			self.removeTileAtPos(event.x/self.tile_size, event.y/self.tile_size)
@@ -284,8 +277,13 @@ class TileEditorGUI:
 
 	def removeTileAtPos(self, x, y):
 		tile = self.getTileAtPos(x, y)
+		
+			
 
 		if tile != None:
+			self.tile_data.remove(tile)
+
+			
 			del self.coord2tile[x][y]
 			self.populateBoard()
 			self.redrawPrev()
@@ -344,9 +342,7 @@ class TileEditorGUI:
 
 
 	def exportTiles(self):
-		print("exporting tiles")
-		print(type(self.parent))
-		self.tumbleGUI.setTilesFromEditor(self.tile_data, self.glue_data, self.preview_tile_data)
+		self.tumbleGUI.setTilesFromEditor(self.tile_data, self.glue_data, self.preview_tile_data, self.board_w, self.board_h)
 
 	def saveTileConfig(self):
 		filename = tkFileDialog.asksaveasfilename()
