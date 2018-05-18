@@ -22,6 +22,7 @@ class TileEditorGUI:
 		#`w1` will be the tile editor
 		#`w2` will be a tile config previewer
 
+
 		self.parent = parent
 		self.board = None
 		self.board_w = board_width
@@ -57,6 +58,9 @@ class TileEditorGUI:
 		#outline of a preview tile when it is selected
 		self.outline = None
 
+		#boolean for whether or not to randomize the color of a placed tile
+		self.randomizeColor = False
+
 
 		#populate the array
 		self.populateArray()
@@ -87,6 +91,9 @@ class TileEditorGUI:
 		#Create two frames, one to hold the board and the buttons, and one to hold the tiles to be placed
 		self.tileEditorFrame = Frame(self.newWindow, width = self.width, height = self.height, relief=SUNKEN,borderwidth=1)
 		self.tileEditorFrame.pack(side=RIGHT, expand=True)
+
+		self.randomColorButton = Button(self.tileEditorFrame, text="Random Color", width=10, command= self.randomColorToggle)
+		self.randomColorButton.pack(side=TOP)
 		
 		self.BoardFrame = Frame(self.newWindow, borderwidth=1,relief=FLAT, width = 500, height = 500)
 		self.BoardFrame.pack(side=LEFT)
@@ -132,6 +139,19 @@ class TileEditorGUI:
 
 		self.onAddState()
 
+	# changes whether a tile placed will have a random color assigned to it
+	# also changes the relief of the button to show whether or not it is currently selected
+	def randomColorToggle(self):
+		print(self.randomizeColor)
+		if self.randomizeColor == True:
+			print("raising")
+			self.randomColorButton.config(relief=RAISED)
+			self.randomizeColor = False
+		else:
+			print("sinking")
+			self.randomColorButton.config(relief=SUNKEN)
+			self.randomizeColor = True
+
 
 	#fills the canvas with preview tiles
 	def popWinTiles(self):
@@ -140,7 +160,7 @@ class TileEditorGUI:
 
 		
 		self.tilePrevCanvas = Canvas(self.tileEditorFrame, width = self.tile_size * 3, height = self.height)
-		self.tilePrevCanvas.pack(side=TOP)
+		self.tilePrevCanvas.pack(side=BOTTOM)
 		
 		buttonArray = []
 
@@ -277,6 +297,9 @@ class TileEditorGUI:
 		if x not in self.coord2tile.keys():
 			self.coord2tile[x] = {}
 
+		#random color function: https://stackoverflow.com/questions/13998901/generating-a-random-hex-color-in-python
+		r = lambda: random.randint(0,255)
+
 		#Create new tile from preview tile data
 		ntile = {}
 		ntile["label"] = self.preview_tile_data[self.selectedTileIndex]["label"]
@@ -287,10 +310,17 @@ class TileEditorGUI:
 		ntile["eastGlue"] = self.preview_tile_data[self.selectedTileIndex]["eastGlue"]
 		ntile["southGlue"] = self.preview_tile_data[self.selectedTileIndex]["southGlue"]
 		ntile["westGlue"] = self.preview_tile_data[self.selectedTileIndex]["westGlue"]
-		ntile["color"] = self.preview_tile_data[self.selectedTileIndex]["color"]
+
+		#if random color is selected, will plae the tile down with a random color
+		if not self.randomizeColor:
+			ntile["color"] = self.preview_tile_data[self.selectedTileIndex]["color"]
+		else:
+			ntile["color"] = ('#%02X%02X%02X' % (r(),r(),r()))
+
 		ntile["concrete"] = self.preview_tile_data[self.selectedTileIndex]["concrete"]
 
-
+		
+		
 		
 		#Add this tile into the Tile array
 		self.coord2tile[x][y] = ntile
@@ -321,53 +351,68 @@ class TileEditorGUI:
 	def saveTileConfig(self):
 		filename = tkFileDialog.asksaveasfilename()
 		tile_config = ET.Element("TileConfiguration")
+		board_size = ET.SubElement(tile_config, "BoardSize")
 		glue_func = ET.SubElement(tile_config, "GlueFunction")
 
-		#Save preview tiles
-		#First check if there are any preview tiles
-		#if not, this is a fresh edit of a versaTile file.
-		#create a new preview tile block
+		#Add all preview tiles to the .xml file if there are any
 		p_tiles = ET.SubElement(tile_config, "PreviewTiles")
-		if self.preview_tile_data == None:
-			for td in self.tile_data:
-				#Save the tile data exactly as is
-				tt = ET.SubElement(p_tiles, "TileType")
-				t = ET.SubElement(tt, "Tile")
-				loc = ET.SubElement(t, "Location")
-				loc.set("x", str(td["location"]["x"]))
-				loc.set("y", str(td["location"]["y"]))
-				c = ET.SubElement(t, "Color")
-				c.text = str(td["color"]).replace("#", "")
-				ng = ET.SubElement(t, "NorthGlue")
-				ng.text = td["northGlue"]
-				sg = ET.SubElement(t, "SouthGlue")
-				sg.text = td["southGlue"]
-				eg = ET.SubElement(t, "EastGlue")
-				eg.text = td["eastGlue"]
-				wg = ET.SubElement(t, "WestGlue")
-				wg.text = td["westGlue"]
-				la = ET.SubElement(t, "Label")
-				la.text = td["label"]
-		else:
-			#do the same as above, but with the
-			#preview tiles object
+		if self.preview_tile_data != None:
 			for td in self.preview_tile_data:
 				#Save the tile data exactly as is
-				tt = ET.SubElement(p_tiles, "TileType")
-				t = ET.SubElement(tt, "Tile")
+				prevTile = ET.SubElement(p_tiles, "PrevTile")
+	
+
+				c = ET.SubElement(prevTile, "Color")
+				c.text = str(td["color"]).replace("#", "")
+
+				ng = ET.SubElement(prevTile, "NorthGlue")
+				ng.text = td["northGlue"]
+
+				sg = ET.SubElement(prevTile, "SouthGlue")
+				sg.text = td["southGlue"]
+
+				eg = ET.SubElement(prevTile, "EastGlue")
+				eg.text = td["eastGlue"]
+
+				wg = ET.SubElement(prevTile, "WestGlue")
+				wg.text = td["westGlue"]
+
+				co = ET.SubElement(prevTile, "Concrete")
+				co.text = td["concrete"]
+
+				la = ET.SubElement(prevTile, "Label")
+				la.text = td["label"]
+
+		tiles = ET.SubElement(tile_config, "TileData")
+		# save all tiles on the board to the .xml file
+		if self.tile_data != None:
+			for td in self.tile_data:
+				#Save the tile data exactly as is
+
+				t = ET.SubElement(tiles, "Tile")
+
 				loc = ET.SubElement(t, "Location")
 				loc.set("x", str(td["location"]["x"]))
 				loc.set("y", str(td["location"]["y"]))
+
 				c = ET.SubElement(t, "Color")
 				c.text = str(td["color"]).replace("#", "")
+
 				ng = ET.SubElement(t, "NorthGlue")
 				ng.text = td["northGlue"]
+
 				sg = ET.SubElement(t, "SouthGlue")
 				sg.text = td["southGlue"]
+
 				eg = ET.SubElement(t, "EastGlue")
 				eg.text = td["eastGlue"]
+
 				wg = ET.SubElement(t, "WestGlue")
 				wg.text = td["westGlue"]
+
+				co = ET.SubElement(t, "Concrete")
+				co.text = td["concrete"]
+
 				la = ET.SubElement(t, "Label")
 				la.text = td["label"]
 
@@ -379,28 +424,6 @@ class TileEditorGUI:
 			l.set('L1', gl)
 			s = ET.SubElement(f, "Strength")
 			s.text = str(gs)
-
-		#For each tile type on the board, save it to the xml file
-		for x in self.coord2tile:
-			for y in self.coord2tile[x]:
-				td = self.coord2tile[x][y]
-				tt = ET.SubElement(tile_config, "TileType")
-				t = ET.SubElement(tt, "Tile")
-				loc = ET.SubElement(t, "Location")
-				loc.set("x", str(td["location"]["x"]))
-				loc.set("y", str(td["location"]["y"]))
-				c = ET.SubElement(t, "Color")
-				c.text = str(td["color"]).replace("#", "")
-				ng = ET.SubElement(t, "NorthGlue")
-				ng.text = td["northGlue"]
-				sg = ET.SubElement(t, "SouthGlue")
-				sg.text = td["southGlue"]
-				eg = ET.SubElement(t, "EastGlue")
-				eg.text = td["eastGlue"]
-				wg = ET.SubElement(t, "WestGlue")
-				wg.text = td["westGlue"]
-				la = ET.SubElement(t, "Label")
-				la.text = td["label"]
 
 		#print tile_config
 		mydata = ET.tostring(tile_config)
