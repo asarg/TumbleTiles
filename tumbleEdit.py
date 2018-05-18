@@ -11,7 +11,7 @@ import os,sys
 
 #the x and y coordinate that the preview tiles will begin to be drawn on
 PREVTILESTARTX = 20
-PREVTILESTARTY = 1
+PREVTILESTARTY = 21
 
 PREVTILESIZE = 70
 
@@ -36,6 +36,8 @@ class TileEditorGUI:
 		self.glue_data = glue_data
 		self.preview_tile_data = preview_tile_data
 		self.previewTileArray = None
+
+		self.selectedTileIndex = -1
 
 		#States for the tile editor
 		self.remove_state = False
@@ -78,10 +80,10 @@ class TileEditorGUI:
 		self.newWindow.protocol("WM_DELETE_WINDOW", lambda: self.closeGUI())
 		
 		#Create two frames, one to hold the board and the buttons, and one to hold the tiles to be placed
-		self.tileEditorFrame = Frame(self.newWindow, width = self.width, height = self.height, borderwidth=1)
-		self.tileEditorFrame.pack(side=RIGHT)
+		self.tileEditorFrame = Frame(self.newWindow, width = self.width, height = self.height, relief=SUNKEN,borderwidth=1)
+		self.tileEditorFrame.pack(side=RIGHT, expand=True)
 		
-		self.BoardFrame = Frame(self.newWindow, borderwidth=1, width = 500, height = 500)
+		self.BoardFrame = Frame(self.newWindow, borderwidth=1,relief=FLAT, width = 500, height = 500)
 		self.BoardFrame.pack(side=LEFT)
 		
 		self.BoardCanvas = Canvas(self.BoardFrame, width = self.width, height = self.height)
@@ -89,6 +91,9 @@ class TileEditorGUI:
 
 		#Used to tell when a tile is trying to be placed, will send the event to onBoardClick to determine the location
 		self.BoardCanvas.bind("<Button-1>", lambda event: self.onBoardClick(event))
+		self.BoardCanvas.bind("<Button-3>", lambda event: self.onBoardClick(event))
+
+		
 		
 
 		Button(self.BoardFrame, text = "Remove tile", command = self.onRemoveState).pack(side=BOTTOM)
@@ -111,7 +116,8 @@ class TileEditorGUI:
 	def selected(self, i):
 		print(self.preview_tile_data[i])
 		data = self.preview_tile_data
-		print(i)
+		
+		self.selectedTileIndex = i
 
 		if self.outline is not None:
 			self.tilePrevCanvas.delete(self.outline)
@@ -150,15 +156,17 @@ class TileEditorGUI:
 		 	#buttonArray.append(prevTileButton)
 
 		 	print tile["northGlue"], tile["southGlue"], tile["eastGlue"]
-		 	#Print Glues
-		 	#north
-			self.tilePrevCanvas.create_text(x + size/2, y + size/5, text = tile["northGlue"], fill="#000", font=('', size/5) )
-			#east
-			self.tilePrevCanvas.create_text(x + size - size/5, y + size/2, text = tile["eastGlue"], fill="#000", font=('', size/5))
-			#south
-			self.tilePrevCanvas.create_text(x + size/2, y + size - size/5, text = tile["southGlue"], fill="#000", font=('', size/5) )
-			#west
-			self.tilePrevCanvas.create_text(x + size/5, y + size/2, text = tile["westGlue"], fill="#000", font=('',size/5) )
+		 	
+		 	if not tile["concrete"] == "True":
+			 	#Print Glues
+			 	#north
+				self.tilePrevCanvas.create_text(x + size/2, y + size/5, text = tile["northGlue"], fill="#000", font=('', size/5) )
+				#east
+				self.tilePrevCanvas.create_text(x + size - size/5, y + size/2, text = tile["eastGlue"], fill="#000", font=('', size/5))
+				#south
+				self.tilePrevCanvas.create_text(x + size/2, y + size - size/5, text = tile["southGlue"], fill="#000", font=('', size/5) )
+				#west
+				self.tilePrevCanvas.create_text(x + size/5, y + size/2, text = tile["westGlue"], fill="#000", font=('',size/5) )
 
 	def populateArray(self):
 		for td in self.tile_data:
@@ -174,37 +182,39 @@ class TileEditorGUI:
 			for y in self.coord2tile[x]:
 				td = self.coord2tile[x][y]
 
-
+				
 				tile = TT.Tile(td["label"],
 					td["location"]["x"], 
 					td["location"]["y"],
 					[td["northGlue"], td["eastGlue"], td["southGlue"], td["westGlue"]],
 					td["color"], td["concrete"])
 
-				print(td["northGlue"])
-				print(td["eastGlue"])
-				print(td["southGlue"])
-				print(td["westGlue"])
-				print(td["concrete"])
-				print(tile.glues)
+				if tile.isConcrete == False:
+					self.board.Add(TT.Polyomino(tile, self.board.poly_id_c))
+				else:
+					self.board.AddConc(tile)
 
-				self.board.Add(TT.Polyomino(tile, self.board.poly_id_c))
+
 
 	def onAddState(self):
 
 		#print "Clicked on ",tile_index
 		#print "Label: %s\n Location: (%i, %i)\n[NG: %s, EG: %s, SG: %s, WG: %s]\n, C: %s", self.tile_data[tile_index]["label"],self.tile_data[tile_index]["location"]["x"], self.tile_data[tile_index]["location"]["y"],self.tile_data[tile_index]["northGlue"], self.tile_data[tile_index]["eastGlue"], self.tile_data[tile_index]["southGlue"], self.tile_data[tile_index]["westGlue"],self.tile_data[tile_index]["color"]
 		#print "Click on a position in the board to add a tile"
+		print("In Add State")
 		self.remove_state = False
 		self.add_state = True
 		
 	def onRemoveState(self):
 		#print "Click on a position in the board to remove a tile"
+		print("In Remove State")
 		self.remove_state = True
 		self.add_state = False
-		self.tile_to_add = None
+		self.selectedTileIndex = -1
+
 
 	def onClearState(self):
+		print("In Clear State")
 		self.remove_state = False
 		self.add_state = False
 		self.tile_to_add = None
@@ -239,9 +249,9 @@ class TileEditorGUI:
 		print "x: ", (event.x/self.tile_size)
 		print "y: ", (event.y/self.tile_size)
 
-		if self.remove_state:
+		if self.remove_state or event.num == 3:
 			self.removeTileAtPos(event.x/self.tile_size, event.y/self.tile_size)
-		elif self.add_state:
+		elif self.add_state and event.num == 1:
 			self.addTileAtPos(event.x/self.tile_size, event.y/self.tile_size)
 
 	def removeTileAtPos(self, x, y):
@@ -252,7 +262,7 @@ class TileEditorGUI:
 			self.populateBoard()
 			self.redrawPrev()
 
-		self.onClearState()
+		
 
 	def addTileAtPos(self, x, y):
 		
@@ -261,17 +271,22 @@ class TileEditorGUI:
 
 		#Create new tile from preview tile data
 		ntile = {}
-		ntile["label"] = self.preview_tile_data[i]["label"]
+		ntile["label"] = self.preview_tile_data[self.selectedTileIndex]["label"]
 		ntile["location"] = {}
 		ntile["location"]["x"] = x
 		ntile["location"]["y"] = y
-		ntile["northGlue"] = self.preview_tile_data[i]["northGlue"]
-		ntile["eastGlue"] = self.preview_tile_data[i]["eastGlue"]
-		ntile["southGlue"] = self.preview_tile_data[i]["southGlue"]
-		ntile["westGlue"] = self.preview_tile_data[i]["westGlue"]
-		ntile["color"] = self.preview_tile_data[i]["color"]
-		ntile["concrete"] = self.preview_tile_data[i]["concrete"]
+		ntile["northGlue"] = self.preview_tile_data[self.selectedTileIndex]["northGlue"]
+		ntile["eastGlue"] = self.preview_tile_data[self.selectedTileIndex]["eastGlue"]
+		ntile["southGlue"] = self.preview_tile_data[self.selectedTileIndex]["southGlue"]
+		ntile["westGlue"] = self.preview_tile_data[self.selectedTileIndex]["westGlue"]
+		ntile["color"] = self.preview_tile_data[self.selectedTileIndex]["color"]
+		ntile["concrete"] = self.preview_tile_data[self.selectedTileIndex]["concrete"]
 
+
+		print([ntile["eastGlue"]])
+		print([ntile["westGlue"]])
+		print([ntile["southGlue"]])
+		print([ntile["northGlue"]])
 		#Add this tile into the Tile array
 		self.coord2tile[x][y] = ntile
 
