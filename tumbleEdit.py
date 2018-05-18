@@ -16,7 +16,7 @@ PREVTILESTARTY = 21
 PREVTILESIZE = 70
 
 class TileEditorGUI:
-	def __init__(self, parent, board_width, board_height, tile_size, tile_data, glue_data, preview_tile_data):
+	def __init__(self, parent, tumbleGUI, board_width, board_height, tile_size, tile_data, glue_data, preview_tile_data):
 
 		#open two windows
 		#`w1` will be the tile editor
@@ -26,6 +26,9 @@ class TileEditorGUI:
 		self.board = None
 		self.board_w = board_width
 		self.board_h = board_height
+
+		#instance of tumbleGUI that created it so methods from that class can be called
+		self.tumbleGUI = tumbleGUI
 
 		#self.rows = self.board.Rows
 		#self.columns = self.board.Cols
@@ -58,14 +61,14 @@ class TileEditorGUI:
 		#populate the array
 		self.populateArray()
 
-		#populate the board
+		#populate the boards
 		self.populateBoard()
 
 		#//////////////////
 		#	Window Config
 		#/////////////////
 		self.newWindow = Toplevel(self.parent)
-		self.newWindow.wm_title("Previewer")
+		self.newWindow.wm_title("Editor")
 		self.newWindow.resizable(False, False)
 		self.newWindow.protocol("WM_DELETE_WINDOW", lambda: self.closeGUI())
 
@@ -73,10 +76,11 @@ class TileEditorGUI:
 		self.menuBar = Menu(self.newWindow, relief=RAISED, borderwidth=1)
 
 		optionsMenu = Menu(self.menuBar, tearoff=0)
-		optionsMenu.add_command(label="Save Configuration", command = lambda: self.saveTileConfig)
-		optionsMenu.add_command(label="Resize Board", command = lambda: self.boardResizeDial)
-
-
+		optionsMenu.add_command(label="Export", command = lambda: self.exportTiles())
+		optionsMenu.add_command(label="Resize Board", command = lambda: self.boardResizeDial())
+		optionsMenu.add_command(label="Save Configuration", command = lambda: self.saveTileConfig())
+		
+		#add the options menu to the menu bar
 		self.menuBar.add_cascade(label="Option", menu=optionsMenu)
 		self.newWindow.config(menu=self.menuBar)
 		
@@ -156,7 +160,6 @@ class TileEditorGUI:
 		 	self.tilePrevCanvas.tag_bind(prevTileButton, "<Button-1>", lambda event, a=i: self.selected(a))
 		 	#buttonArray.append(prevTileButton)
 
-		 	print tile["northGlue"], tile["southGlue"], tile["eastGlue"]
 		 	
 		 	if not tile["concrete"] == "True":
 			 	#Print Glues
@@ -221,6 +224,7 @@ class TileEditorGUI:
 		self.tile_to_add = None
 
 	def boardResizeDial(self):
+		print("in boardResizeDial")
 		wr = self.WindowResizeDialogue(self.w2, self.board_w, self.board_h)
 		
 		if wr.pressed_apply:
@@ -284,20 +288,16 @@ class TileEditorGUI:
 		ntile["concrete"] = self.preview_tile_data[self.selectedTileIndex]["concrete"]
 
 
-		print([ntile["eastGlue"]])
-		print([ntile["westGlue"]])
-		print([ntile["southGlue"]])
-		print([ntile["northGlue"]])
+		
 		#Add this tile into the Tile array
 		self.coord2tile[x][y] = ntile
+		self.tile_data.append(ntile)
 
 		self.populateBoard()
 		self.redrawPrev()
 		#self.onClearState()
 
-		self.populateBoard()
-		self.redrawPrev()
-		#self.onClearState()
+
 
 	def getTileAtPos(self, x, y):
 		if x in self.coord2tile.keys():
@@ -308,6 +308,12 @@ class TileEditorGUI:
 
 	def redrawPrev(self):
 		redrawCanvas(self.board, self.board_w, self.board_h, self.BoardCanvas, self.tile_size, b_drawGrid = True, b_drawLoc = True)
+
+
+	def exportTiles(self):
+		print("exporting tiles")
+		print(type(self.parent))
+		self.tumbleGUI.setTilesFromEditor(self.tile_data, self.glue_data, self.preview_tile_data)
 
 	def saveTileConfig(self):
 		filename = tkFileDialog.asksaveasfilename()
