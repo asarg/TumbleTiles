@@ -15,6 +15,9 @@ PREVTILESTARTY = 21
 
 PREVTILESIZE = 70
 
+NEWTILEWINDOW_W = 150
+NEWTILEWINDOW_H = 160
+
 class TileEditorGUI:
 	def __init__(self, parent, tumbleGUI, board_width, board_height, tile_size, tile_data, glue_data, preview_tile_data):
 
@@ -38,7 +41,14 @@ class TileEditorGUI:
 		self.height = board_height*tile_size
 		self.tile_data = tile_data
 		self.glue_data = glue_data
-		self.preview_tile_data = preview_tile_data
+
+
+		if preview_tile_data == None:
+			self.preview_tile_data = []
+		else:
+			self.preview_tile_data = preview_tile_data
+
+
 		self.previewTileArray = None
 
 		self.selectedTileIndex = -1
@@ -61,6 +71,11 @@ class TileEditorGUI:
 		#boolean for whether or not to randomize the color of a placed tile
 		self.randomizeColor = False
 
+		#the variable associated with the entry in the create new tile window
+		self.newTileN = StringVar()
+		self.newTileE = StringVar()
+		self.newTileS = StringVar()
+		self.newTileW = StringVar()
 
 		#populate the array
 		self.populateArray()
@@ -112,6 +127,9 @@ class TileEditorGUI:
 		self.BoardCanvas.bind("<Button-1>", lambda event: self.onBoardClick(event)) # -- LEFT CLICK
 		self.BoardCanvas.bind("<Button-3>", lambda event: self.onBoardClick(event)) # -- RIGHT CLICK
 
+		self.tilePrevCanvas = Canvas(self.tileEditorFrame, width = self.tile_size * 3, height = self.height)
+		self.tilePrevCanvas.pack(side=BOTTOM)
+
 
 		#draw the board on the canvas
 		self.popWinTiles()
@@ -123,29 +141,72 @@ class TileEditorGUI:
 	def addNewPrevTile(self):
 		self.addTileWindow = Toplevel(self.newWindow)
 
-		#Makes the new window open over the current editor window
-		self.addTileWindow.geometry('%dx%d+%d+%d' % (250, 250, self.newWindow.winfo_x() + self.newWindow.winfo_width() / 2, self.newWindow.winfo_y() + self.newWindow.winfo_height() / 2))
+
 
 		self.addTileWindow.wm_title("Create Tile")
 		self.addTileWindow.resizable(False, False)
 		self.addTileWindow.protocol("WM_DELETE_WINDOW", lambda: self.closeNewTileWindow())
 
 		#Frame that will hold the text boxes that the glues will be entered it
-		self.tileFrame = Frame(self.addTileWindow, borderwidth=1, relief=FLAT, width = self.tile_size * 3, height = self.tile_size * 3)
+		self.tileFrame = Frame(self.addTileWindow, borderwidth=1, relief=FLAT, width = self.tile_size * 4, height = NEWTILEWINDOW_H - 50)
 		self.tileFrame.pack(side=TOP)
 
+
+		#Labels and entrys that user will enter the new glue configuration into
+		self.glueN = Entry(self.tileFrame, textvariable= self.newTileN)
+		self.glueE = Entry(self.tileFrame, textvariable= self.newTileE)
+		self.glueS = Entry(self.tileFrame, textvariable= self.newTileS)
+		self.glueW = Entry(self.tileFrame, textvariable= self.newTileW)
+
+		self.labelN = Label(self.tileFrame, text="N:")
+		self.labelE = Label(self.tileFrame, text="E:")
+		self.labelS = Label(self.tileFrame, text="S:")
+		self.labelW = Label(self.tileFrame, text="W:")
+
+		self.labelN.place(x = 40, y = 20)
+		self.labelE.place(x = 40, y = 40)
+		self.labelS.place(x = 40, y = 60)
+		self.labelW.place(x = 40, y = 80)
+
+		self.glueN.place(x = 65, y = 20, width = 20)
+		self.glueE.place(x = 65, y = 40, width = 20)
+		self.glueS.place(x = 65, y = 60, width = 20)
+		self.glueW.place(x = 65, y = 80, width = 20)
+
 		#Frame that till hold the two buttons cancel / create
-		self.buttonFrame = Frame(self.addTileWindow, borderwidth=1, relief=FLAT, width = self.tile_size * 3, height =  200)
+		self.buttonFrame = Frame(self.addTileWindow, borderwidth=1, background = "#000",relief=FLAT, width = self.tile_size * 3, height =  200)
 		self.buttonFrame.pack(side=BOTTOM)
 
-		self.createButton = Button(self.buttonFrame, text="Create Tile", width=10, command= self.createTile)
-		self.cancelButton = Button(self.buttonFrame, text="Cancel", width=10, command= self.cancelTileCreation)
+		self.createButton = Button(self.buttonFrame, text="Create Tile", width=8, command= self.createTile)
+		self.cancelButton = Button(self.buttonFrame, text="Cancel", width=8, command= self.cancelTileCreation)
 		self.createButton.pack(side=LEFT)
 		self.cancelButton.pack(side=RIGHT)
 
+		#Makes the new window open over the current editor window
+		self.addTileWindow.geometry('%dx%d+%d+%d' % (NEWTILEWINDOW_H, NEWTILEWINDOW_W, 
+			self.newWindow.winfo_x() + self.newWindow.winfo_width() / 2 - NEWTILEWINDOW_W /2, 
+			self.newWindow.winfo_y() + self.newWindow.winfo_height() / 2 - NEWTILEWINDOW_H /2))
+
 
 	def createTile(self):
-		print(a)
+
+		print "N ", self.newTileN.get(), "E ", self.newTileE.get(), "S ", self.newTileS.get(), "W ", self.newTileW.get(),
+		r = lambda: random.randint(100,255)
+
+		newPrevTile = {}
+		print(newPrevTile)
+
+		newPrevTile["color"] = ('#%02X%02X%02X' % (r(),r(),r()))
+		newPrevTile["northGlue"] = self.newTileN.get()
+		newPrevTile["eastGlue"] = self.newTileE.get()
+		newPrevTile["southGlue"] = self.newTileS.get()
+		newPrevTile["westGlue"] = self.newTileW.get()
+		newPrevTile["label"] = "x"
+		newPrevTile["concrete"] = "False"
+
+		self.preview_tile_data.append(newPrevTile)
+		self.popWinTiles()
+
 
 	def cancelTileCreation(self):
 		self.closeNewTileWindow()
@@ -181,13 +242,11 @@ class TileEditorGUI:
 	#fills the canvas with preview tiles
 	def popWinTiles(self):
 
+		self.tilePrevCanvas.delete("all")
+
 		data = self.preview_tile_data
 
 		
-		self.tilePrevCanvas = Canvas(self.tileEditorFrame, width = self.tile_size * 3, height = self.height)
-		self.tilePrevCanvas.pack(side=BOTTOM)
-		
-		buttonArray = []
 
 		#loop through the list of tiles and draw a rectangle for each one
 		if data == None:
@@ -210,6 +269,7 @@ class TileEditorGUI:
 
 		 	
 		 	if not tile["concrete"] == "True":
+		 		print("printing glues")
 			 	#Print Glues
 			 	#north
 				self.tilePrevCanvas.create_text(x + size/2, y + size/5, text = tile["northGlue"], fill="#000", font=('', size/5) )
@@ -321,7 +381,7 @@ class TileEditorGUI:
 			self.coord2tile[x] = {}
 
 		#random color function: https://stackoverflow.com/questions/13998901/generating-a-random-hex-color-in-python
-		r = lambda: random.randint(0,255)
+		r = lambda: random.randint(100,255)
 
 		#Create new tile from preview tile data
 		ntile = {}

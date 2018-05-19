@@ -350,7 +350,7 @@ class Board:
             #make sure adjacent tile is in bounds of the board, use - instead of + because we are checking relative to the concrete
             if c.y - dy >= 0 and c.y - dy < self.Rows and c.x - dx >= 0 and c.x - dx < self.Cols: #first check if its OOB to avoid error
                 sym = self.Board[c.y - dy][c.x - dx]
-                if c.y + dy >= 0 and c.y + dy <= self.Rows and sym != ' ' and sym != 'C':
+                if c.y + dy >= 0 and c.y + dy < self.Rows and sym != ' ' and sym != 'C':
                     self.Polyominoes[self.LookUp[sym]].HasMoved = True
             
                 
@@ -370,20 +370,22 @@ class Board:
                         #     nonemarked = False
                         
                         #checks if it is touching a polyomino that will not move or concrete, if so mark hasMoved as true
-                        symmove = self.Board[t.y + dy][t.x + dx]
+                        if t.y + dy >= 0 and t.y + dy < self.Rows and t.x - dx >= 0 and t.x + dx < self.Cols: #first check if in bounds
 
-                        # believe this may not work for all cases, and may cause a polyomino to move if it is
-                        # against a polyomino that wont move but hasnt been marked yet because of the
-                        # order of the iteration of polyominoes
-                        if symmove != ' ' and symmove != t.symbol and symmove != 'C':
-                            nei = self.LookUp[symmove]
-                            if self.Polyominoes[nei].HasMoved == True: 
+                            symmove = self.Board[t.y + dy][t.x + dx]
+
+                            # believe this may not work for all cases, and may cause a polyomino to move if it is
+                            # against a polyomino that wont move but hasnt been marked yet because of the
+                            # order of the iteration of polyominoes
+                            if symmove != ' ' and symmove != t.symbol and symmove != 'C':
+                                nei = self.LookUp[symmove]
+                                if self.Polyominoes[nei].HasMoved == True: 
+                                    self.Polyominoes[pin].HasMoved = True                    
+                                    nonemarked = False
+                            #check for concrete
+                            elif symmove == 'C':  
                                 self.Polyominoes[pin].HasMoved = True                    
                                 nonemarked = False
-                        #check for concrete
-                        elif symmove == 'C':  
-                            self.Polyominoes[pin].HasMoved = True                    
-                            nonemarked = False
             
             if nonemarked == True:
                 for pin in range(len(self.Polyominoes)):
