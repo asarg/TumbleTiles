@@ -2,7 +2,7 @@ from Tkinter import *
 
 def redrawCanvas(board, boardwidth, boardheight, canvas, tilesize, textcolor = "#000000", gridcolor = "#000000", b_drawGrid = False, b_drawLoc = False):
 	canvas.delete(ALL)
-	board.SetGrid()
+	#board.SetGrid()
 	drawGrid(board, boardwidth, boardheight, canvas, tilesize, gridcolor, b_drawGrid, b_drawLoc)
 
 	# for row in range(board.Rows):

@@ -565,23 +565,27 @@ class tumblegui:
             colorb = "#"+ str(hex(random.randint(0,16))[2:]) + str(hex(random.randint(0,16))[2:]) + str(hex(random.randint(0,16))[2:])
             if len(colorb) > 4:
                 colorb = colorb[:4]
-            p = TT.Polyomino(TT.Tile(chr(ord('A')+i), 0, bh-i-2, ['N','E','S','W'],colorb, False), self.board.poly_id_c)
+
+            p = TT.Polyomino(self.board.poly_id_c, bh-i-2, bh - 1, ['N','E','S','W'],colorb)
             self.board.Add(p)
             #left tiles
             #colorl = str(colorl[0]+chr(ord(colorl[1])-1)+colorl[2:])
             colorl = "#"+ str(hex(random.randint(0,16))[2:]) + str(hex(random.randint(0,16))[2:]) + str(hex(random.randint(0,16))[2:]) 
             if len(colorl) > 4:
                 colorl = colorl[:4]
-            p = TT.Polyomino(TT.Tile(chr(ord('a')+i), i+1, bh-1, ['S','W','N','E'],colorl, False), self.board.poly_id_c)
+
+            char = chr(ord('a')+i)
+            p = TT.Polyomino(self.board.poly_id_c, 0, bh-i-2, ['S','W','N','E'],colorb)
+
             self.board.Add(p)
 
             #test add a concrete tile
 
-        self.board.AddConc(TT.Tile('C', 5, 13, [] ,colorg, True))
-        self.board.AddConc(TT.Tile('C', 10, 1, [] ,colorg, True))
-        self.board.AddConc(TT.Tile('C', 8, 8, [] ,colorg, True))
-        self.board.AddConc(TT.Tile('C', 1, 10, [] ,colorg, True))
-        self.board.AddConc(TT.Tile('C', 13, 5, [] ,colorg, True))
+        self.board.AddConc(TT.Tile(None, -1, 5, 13, [] ,colorg, True))
+        self.board.AddConc(TT.Tile(None, -1, 10, 1, [] ,colorg, True))
+        self.board.AddConc(TT.Tile(None, -1, 8, 8, [] ,colorg, True))
+        self.board.AddConc(TT.Tile(None, -1, 1, 10, [] ,colorg, True))
+        self.board.AddConc(TT.Tile(None, -1, 13, 5, [] ,colorg, True))
 
 
 
@@ -589,7 +593,7 @@ class tumblegui:
 
 
         
-        self.board.SetGrid()
+        #self.board.SetGrid()
         self.callCanvasRedraw()
 
     def EnableLogging(self):
