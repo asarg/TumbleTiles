@@ -230,13 +230,22 @@ class Board:
     def CombinePolys(self, p1, p2):
         print("combingin Polys")
         # Join the two polyominoes
+        count = 0
+        for p in self.Polyominoes:
+            print "Polyomino:, ", count, " has tiles at: ",
+            count += 1
+            for tile in p.Tiles:
+                print "( ", tile.x, ", ", tile.y, ")",
+            print("")    
 
+        p1.Join(p2)
+        
         for i in range(len(self.Polyominoes) - 1):
             if self.Polyominoes[i] == p2:
                 print("p2 found")
                 del self.Polyominoes[i]
                 
-        p1.Join(p2)
+        
         
         #del self.Polyominoes[self.Polyominoes.index(p2)]
 
