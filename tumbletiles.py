@@ -84,23 +84,31 @@ class Polyomino:
     
     #Takes two polyominos, adds all the tiles from poly into the tile array in (self), adjusts the number of tiles
     def Join(self, poly):
+        print("in Join")
         #sym = self.Tiles[0].symbol
         sym = self.id
         color = self.Tiles[0].color
+        parent = self.Tiles[0].parent
         self.Tiles.extend(poly.Tiles)
         self.NumTiles = len(self.Tiles)
         for t in self.Tiles:
             t.symbol = sym
             t.color = color
+            t.parent = parent
+        print("Join Done")
             
     #Checks for possible connections between every pair of tiles in two polynomials (self) and poly
     #if glue connections are found the strength is added to gluestrength and if gluestrength is
     #larger than TEMP the polyominos can be joined
     def CanJoin(self, poly):
-
+        print("in CanJoin")
         global TEMP
         global GLUEFUNC
 
+        print "This polyomino has: ", len(self.Tiles), " tiles:\n"
+        for tile in self.Tiles:
+            print " (", tile.x , ", ", tile.y, ") , "
+        print("")
         
         if poly == None:
             return False
@@ -112,7 +120,7 @@ class Polyomino:
 
             for t in self.Tiles:
                 for pt in poly.Tiles:
-                    sleep(.1)
+                    
                     #pt on left, t on right
                     if pt.glues[E] != None and t.x - pt.x == 1 and pt.glues[E] != " " and len(pt.glues[E]) > 0 and t.y == pt.y:
                         if t.glues[W] != None and t.glues[W] != " " and t.glues[W] == pt.glues[E]:
@@ -129,13 +137,15 @@ class Polyomino:
                     if pt.glues[S] != None and t.x  == pt.x and pt.glues[S] != " " and len(pt.glues[S]) > 0 and pt.y - t.y == -1:
                         if t.glues[N] != None and t.glues[N] != " " and t.glues[N] == pt.glues[S]:
                             gluestrength += int(GLUEFUNC[pt.glues[S]])
+                    #print t.glues,t.x,t.y,pt.glues,pt.x,pt.y,gluestrength
             if gluestrength >= TEMP:
                 return True
             else:
                 return False
         except Exception as e:
             #print "CANJOIN"
-            print sys.exc_info()[0]      
+            print sys.exc_info()[0]  
+        print("CanJoin Done")      
     
     #moves every tile in the polyomino by one in the indicated direction
     def Move(self, direction):
@@ -228,14 +238,14 @@ class Board:
             return
         print("combining Polys")
         # Join the two polyominoes
+           
         count = 0
         for p in self.Polyominoes:
             print "Polyomino:, ", count, " has ", len(p.Tiles), " tiles, one at ", p.Tiles[0].x, ", ", p.Tiles[0].y
             count += 1
             for tile in p.Tiles:
                 print "( ", tile.x, ", ", tile.y, ")",
-            print("")    
-
+            print("") 
         
 
         count = 0
@@ -247,10 +257,15 @@ class Board:
 
         p1.Join(p2)
         
-        for i in range(len(self.Polyominoes) - 1):
-            if self.Polyominoes[i] == p2:
-                print("p2 found")
-                del self.Polyominoes[i]
+        # for i in range(len(self.Polyominoes) - 1):
+        #     if self.Polyominoes[i] == p2:
+        #         print("p2 found")
+        #         del self.Polyominoes[i]
+
+        if p2 in self.Polyominoes:
+            print("Poly Found")
+            self.Polyominoes.remove(p2)
+        #sleep(3)
 
         count = 0
         for p in self.Polyominoes:
@@ -258,7 +273,14 @@ class Board:
                 count += 1
         print "TOTAL NUM TILES AFTER: ", count, "\n",
 
-       # sleep(3)
+        count = 0
+        for p in self.Polyominoes:
+            print "Polyomino:, ", count, " has ", len(p.Tiles), " tiles, one at ", p.Tiles[0].x, ", ", p.Tiles[0].y
+            count += 1
+            for tile in p.Tiles:
+                print "( ", tile.x, ", ", tile.y, ")",
+            print("") 
+
 
         
         
@@ -305,12 +327,23 @@ class Board:
                     if tile.y - 1 >= 0:
                         if self.coordToTile[tile.x][tile.y - 1] != None and self.coordToTile[tile.x][tile.y - 1].parent != tile.parent:
                             neighbors.append(self.coordToTile[tile.x][tile.y - 1])
-                
+                  
+                    # print "neighbors is size " , len(neighbors), " -- has neighbors (",
 
+                    # if neighbors[0] != None and len(neighbors) > 0: 
+                    #     print neighbors[0].x, ", ", neighbors[0].y, 
+                    # if len(neighbors) > 1 and neighbors[1] != None:
+                    #     print ") , (", neighbors[1].x, ", ", neighbors[1].y,
+                    # if len(neighbors) > 2 and neighbors[2] != None:
+                    #     print ") , (", neighbors[2].x, ", ", neighbors[2].y,
+                    # if len(neighbors) > 3 and neighbors[3] != None:
+                    #     print ") , (", neighbors[3].x, ", ", neighbors[3].y, ")\n"
+
+                   # sleep(1)
                     for nei in neighbors:
-                    
+                        print("checking a neigbor")
                         if nei != None and nei.parent != tile.parent and p.CanJoin(nei.parent):
-                        
+                            print "Calling CombinePolys - tile: ", tile.x , ", ", tile.y, ") and (", nei.x, ", ", nei.y, ")\n"
                             self.CombinePolys(p, nei.parent)
                             self.remapArray()
                             self.verifyTileLocations()
@@ -323,22 +356,22 @@ class Board:
                     break
             if changed:
                 break
-      
+        print("ActivateGlues Done")
 
 
     # Repeatedly calls Step() in a direction until Step() returns false, then Activates the glues and sets the grid again
     def Tumble(self, direction):
         
-       
+        print("in tumble")
         if direction == "N" or direction == "S" or direction == "E" or direction == "W":
             StepTaken = self.Step(direction)
             while StepTaken == True:
                 StepTaken = self.Step(direction)
         else:
             print "Someone doesn't know what they're doing"
-        
+        print("Activating Glues")
         self.ActivateGlues()
-
+        print("Tumble Complete")
        
 
     # Functions the same as Tumble() but it activates glues after every step
@@ -354,7 +387,8 @@ class Board:
     
     # Steps all tiles in one direction
     def Step(self, direction):
-        
+        self.printAllTileLocations()
+        print "IN STEP, there are ", len(self.Polyominoes), "\n"
         for p in self.Polyominoes:
             p.HasMoved = False
             
@@ -378,7 +412,7 @@ class Board:
         # First check for all polyominos touching a wall or a concrete tile
         anyMarked = True
         while anyMarked: # This is not efficient but may be necesary to to ensure that all polyonimos that should be marked
-                        # do get marked. If any polyomino is marked then it runs again check if a polyomino is touching that
+            print("starting main loop")             # do get marked. If any polyomino is marked then it runs again check if a polyomino is touching that
                             # polyomino that was not touching a hasMoved polyomino before
             anyMarked = False
 
@@ -393,13 +427,17 @@ class Board:
 
                     # Check if any tile is moving into a wall
                     if direction == "N" or direction == "S":
+                      #  print tile.y + dy, "Y vs ", wallindex, "\n",
                         if tile.y + dy == wallindex:
+                            print "Y - tile at ", tile.x, ", ", tile.y, " cant move \n",
                             anyMarked = True
                             p.HasMoved = True
                             
 
                     if direction == "W" or direction == "E":
+                       # print tile.x + dx, "X vs ", wallindex, "\n",
                         if tile.x + dx == wallindex:
+                            print "X -tile at ", tile.x, ", ", tile.y, " cant move \n",
                             anyMarked = True
                             p.HasMoved = True                                                                                                                                         
                             
@@ -408,21 +446,25 @@ class Board:
                     try:
                         neighbor = self.coordToTile[tile.x + dx][tile.y + dy]
                         if neighbor != None:
+                            print "neighbor of ", tile.x , ", ", tile.y, " is ", neighbor.x, ", ", neighbor.y, "\n"
                     except IndexError:
                         if DEBUGGING:
                             print "tumbletiles.py - Board.Step() - Index Error - Line ", lineno(), "\n",
                     
                     if neighbor != None:
                         if neighbor.isConcrete or neighbor.parent.HasMoved:
+                            print "tile at ", tile.x, ", ", tile.y, " cant move = its neighbor is ", tile.x + dx, tile.y + dy, " \n",
                             anyMarked = True
                             p.HasMoved = True
 
+        print("Moving Tiles")
 
         # Move all tiles in every polyomino, if none end up moving, then step taken is still false
         for p in self.Polyominoes:
             if p.HasMoved:
                 continue
             if p.HasMoved == False:
+               # print p, " has not moved, it has a tile at ", p.Tiles[0].x, ", ", p.Tiles[0].y, "\n"
                 p.HasMoved = True
                 StepTaken = True
                 for tile in p.Tiles:
@@ -432,17 +474,20 @@ class Board:
                         if DEBUGGING:
                             print "tumbletiles.py - Board.Step() - Index Error - Line ", lineno(), "\n",
 
+                    print "moving tile from ", tile.x, ", ", tile.y,
                     tile.x += dx
                     tile.y += dy
-
+                    print "to ", tile.x, ", ", tile.y
                     self.coordToTile[tile.x][tile.y] = tile
 
-                
+                    print "coordToTile: ", self.coordToTile[tile.x][tile.y]
+                    print "Actual Tile: ", tile
 
         
         self.remapArray()
         self.verifyTileLocations()
 
+        print "returning ", StepTaken, "\n"
         return StepTaken
 
 
@@ -452,6 +497,8 @@ class Board:
         for p in self.Polyominoes:
             for tile in p.Tiles:
                 self.coordToTile[tile.x][tile.y] = tile
+        for conc in self.ConcreteTiles:
+                self.coordToTile[conc.x][conc.y] = conc
 
     # Debugging method
     def printAllTileLocations(self):
