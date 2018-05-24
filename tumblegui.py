@@ -147,8 +147,8 @@ class tumblegui:
         #3 sets of data that the class will keep track of, these are used to sending tiles to the editor or updating the board
         #when tile data is received from the editor
         self.tile_data = None #the data of the actual tiles on the board
-        self.glue_data = None #contains the glue function
-        self.prev_tile_data = None #contains the preview tiles so if the editor needs to be reopened the preview tiles are reserved
+        self.glueFunc = {} #contains the glue function
+        self.prevTileList = [] #contains the preview tiles so if the editor needs to be reopened the preview tiles are reserved
         
         self.board = TT.Board(TT.BOARDHEIGHT, TT.BOARDWIDTH)
         self.root = root
@@ -355,53 +355,24 @@ class tumblegui:
         if filename == "":
             return
         #self.Log("\nLoad "+filename+"\n")
-        new_tileset_data = parseFile(filename)
+        data = parseFile(filename)
 
-        del self.board.Polyominoes[:]
-        self.board.LookUp = {}
+        del self.board
+
         TT.GLUEFUNC = {}
-        self.board = TT.Board(TT.BOARDHEIGHT,  TT.BOARDWIDTH)
+        self.board = data[0]
+        self.callCanvasRedraw()
 
-        #preview_board = TT.Board(TT.BOARDHEIGHT, TT.BOARDWIDTH)
+        # Glue Function
+        for label in data[1]:
+            TT.GLUEFUNC[label] = int(data[1][label])
+            self.glueFunc[label] = TT.GLUEFUNC[label]
 
-        for label in new_tileset_data["glueFunc"]:
-            TT.GLUEFUNC[label] = int(new_tileset_data["glueFunc"][label])
-
-
-        for td in new_tileset_data["tileData"]:
-
-            #if its concrete dont add it to a polyomino, just directly add it to the list of concrete tiles
-            if td["concrete"] == "True":
-
-                self.board.AddConc(TT.Tile(td["label"], td["location"]["x"], td["location"]["y"], [td["northGlue"], 
-                    td["eastGlue"], td["southGlue"], td["westGlue"]], td["color"], True))
-            else:
-                ntile = TT.Tile(td["label"],
-                    td["location"]["x"], 
-                    td["location"]["y"],
-                    [td["northGlue"], td["eastGlue"], td["southGlue"], td["westGlue"]],
-                    td["color"], False)
-               
-                if TT.BOARDWIDTH < int(td["location"]["x"]):
-                    offset = TT.BOARDWIDTH % 5
-                    TT.BOARDWIDTH = (int(td["location"]["x"])) + (5 - offset)
-                    self.resizeBoardAndCanvas()
-
-                if TT.BOARDHEIGHT < int(td["location"]["y"]):
-                    offset = TT.BOARDHEIGHT % 5
-                    TT.BOARDHEIGHT = (int(td["location"]["y"])) + (5 - offset)
-                    self.resizeBoardAndCanvas()
-
-                self.board.Add(TT.Polyomino(ntile, self.board.poly_id_c))
-                #preview_board.Add(TT.Polyomino(ntile))
-
+        self.prevTileList = data[2]
         
 
-        if len(new_tileset_data["prevTiles"]) > 0:
-            p_tiles = new_tileset_data["prevTiles"]
-
         #Call the board editor
-        self.openBoardEditDial(self.root, TT.BOARDWIDTH, TT.BOARDHEIGHT, TILESIZE, new_tileset_data["tileData"], new_tileset_data["glueFunc"], p_tiles)
+        self.openBoardEditDial(self.root, self.board, data[1], self.prevTileList)
         
         #self.board.SetGrid()
         self.callCanvasRedraw()
@@ -437,21 +408,12 @@ class tumblegui:
         except:
             pass
 
-    def openBoardEditDial(self, root, boardwidth, boardheight, tilesize, tiledata, gluedata, prevTiles):
-        TGBox = TE.TileEditorGUI(root, self, boardwidth, boardheight, tilesize, tiledata, gluedata, prevTiles)
+    def openBoardEditDial(self, root, board, gluedata, prevTiles):
+        TGBox = TE.TileEditorGUI(root, self, board, gluedata, prevTiles)
 
     #Opens the editor and loads the cuurent tiles from the simulator
     def editCurrentTiles(self):
-        
-        self.tile_data = self.getTileDataFromBoard()
-       
-
-        print(TT.GLUEFUNC)
-        tile_set_data = {"glueFunc": {}, "prevTiles": [], "tileData": []}
-        tile_set_data["glueFunc"] = TT.GLUEFUNC
-        tile_set_data["tileData"] = self.tile_data
-        tile_set_data["prevTiles"] = self.prev_tile_data
-        TGBox = TE.TileEditorGUI(self.root, self, TT.BOARDWIDTH, TT.BOARDHEIGHT, TILESIZE, tile_set_data["tileData"], tile_set_data["glueFunc"], tile_set_data["prevTiles"])
+        TGBox = TE.TileEditorGUI(self.root, self, self.board, self.glueFunc, self.prevTileList)
     
     #Turns the list of polyominoes and concrete tiles into a list of tiles including their position
     #this is used to get the tile list that will be paseed to the editor
@@ -495,47 +457,12 @@ class tumblegui:
         return new_tile_data
 
     #This method will be called wben you want to export the tiles from the editor back to the simulation
-    def setTilesFromEditor(self, tile_data, glue_data, prev_tiles, width, height):
+    def setTilesFromEditor(self, board, glueFunc, prev_tiles, width, height):
         TT.BOARDHEIGHT = height
         TT.BOARDWIDTH = width
-        self.board = TT.Board(TT.BOARDHEIGHT,  TT.BOARDWIDTH)
-        self.resizeBoardAndCanvas()
-
-        for label in glue_data:
-            TT.GLUEFUNC[label] = int(glue_data[label])
-            self.glue_data = glue_data
-
-        if prev_tiles != None and len(prev_tiles) > 0:
-            self.prev_tile_data = prev_tiles
-
-        self.tile_data = tile_data
-        for td in tile_data:
-
-            #if its concrete dont add it to a polyomino, just directly add it to the list of concrete tiles
-            if td["concrete"] == "True":
-                self.board.AddConc(TT.Tile(td["label"], td["location"]["x"], td["location"]["y"], [td["northGlue"], 
-                    td["eastGlue"], td["southGlue"], td["westGlue"]], td["color"], True))
-            else:
-                ntile = TT.Tile(td["label"],
-                    td["location"]["x"], 
-                    td["location"]["y"],
-                    [td["northGlue"], td["eastGlue"], td["southGlue"], td["westGlue"]],
-                    td["color"], False)
-               
-                if TT.BOARDWIDTH < int(td["location"]["x"]):
-                    offset = TT.BOARDWIDTH % 5
-                    TT.BOARDWIDTH = (int(td["location"]["x"])) + (5 - offset)
-                    self.resizeBoardAndCanvas()
-
-                if TT.BOARDHEIGHT < int(td["location"]["y"]):
-                    offset = TT.BOARDHEIGHT % 5
-                    TT.BOARDHEIGHT = (int(td["location"]["y"])) + (5 - offset)
-                    self.resizeBoardAndCanvas()
-
-                self.board.Add(TT.Polyomino(ntile, self.board.poly_id_c))
-
-        #redraw canvas with tiles from editor
-        self.board.SetGrid()
+        self.board = board
+        self.glueFunc = glueFunc
+        self.prevTileList = prev_tiles
         self.callCanvasRedraw()
 
 

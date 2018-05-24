@@ -236,12 +236,6 @@ class Board:
         
 
 
-        
-        
-        
-
-      
-        
      
     #This method will check to see if loop through every position in the board and if two polyominoes are 
     #touching it will check if they can be joined and if so, it will join them

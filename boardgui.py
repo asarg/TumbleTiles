@@ -2,31 +2,7 @@ from Tkinter import *
 
 def redrawCanvas(board, boardwidth, boardheight, canvas, tilesize, textcolor = "#000000", gridcolor = "#000000", b_drawGrid = False, b_drawLoc = False):
 	canvas.delete(ALL)
-	#board.SetGrid()
 	drawGrid(board, boardwidth, boardheight, canvas, tilesize, gridcolor, b_drawGrid, b_drawLoc)
-
-	# for row in range(board.Rows):
-	# 	for col in range(board.Cols):
-	# 		if board.Board[row][col] != ' ' and board.Board[row][col] != 'C':
-	# 			pin = board.LookUp[board.Board[row][col]]
-	# 			color = board.Polyominoes[pin].Tiles[0].color
-	# 			canvas.create_rectangle(tilesize*col, tilesize*row, tilesize*col + tilesize, tilesize*row + tilesize, fill = color)
-
-	# 			for t in board.Polyominoes[pin].Tiles:
-	# 				if t.x == col and t.y == row:
-	# 					#north
-	# 					canvas.create_text(tilesize*col + tilesize/2, tilesize*row + tilesize/5, text = t.glues[0], fill=textcolor, font=('',tilesize/5) )
-	# 					#east
-	# 					canvas.create_text(tilesize*col + tilesize - tilesize/5, tilesize*row + tilesize/2, text = t.glues[1], fill=textcolor, font=('',tilesize/5))
-	# 					#south
-	# 					canvas.create_text(tilesize*col + tilesize/2, tilesize*row + tilesize - tilesize/5, text = t.glues[2], fill=textcolor, font=('',tilesize/5) )
-	# 					#west
-	# 					canvas.create_text(tilesize*col + tilesize/5, tilesize*row + tilesize/2, text = t.glues[3], fill=textcolor, font=('',tilesize/5) )
-			
-	# 		elif board.Board[row][col] == 'C':
-	# 			canvas.create_rectangle(tilesize*col, tilesize*row, tilesize*col + tilesize, tilesize*row + tilesize, fill = board.ConcreteColor)
-				# for i in range (1,11):
-				# 	canvas.create_line(col*tilesize + i * tilesize / 10, tilesize*row, col*tilesize + i * tilesize / 10, tilesize*row + tilesize, fill="#000", width=.25)
 
 	for p in board.Polyominoes:
 		for tile in p.Tiles:

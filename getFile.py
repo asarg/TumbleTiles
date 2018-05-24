@@ -5,19 +5,24 @@ import xml.etree.ElementTree as ET
 import random
 import time
 import os,sys
+import tumbletiles as TT
 
 def getFile():
     return tkFileDialog.askopenfilename()
 
+#parse file will get the data from a file and now return both a board object and a preview tile object
 def parseFile(filename):
 
 
-    #print "doing stuff with "+filename
     tree = ET.parse(filename)
     treeroot = tree.getroot()
     #self.Log("\nLoad "+filename+"\n")
 
+    #default size of board, changes if new board size data is read from the file
+    rows = 15
+    columns = 15
 
+    boardSizeExits = False
     glueFuncExists = False
     previewTilesExist = False
     tileDataExists = False
@@ -29,12 +34,21 @@ def parseFile(filename):
     if tree.find("PreviewTiles") != None:
         previewTilesExist = True
 
+    if tree.find("BoardSize") != None:
+        boardSizeExists = True
+
     if tree.find("TileData") != None:
         tileDataExists = True
 
 
+
+
     #data set that will be passed back to tumblegui
     tile_set_data = {"glueFunc": {}, "prevTiles": [], "tileData": []}
+
+    if boardSizeExists:
+        rows = treeroot[0].attrib["height"]
+        columns = treeroot[0].attrib["width"]
 
     #add glue function to the data set
     if glueFuncExists:
@@ -89,6 +103,7 @@ def parseFile(filename):
     #add tile data to the data set, these are the tiles that will actually be loaded onto the plane
     if tileDataExists:
         tileDataTree = treeroot[3]
+        print(tileDataTree)
         for tile in tileDataTree:
 
             newTile = {}
@@ -134,5 +149,26 @@ def parseFile(filename):
 
             tile_set_data["tileData"].append(newTile)
 
+    board = TT.Board(int(rows), int(columns))
+    glueFunc = tile_set_data["glueFunc"]
+    prevTiles = tile_set_data["prevTiles"]
+    prevTileList = []
 
-    return tile_set_data
+    for tile in tile_set_data["tileData"]:
+        if tile["concrete"] != "True":
+            glues = [tile["northGlue"],tile["eastGlue"],tile["southGlue"],tile["westGlue"]]
+            board.Add(TT.Polyomino(0, tile["location"]["x"], tile["location"]["y"], glues, tile["color"]))
+        else:
+            glues = []
+            board.AddConc(TT.Tile(0, tile["location"]["x"], tile["location"]["y"], glues, tile["color"], "True"))
+
+    for prevTile in prevTiles:
+        prevGlues = [prevTile["northGlue"],prevTile["eastGlue"],prevTile["southGlue"],prevTile["westGlue"]]
+        prevTileList.append(TT.Tile( None, 0, 0, 0, prevGlues, prevTile["color"], prevTile["concrete"]))
+
+    
+
+    data = [board, glueFunc, prevTileList]
+
+
+    return data

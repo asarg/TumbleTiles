@@ -4,6 +4,7 @@ from scrollableFrame import VerticalScrolledFrame
 import tkFileDialog, tkMessageBox, tkColorChooser
 import xml.etree.ElementTree as ET
 import tumbletiles as TT
+import tumblegui as TG
 from boardgui import redrawCanvas, drawGrid
 import random
 import time
@@ -19,7 +20,7 @@ NEWTILEWINDOW_W = 150
 NEWTILEWINDOW_H = 160
 
 class TileEditorGUI:
-	def __init__(self, parent, tumbleGUI, board_width, board_height, tile_size, tile_data, glue_data, preview_tile_data):
+	def __init__(self, parent, tumbleGUI, board, glue_data, previewTileList):
 
 		#open two windows
 		#`w1` will be the tile editor
@@ -27,29 +28,22 @@ class TileEditorGUI:
 
 
 		self.parent = parent
-		self.board = None
-		self.board_w = board_width
-		self.board_h = board_height
+		self.board = board
+		self.board_w = board.Cols
+		self.board_h = board.Rows
 
 		#instance of tumbleGUI that created it so methods from that class can be called
 		self.tumbleGUI = tumbleGUI
 
 		#self.rows = self.board.Rows
 		#self.columns = self.board.Cols
-		self.tile_size = tile_size
-		self.width = board_width*tile_size
-		self.height = board_height*tile_size
-		self.tile_data = tile_data
-		self.glue_data = glue_data
+		self.tile_size = TG.TILESIZE
+		self.width = self.board_w * self.tile_size
+		self.height = self.board_h * self.tile_size
 
 
-		if preview_tile_data == None:
-			self.preview_tile_data = []
-		else:
-			self.preview_tile_data = preview_tile_data
 
-
-		self.previewTileArray = None
+		self.prevTileList = previewTileList
 
 		self.selectedTileIndex = -1
 
@@ -62,8 +56,10 @@ class TileEditorGUI:
 
 		self.glue_label_list = []
 
+		self.glue_data = glue_data
+
 		#A two-dimensional array
-		self.coord2tile = {}
+		self.coord2tile = [[None for x in range(self.board_w)] for y in range(self.board_h)]
 
 		#outline of a preview tile when it is selected
 		self.outline = None
@@ -80,8 +76,6 @@ class TileEditorGUI:
 		#populate the array
 		self.populateArray()
 
-		#populate the boards
-		self.populateBoard()
 
 		#//////////////////
 		#	Window Config
@@ -134,7 +128,6 @@ class TileEditorGUI:
 		#draw the board on the canvas
 		self.popWinTiles()
 		self.redrawPrev()
-		
 
 	# Called when you click to add a new tile. Will create a small window where you can insert the 4 glues, then add that tile to the
 	# preview tile window
@@ -196,15 +189,18 @@ class TileEditorGUI:
 		newPrevTile = {}
 		print(newPrevTile)
 
-		newPrevTile["color"] = ('#%02X%02X%02X' % (r(),r(),r()))
-		newPrevTile["northGlue"] = self.newTileN.get()
-		newPrevTile["eastGlue"] = self.newTileE.get()
-		newPrevTile["southGlue"] = self.newTileS.get()
-		newPrevTile["westGlue"] = self.newTileW.get()
-		newPrevTile["label"] = "x"
-		newPrevTile["concrete"] = "False"
+		color = ('#%02X%02X%02X' % (r(),r(),r()))
+		northGlue = self.newTileN.get()
+		eastGlue = self.newTileE.get()
+		southGlue = self.newTileS.get()
+		westGlue = self.newTileW.get()
+		label = "x"
+		isConcrete = "False"
 
-		self.preview_tile_data.append(newPrevTile)
+		glues = [northGlue, eastGlue, southGlue, westGlue]
+		newTile = TT.Tile(None, 0, 0, 0, glues, color, "False")
+
+		self.prevTileList.append(newTile)
 		self.popWinTiles()
 
 
@@ -212,8 +208,6 @@ class TileEditorGUI:
 		self.closeNewTileWindow()
 
 	def selected(self, i):
-		print(self.preview_tile_data[i])
-		data = self.preview_tile_data
 		
 		self.selectedTileIndex = i
 
@@ -243,68 +237,44 @@ class TileEditorGUI:
 	def popWinTiles(self):
 
 		self.tilePrevCanvas.delete("all")
-
-		data = self.preview_tile_data
-
-		
-
-		#loop through the list of tiles and draw a rectangle for each one
-		if data == None:
-			return
-
-		for i in range(len(data)):
-		 	tile = data[i]
-		 	print(tile)
+		print "Length of prev tile list: ", len(self.prevTileList)
+		i = 0
+		for prevTile in self.prevTileList:
 
 		 	x = PREVTILESTARTX
 		 	y = PREVTILESTARTY + 80 * i
 		 	size = PREVTILESIZE
 
-		 	prevTileButton = self.tilePrevCanvas.create_rectangle(x, y, x + size, y + size, fill = tile["color"])
-
+		 	prevTileButton = self.tilePrevCanvas.create_rectangle(x, y, x + size, y + size, fill = prevTile.color)
+		 	print "Drawing rect at " , x, y
 		 	#tag_bing can bind an object in a canvas to an event, here the rectangle that bounds the
 		 	#preview tile is bound to a mouse click, and it will call selected() with its index as the argument
 		 	self.tilePrevCanvas.tag_bind(prevTileButton, "<Button-1>", lambda event, a=i: self.selected(a))
 		 	#buttonArray.append(prevTileButton)
 
 		 	
-		 	if not tile["concrete"] == "True":
+		 	if prevTile.isConcrete == False:
 		 		print("printing glues")
 			 	#Print Glues
 			 	#north
-				self.tilePrevCanvas.create_text(x + size/2, y + size/5, text = tile["northGlue"], fill="#000", font=('', size/5) )
+				self.tilePrevCanvas.create_text(x + size/2, y + size/5, text = prevTile.glues[0], fill="#000", font=('', size/5) )
 				#east
-				self.tilePrevCanvas.create_text(x + size - size/5, y + size/2, text = tile["eastGlue"], fill="#000", font=('', size/5))
+				self.tilePrevCanvas.create_text(x + size - size/5, y + size/2, text = prevTile.glues[1], fill="#000", font=('', size/5))
 				#south
-				self.tilePrevCanvas.create_text(x + size/2, y + size - size/5, text = tile["southGlue"], fill="#000", font=('', size/5) )
+				self.tilePrevCanvas.create_text(x + size/2, y + size - size/5, text = prevTile.glues[2], fill="#000", font=('', size/5) )
 				#west
-				self.tilePrevCanvas.create_text(x + size/5, y + size/2, text = tile["westGlue"], fill="#000", font=('',size/5) )
+				self.tilePrevCanvas.create_text(x + size/5, y + size/2, text = prevTile.glues[3], fill="#000", font=('',size/5) )
+			
+			i += 1
 
 	def populateArray(self):
-		for td in self.tile_data:
-			if td["location"]["x"] not in self.coord2tile.keys():
-				self.coord2tile[td["location"]["x"]] = {}
-			self.coord2tile[td["location"]["x"]][td["location"]["y"]] = td
+		for p in self.board.Polyominoes:
+			for tile in p.Tiles:
+				self.coord2tile[tile.x][tile.y] = tile
 
 	def populateBoard(self):
 		#flush the board
-		self.board = TT.Board(self.board_h, self.board_w)
-
-		for x in self.coord2tile:
-			for y in self.coord2tile[x]:
-				td = self.coord2tile[x][y]
-
-				
-				tile = TT.Tile(td["label"],
-					td["location"]["x"], 
-					td["location"]["y"],
-					[td["northGlue"], td["eastGlue"], td["southGlue"], td["westGlue"]],
-					td["color"], td["concrete"])
-
-				if tile.isConcrete == False:
-					self.board.Add(TT.Polyomino(tile, self.board.poly_id_c))
-				else:
-					self.board.AddConc(tile)
+		print("a")
 
 
 
@@ -361,73 +331,56 @@ class TileEditorGUI:
 			self.addTileAtPos(event.x/self.tile_size, event.y/self.tile_size)
 
 	def removeTileAtPos(self, x, y):
-		tile = self.getTileAtPos(x, y)
+		tile = self.coord2tile[x][y]
+
+		if tile == None:
+			return
+
+		if tile.isConcrete:
+			self.board.ConcreteTiles.remove(tile)
+			self.coord2tile[x][y] = None
 		
+		else:
+			tile.parent.Tiles.remove(tile) #remove tile from the polyomino that its in
+			self.board.Polyominoes.remove(tile.parent) #remove polyomino from the array
 			
+			self.coord2tile[x][y] = None
 
-		if tile != None:
-			self.tile_data.remove(tile)
-
-			
-			del self.coord2tile[x][y]
-			self.populateBoard()
-			self.redrawPrev()
+		self.populateBoard()
+		self.redrawPrev()
 
 		
 
 	def addTileAtPos(self, x, y):
 		
-		if x not in self.coord2tile.keys():
-			self.coord2tile[x] = {}
+		i = self.selectedTileIndex
 
 		#random color function: https://stackoverflow.com/questions/13998901/generating-a-random-hex-color-in-python
 		r = lambda: random.randint(100,255)
-
-		#Create new tile from preview tile data
-		ntile = {}
-		ntile["label"] = self.preview_tile_data[self.selectedTileIndex]["label"]
-		ntile["location"] = {}
-		ntile["location"]["x"] = x
-		ntile["location"]["y"] = y
-		ntile["northGlue"] = self.preview_tile_data[self.selectedTileIndex]["northGlue"]
-		ntile["eastGlue"] = self.preview_tile_data[self.selectedTileIndex]["eastGlue"]
-		ntile["southGlue"] = self.preview_tile_data[self.selectedTileIndex]["southGlue"]
-		ntile["westGlue"] = self.preview_tile_data[self.selectedTileIndex]["westGlue"]
-
-		#if random color is selected, will plae the tile down with a random color
-		if not self.randomizeColor:
-			ntile["color"] = self.preview_tile_data[self.selectedTileIndex]["color"]
+		if self.randomizeColor:
+			color = ('#%02X%02X%02X' % (r(),r(),r()))
 		else:
-			ntile["color"] = ('#%02X%02X%02X' % (r(),r(),r())) #random color function mentioned above
+			color = self.prevTileList[i].color
 
-		ntile["concrete"] = self.preview_tile_data[self.selectedTileIndex]["concrete"]
+		if not self.prevTileList[i].isConcrete:
+			newPoly = TT.Polyomino(0, x, y, self.prevTileList[i].glues, color)
+			self.board.Add(newPoly)
+			self.coord2tile[newPoly.Tiles[0].x][newPoly.Tiles[0].y] = newPoly.Tiles[0]
+		else:
+			newConcTile = TT.Tile(None, 0, x, y, [], self.prevTileList[i].color, "True")
+			self.board.AddConc(newConcTile)
+			self.coord2tile[newConcTile.x][newConcTile.y] = newConcTile
 
-		
-		
-		
-		#Add this tile into the Tile array
-		self.coord2tile[x][y] = ntile
-		self.tile_data.append(ntile)
-
-		self.populateBoard()
+	
 		self.redrawPrev()
-		#self.onClearState()
 
-
-
-	def getTileAtPos(self, x, y):
-		if x in self.coord2tile.keys():
-			if y in self.coord2tile[x].keys():
-				return self.coord2tile[x][y]
-
-		return None
 
 	def redrawPrev(self):
 		redrawCanvas(self.board, self.board_w, self.board_h, self.BoardCanvas, self.tile_size, b_drawGrid = True, b_drawLoc = True)
 
 
 	def exportTiles(self):
-		self.tumbleGUI.setTilesFromEditor(self.tile_data, self.glue_data, self.preview_tile_data, self.board_w, self.board_h)
+		self.tumbleGUI.setTilesFromEditor(self.board, self.glue_data, self.prevTileList, self.board.Cols, self.board.Rows)
 
 	def saveTileConfig(self):
 		filename = tkFileDialog.asksaveasfilename()
