@@ -29,6 +29,7 @@ LOGFILENAME = ""
 TILESIZE = 35
 VERSION = "1.5"
 
+
 class MsgAbout:
     def __init__(self,  parent):
         global VERSION
@@ -63,9 +64,11 @@ class MsgAbout:
         
         
 class Settings:
-    def __init__(self,  parent, logging):#, fun):
+    def __init__(self,  parent, logging, tumblegui):#, fun):
         global TILESIZE
         
+
+        self.tumbleGUI = tumblegui
         self.logging = logging
         #self.function = fun
         self.parent = parent
@@ -123,7 +126,8 @@ class Settings:
         if TT.TEMP != int(self.tkTEMP.get()):
             self.Log("\nChange TEMP from "+str(TT.TEMP)+" to "+self.tkTEMP.get())
             TT.TEMP = int(self.tkTEMP.get())
-        #self.function() #.RedrawCanvas()
+
+        self.tumbleGUI.callCanvasRedraw()
         self.t.destroy()
         
         
@@ -154,6 +158,9 @@ class tumblegui:
         self.root = root
         self.root.resizable(False, False)
         self.mainframe = Frame(self.root, bd=0, relief=FLAT)
+
+        FACTORYMODE = BooleanVar()
+        FACTORYMODE.set(False)
         
         #main canvas to draw on
         self.w = Canvas(self.mainframe, width=TT.BOARDWIDTH*TILESIZE, height=TT.BOARDHEIGHT*TILESIZE)
@@ -200,6 +207,9 @@ class tumblegui:
         self.tkDRAWGRID.set(False)
         self.tkSHOWLOC = BooleanVar()
         self.tkSHOWLOC.set(False)
+        self.tkFACTORYMODE = BooleanVar()
+        self.tkFACTORYMODE.set(False)
+       
         
         settingsmenu = Menu(self.menubar, tearoff=0)
         settingsmenu.add_checkbutton(label="Single Step", onvalue=True, offvalue=False, variable=self.tkSTEPVAR) #,command=stepmodel)
@@ -211,6 +221,7 @@ class tumblegui:
         settingsmenu.add_checkbutton(label="Show Locations", onvalue=True, offvalue=False, variable=self.tkSHOWLOC, command = lambda: self.callCanvasRedraw())
         settingsmenu.add_separator()
         settingsmenu.add_command(label="Board Options", command=self.changetile)
+        settingsmenu.add_checkbutton(label="Factory Mode", onvalue=True, offvalue=False, variable= self.tkFACTORYMODE, command= self.setFactoryMode)
 
         editormenu = Menu(self.menubar, tearoff=0)
         editormenu.add_command(label="Open Editor", command=self.editCurrentTiles)
@@ -253,24 +264,31 @@ class tumblegui:
         
         self.callGridDraw()
         self.CreateInitial()
+
+    # sets the factory mode variable
+    def setFactoryMode(self):
+        print "setting factory mode to ", self.tkFACTORYMODE.get()
+        TT.FACTORYMODE = self.tkFACTORYMODE.get()
+        print "it is now ", TT.FACTORYMODE
     
     def changetile(self):
         global TILESIZE
         
-        Sbox = Settings(self.root, self.tkLOG.get())
+        Sbox = Settings(self.root, self.tkLOG.get(), self)
         self.resizeBoardAndCanvas()
         self.tkTempText.set(TT.TEMP)
 
     def resizeBoardAndCanvas(self):
-        #expand grid
-        self.board.ResizeGrid(TT.BOARDHEIGHT,  TT.BOARDWIDTH)
+        
+        self.board.Cols = TT.BOARDWIDTH
+        self.board.Rows = TT.BOARDHEIGHT
         #resize canvas
-        self.w.config(width=TT.BOARDWIDTH*TILESIZE, height=TT.BOARDHEIGHT*TILESIZE)
-        self.tkWidthText.set(TT.BOARDWIDTH)
-        self.tkHeightText.set(TT.BOARDHEIGHT)
+        self.w.config(width=self.board.Cols*TILESIZE, height=self.board.Rows*TILESIZE)
+        self.tkWidthText.set(self.board.Cols)
+        self.tkHeightText.set(self.board.Rows)
         #resize window #wxh
         toolbarframeheight = 24
-        self.root.geometry(str(TT.BOARDWIDTH*TILESIZE)+'x'+str(TT.BOARDHEIGHT*TILESIZE+toolbarframeheight))
+        self.root.geometry(str(self.board.Cols*TILESIZE)+'x'+str(self.board.Rows*TILESIZE+toolbarframeheight))
         #redraw
         self.callCanvasRedraw()
 
@@ -287,6 +305,7 @@ class tumblegui:
         
     def callback(self, event):
         global TILESIZE
+
         
         try:
             #print "clicked at", event.x, event.y
@@ -360,7 +379,13 @@ class tumblegui:
         del self.board
 
         TT.GLUEFUNC = {}
+
         self.board = data[0]
+        TT.BOARDHEIGHT = self.board.Rows
+        TT.BOARDWIDTH = self.board.Cols
+        print TT.BOARDHEIGHT, ", ", TT.BOARDWIDTH
+        
+        self.resizeBoardAndCanvas()
         self.callCanvasRedraw()
 
         # Glue Function
@@ -372,6 +397,7 @@ class tumblegui:
         
 
         #Call the board editor
+        self.board.relistPolyominoes()
         self.openBoardEditDial(self.root, self.board, data[1], self.prevTileList)
         
         #self.board.SetGrid()
@@ -379,7 +405,7 @@ class tumblegui:
 
     def callCanvasRedraw(self):
         global TILESIZE
-        redrawCanvas(self.board, TT.BOARDWIDTH, TT.BOARDHEIGHT, self.w, TILESIZE, self.textcolor, self.gridcolor, self.tkDRAWGRID.get(), self.tkSHOWLOC.get())
+        redrawCanvas(self.board, self.board.Cols, self.board.Rows, self.w, TILESIZE, self.textcolor, self.gridcolor, self.tkDRAWGRID.get(), self.tkSHOWLOC.get())
 
     def callGridDraw(self):
         global TILESIZE
@@ -413,6 +439,7 @@ class tumblegui:
 
     #Opens the editor and loads the cuurent tiles from the simulator
     def editCurrentTiles(self):
+        self.glueFunc = TT.GLUEFUNC
         TGBox = TE.TileEditorGUI(self.root, self, self.board, self.glueFunc, self.prevTileList)
     
     #Turns the list of polyominoes and concrete tiles into a list of tiles including their position
@@ -458,12 +485,17 @@ class tumblegui:
 
     #This method will be called wben you want to export the tiles from the editor back to the simulation
     def setTilesFromEditor(self, board, glueFunc, prev_tiles, width, height):
-        TT.BOARDHEIGHT = height
-        TT.BOARDWIDTH = width
+        TT.BOARDHEIGHT = board.Rows
+        TT.BOARDWIDTH = board.Cols
         self.board = board
         self.glueFunc = glueFunc
+        TT.GLUEFUNC = self.glueFunc
         self.prevTileList = prev_tiles
+        self.board.relistPolyominoes()
+        self.resizeBoardAndCanvas()
         self.callCanvasRedraw()
+
+
 
 
     
@@ -493,7 +525,7 @@ class tumblegui:
             if len(colorb) > 4:
                 colorb = colorb[:4]
 
-            p = TT.Polyomino(self.board.poly_id_c, bh-i-2, bh - 1, ['N','E','S','W'],colorb)
+            p = TT.Polyomino(self.board.poly_id_c, bh-i-2, bh - 1, ['N','N','N','N'],colorb)
             self.board.Add(p)
             #left tiles
             #colorl = str(colorl[0]+chr(ord(colorl[1])-1)+colorl[2:])
@@ -502,7 +534,7 @@ class tumblegui:
                 colorl = colorl[:4]
 
             char = chr(ord('a')+i)
-            p = TT.Polyomino(self.board.poly_id_c, 0, bh-i-2, ['S','W','N','E'],colorb)
+            p = TT.Polyomino(self.board.poly_id_c, 0, bh-i-2, ['N','N','N','N'],colorb)
 
             self.board.Add(p)
 

@@ -103,7 +103,6 @@ def parseFile(filename):
     #add tile data to the data set, these are the tiles that will actually be loaded onto the plane
     if tileDataExists:
         tileDataTree = treeroot[3]
-        print(tileDataTree)
         for tile in tileDataTree:
 
             newTile = {}
@@ -160,7 +159,7 @@ def parseFile(filename):
             board.Add(TT.Polyomino(0, tile["location"]["x"], tile["location"]["y"], glues, tile["color"]))
         else:
             glues = []
-            board.AddConc(TT.Tile(0, tile["location"]["x"], tile["location"]["y"], glues, tile["color"], "True"))
+            board.AddConc(TT.Tile(None, 0, tile["location"]["x"], tile["location"]["y"], glues, tile["color"], "True"))
 
     for prevTile in prevTiles:
         prevGlues = [prevTile["northGlue"],prevTile["eastGlue"],prevTile["southGlue"],prevTile["westGlue"]]

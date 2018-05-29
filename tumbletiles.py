@@ -6,6 +6,8 @@ from time import sleep
 import copy
 import sys
 import inspect
+import random
+
 
 DEBUGGING = False
 
@@ -13,6 +15,8 @@ TEMP = 1
 GLUEFUNC = {'N':1, 'E':1, 'S':1, 'W':1,}
 BOARDHEIGHT = 15
 BOARDWIDTH = 15
+FACTORYMODE = False
+
 
 
 # http://code.activestate.com/recipes/145297-grabbing-the-current-line-number-easily/
@@ -55,7 +59,7 @@ class Tile:
 
         #concrete tiles wll have a symbol/id of -1
         if(self.isConcrete):
-            g = []
+            self.glues = []
         else:
             self.glues = g
 
@@ -91,7 +95,8 @@ class Polyomino:
         self.NumTiles = len(self.Tiles)
         for t in self.Tiles:
             t.symbol = sym
-            t.color = color
+            if not FACTORYMODE:
+                t.color = color
             t.parent = parent
             
     #Checks for possible connections between every pair of tiles in two polynomials (self) and poly
@@ -100,7 +105,6 @@ class Polyomino:
     def CanJoin(self, poly):
         global TEMP
         global GLUEFUNC
-
         
         if poly == None:
             return False
@@ -129,13 +133,12 @@ class Polyomino:
                     if pt.glues[S] != None and t.x  == pt.x and pt.glues[S] != " " and len(pt.glues[S]) > 0 and pt.y - t.y == -1:
                         if t.glues[N] != None and t.glues[N] != " " and t.glues[N] == pt.glues[S]:
                             gluestrength += int(GLUEFUNC[pt.glues[S]])
-                    #print t.glues,t.x,t.y,pt.glues,pt.x,pt.y,gluestrength
             if gluestrength >= TEMP:
                 return True
             else:
                 return False
         except Exception as e:
-            #print "CANJOIN"
+            print "Glue Error"
             print sys.exc_info()[0]  
     
     #moves every tile in the polyomino by one in the indicated direction
@@ -198,16 +201,17 @@ class Board:
 
     #Adds a polyomino the the list
     def Add(self, p):
-
         #add tile two the two dimensional array
 
-        #print "trying to add poly at", p.Tiles[0].x, ", ", p.Tiles[0].y, "\n"
-        for tile in p.Tiles:
-            if self.coordToTile[tile.x][tile.y] == None:
-                self.coordToTile[tile.x][tile.y] = tile
-                self.Polyominoes.append(p)
-            elif DEBUGGING:
-                print "tumbletiles.py - Board.Add(): Can not add tile. A tile already exists at this location - Line ", lineno(), "\n",
+        tile = p.Tiles[0]
+
+        if self.coordToTile[tile.x][tile.y] == None:
+            self.coordToTile[tile.x][tile.y] = tile
+
+            self.Polyominoes.append(p)
+
+        elif DEBUGGING:
+            print "tumbletiles.py - Board.Add(): Can not add tile. A tile already exists at this location - Line ", lineno(), "\n",
 
     def AddConc(self,t):
 
@@ -226,8 +230,6 @@ class Board:
         if p1 == p2:
             return
         # Join the two polyominoes
-           
-
         p1.Join(p2)
         
        
@@ -235,7 +237,10 @@ class Board:
             self.Polyominoes.remove(p2)
         
 
-
+    def resizeBoard(self, w, h):
+        self.Rows = h
+        self.Cols = w
+        self.remapArray()
      
     #This method will check to see if loop through every position in the board and if two polyominoes are 
     #touching it will check if they can be joined and if so, it will join them
@@ -267,20 +272,19 @@ class Board:
                         if self.coordToTile[tile.x][tile.y - 1] != None and self.coordToTile[tile.x][tile.y - 1].parent != tile.parent:
                             neighbors.append(self.coordToTile[tile.x][tile.y - 1])
                   
-                    
                     for nei in neighbors:
+
                         if nei != None and nei.parent != tile.parent and p.CanJoin(nei.parent):
                             self.CombinePolys(p, nei.parent)
                             self.remapArray()
-    
-
                             changed = True
-                    if changed:
-                        break
-                if changed:
-                    break
-            if changed:
-                break
+
+            #         if changed:
+            #             break
+            #     if changed:
+            #         break
+            # if changed:
+            #     break
 
 
     # Repeatedly calls Step() in a direction until Step() returns false, then Activates the glues and sets the grid again
@@ -293,7 +297,17 @@ class Board:
         else:
             print "Someone doesn't know what they're doing"
         self.ActivateGlues()
-       
+
+
+        # If in factory mode tiles will be removed if they hit the bottom wall
+        if FACTORYMODE:
+            for p in self.Polyominoes:
+                for tile in p.Tiles:
+                    if tile.y >= self.Rows - 1:
+                        p.Tiles.remove(tile)
+
+                        if len(p.Tiles) == 0:
+                            self.Polyominoes.remove(p)
 
     # Functions the same as Tumble() but it activates glues after every step
     def TumbleGlue(self, direction):
@@ -396,6 +410,25 @@ class Board:
 
         return StepTaken
 
+    # Removes all tiles from their current polyomino, then puts them each in their own
+    # polyomino, and activates glues
+    def relistPolyominoes(self):
+
+        r = lambda: random.randint(100,255)
+        
+        tileList = []
+        for p in self.Polyominoes:
+            for tile in p.Tiles:
+                tileList.append(tile)
+            p.Tiles = []
+        self.Polyominoes = []
+        for tile in tileList:
+           # color = ('#%02X%02X%02X' % (r(),r(),r()))
+            color = tile.color
+            poly = Polyomino(0, tile.x, tile.y, tile.glues, color)
+            self.Polyominoes.append(poly)
+        self.remapArray()
+        self.ActivateGlues()
 
     # Assignes every tile to its new correct position in coordToTile
     def remapArray(self):
@@ -432,28 +465,28 @@ if __name__ =="__main__":
     board = Board(bh,bw)
     #initial
     #CreateTiles(board)
-    for i in range(5):
+    #for i in range(5):
         #bottom tiles
-        p = Polyomino(Tile(chr(ord('M')+i), 0, bh-i-2, ['N','E','S','W']))
-        board.Add(p)
+       # p = Polyomino(Tile(chr(ord('M')+i), 0, bh-i-2, ['N','E','S','W']))
+       # board.Add(p)
         #left tiles
-        p = Polyomino(Tile(chr(ord('A')+i), i+1, bh-1, ['S','W','N','E']))
-        board.Add(p)
+       # p = Polyomino(Tile(chr(ord('A')+i), i+1, bh-1, ['S','W','N','E']))
+       # board.Add(p)
 
     #main program loop
-    response = 'A'
-    while response != 'Q':
-        board.GridDraw()
-        response = raw_input("\nDirection to tumble (N,E,S,W)?")
-        response = response.capitalize()
-        if response != 'Q' and response !='P':
-            board.Tumble(response)
-        elif response == 'P':
-            #pat = ['N','E','S','W']
-            #pat = ['N','E','W','S']
-            pat = ['N','W','E','S']
-            for i in range(10):
-                for p in pat:
-                    board.Tumble(p.capitalize())
+    # response = 'A'
+    # while response != 'Q':
+    #     board.GridDraw()
+    #     response = raw_input("\nDirection to tumble (N,E,S,W)?")
+    #     response = response.capitalize()
+    #     if response != 'Q' and response !='P':
+    #         board.Tumble(response)
+    #     elif response == 'P':
+    #         #pat = ['N','E','S','W']
+    #         #pat = ['N','E','W','S']
+    #         pat = ['N','W','E','S']
+    #         for i in range(10):
+    #             for p in pat:
+    #                 board.Tumble(p.capitalize())
     
 
