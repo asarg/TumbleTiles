@@ -13,7 +13,7 @@ import os,sys
 #the x and y coordinate that the preview tiles will begin to be drawn on
 PREVTILESTARTX = 20
 PREVTILESTARTY = 21
-
+TILESIZE = 35
 PREVTILESIZE = 70
 
 NEWTILEWINDOW_W = 150
@@ -37,7 +37,7 @@ class TileEditorGUI:
 
 		#self.rows = self.board.Rows
 		#self.columns = self.board.Cols
-		self.tile_size = TG.TILESIZE
+		self.tile_size = TILESIZE
 		self.width = self.board_w * self.tile_size
 		self.height = self.board_h * self.tile_size
 
@@ -249,7 +249,7 @@ class TileEditorGUI:
 		self.tilePrevCanvas.delete("all")
 		i = 0
 		for prevTile in self.prevTileList:
-
+			PREVTILESIZE = TILESIZE * 2
 		 	x = PREVTILESTARTX
 		 	y = PREVTILESTARTY + 80 * i
 		 	size = PREVTILESIZE

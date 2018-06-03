@@ -117,6 +117,7 @@ class Settings:
         global TILESIZE
         
         TILESIZE = int(self.tkTILESIZE.get())
+        TE.TILESIZE = TILESIZE
         if TT.BOARDWIDTH != int(self.tkBOARDWIDTH.get()):
             self.Log("\nChange BOARDWIDTH from "+str(TT.BOARDWIDTH)+" to "+self.tkBOARDWIDTH.get())
             TT.BOARDWIDTH = int(self.tkBOARDWIDTH.get())
