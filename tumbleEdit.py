@@ -262,7 +262,6 @@ class TileEditorGUI:
 
 		 	
 		 	if prevTile.isConcrete == False:
-		 		print("printing glues")
 			 	#Print Glues
 			 	if prevTile.glues[0] != "None":
 				 	#north
@@ -294,8 +293,6 @@ class TileEditorGUI:
 
 
 	def onAddState(self):
-
-		print("In Add State")
 		self.remove_state = False
 		self.add_state = True
 		
@@ -354,20 +351,14 @@ class TileEditorGUI:
 		else:
 			tile.parent.Tiles.remove(tile) #remove tile from the polyomino that its in
 			if len(tile.parent.Tiles) == 0:
-				print "no more tiles in Poly!"
 				self.board.Polyominoes.remove(tile.parent) #remove polyomino from the array
 			
 			self.coord2tile[x][y] = None
 
 		self.board.coordToTile[x][y]= None
 
-		print "Number of Polyominoes: ", len(self.board.Polyominoes)
-		for p in self.board.Polyominoes:
-			print "    Poly of length: ", len(p.Tiles)
 
-		print "Number of ConcreteTiles: ", len(self.board.ConcreteTiles)
-
-		self.verifyTileLocations()
+		#self.verifyTileLocations()
 		self.populateBoard()
 		self.redrawPrev()
 
@@ -378,12 +369,7 @@ class TileEditorGUI:
 		i = self.selectedTileIndex
 
 		if self.coord2tile[x][y] != None:
-			
-			print "this is there there! ",
-			print self.coord2tile[x][y]
 			return
-		else:
-			print "There nothing there!"
 
 
 		#random color function: https://stackoverflow.com/questions/13998901/generating-a-random-hex-color-in-python
@@ -394,26 +380,18 @@ class TileEditorGUI:
 			color = self.prevTileList[i].color
 
 		if not self.prevTileList[i].isConcrete:
-			print "adding a poly"
 			newPoly = TT.Polyomino(0, x, y, self.prevTileList[i].glues, color)
 			self.board.Add(newPoly)
 			self.coord2tile[x][y] = newPoly.Tiles[0]
 			self.board.coordToTile[x][y]= newPoly.Tiles[0]
 		else:
-			print "adding a concrete tile"
 			newConcTile = TT.Tile(None, 0, x, y, [], self.prevTileList[i].color, "True")
 			self.board.AddConc(newConcTile)
 			self.coord2tile[x][y] = newConcTile
 			self.board.coordToTile[x][y]= newConcTile
 
 
-		print "Number of Polyominoes: ", len(self.board.Polyominoes)
-		for p in self.board.Polyominoes:
-			print "    Poly of length: ", len(p.Tiles)
-
-		print "Number of ConcreteTiles: ", len(self.board.ConcreteTiles)
-
-		self.verifyTileLocations()
+		#self.verifyTileLocations()
 		self.redrawPrev()
 
 	def verifyTileLocations(self):

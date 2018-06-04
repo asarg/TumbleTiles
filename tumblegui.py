@@ -28,6 +28,7 @@ LOGFILE = None
 LOGFILENAME = ""
 TILESIZE = 35
 VERSION = "1.5"
+LASTLOADEDFILE = "A"
 
 
 class MsgAbout:
@@ -180,7 +181,8 @@ class tumblegui:
         filemenu = Menu(self.menubar, tearoff=0)
         filemenu.add_command(label="Example", command=self.CreateInitial)
         #filemenu.add_command(label="Generate Tiles", command=self.openTileEditDial)
-        filemenu.add_command(label="Load", command = lambda: self.loadTileSet())
+        filemenu.add_command(label="Load", command = lambda: self.loadFile())
+        filemenu.add_command(label="Reload Last File", command = lambda: self.reloadFile()) 
         
         self.tkLOG = BooleanVar()
         self.tkLOG.set(False)
@@ -268,9 +270,7 @@ class tumblegui:
 
     # sets the factory mode variable
     def setFactoryMode(self):
-        print "setting factory mode to ", self.tkFACTORYMODE.get()
         TT.FACTORYMODE = self.tkFACTORYMODE.get()
-        print "it is now ", TT.FACTORYMODE
     
     def changetile(self):
         global TILESIZE
@@ -368,12 +368,23 @@ class tumblegui:
             print "Could not print for some reason"
             #print e
 
-    def loadTileSet(self):
-        #flush board
+    def loadFile(self):
+        global LASTLOADEDFILE
         filename = getFile()
+        LASTLOADEDFILE = filename
+        self.loadTileSet(filename)
+
+    # Will reload the last loaded file to enable quick testing
+    def reloadFile(self):
+        global LASTLOADEDFILE
+        self.loadTileSet(LASTLOADEDFILE)
+
+    def loadTileSet(self, filename):
+        
 
         if filename == "":
             return
+
         #self.Log("\nLoad "+filename+"\n")
         data = parseFile(filename)
 
@@ -384,7 +395,6 @@ class tumblegui:
         self.board = data[0]
         TT.BOARDHEIGHT = self.board.Rows
         TT.BOARDWIDTH = self.board.Cols
-        print TT.BOARDHEIGHT, ", ", TT.BOARDWIDTH
         
         self.resizeBoardAndCanvas()
         self.callCanvasRedraw()
@@ -399,7 +409,7 @@ class tumblegui:
 
         #Call the board editor
         self.board.relistPolyominoes()
-        self.openBoardEditDial(self.root, self.board, data[1], self.prevTileList)
+        #self.openBoardEditDial(self.root, self.board, data[1], self.prevTileList)
         
         #self.board.SetGrid()
         self.callCanvasRedraw()
@@ -496,12 +506,6 @@ class tumblegui:
         self.resizeBoardAndCanvas()
         self.callCanvasRedraw()
 
-
-
-
-    
-
-
     def CreateInitial(self):
         
         self.Log("\nLoad initial\n")
@@ -526,7 +530,7 @@ class tumblegui:
             if len(colorb) > 4:
                 colorb = colorb[:4]
 
-            p = TT.Polyomino(self.board.poly_id_c, bh-i-2, bh - 1, ['N','N','N','N'],colorb)
+            p = TT.Polyomino(self.board.poly_id_c, bh-i-2, bh - 1, ['N','E','S','W'],colorb)
             self.board.Add(p)
             #left tiles
             #colorl = str(colorl[0]+chr(ord(colorl[1])-1)+colorl[2:])
@@ -535,7 +539,7 @@ class tumblegui:
                 colorl = colorl[:4]
 
             char = chr(ord('a')+i)
-            p = TT.Polyomino(self.board.poly_id_c, 0, bh-i-2, ['N','N','N','N'],colorb)
+            p = TT.Polyomino(self.board.poly_id_c, 0, bh-i-2, ['S','W','N','E'],colorb)
 
             self.board.Add(p)
 
@@ -546,12 +550,6 @@ class tumblegui:
         self.board.AddConc(TT.Tile(None, -1, 8, 8, [] ,colorg, True))
         self.board.AddConc(TT.Tile(None, -1, 1, 10, [] ,colorg, True))
         self.board.AddConc(TT.Tile(None, -1, 13, 5, [] ,colorg, True))
-
-
-
-
-
-
         
         #self.board.SetGrid()
         self.callCanvasRedraw()
