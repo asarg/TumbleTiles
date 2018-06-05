@@ -4,31 +4,48 @@ from scrollableFrame import VerticalScrolledFrame
 import tkFileDialog, tkMessageBox, tkColorChooser
 import xml.etree.ElementTree as ET
 import tumbletiles as TT
+import tumblegui as TG
 from boardgui import redrawCanvas, drawGrid
 import random
 import time
 import os,sys
 
+#the x and y coordinate that the preview tiles will begin to be drawn on
+PREVTILESTARTX = 20
+PREVTILESTARTY = 21
+TILESIZE = 35
+PREVTILESIZE = 70
+
+NEWTILEWINDOW_W = 150
+NEWTILEWINDOW_H = 180
+
 class TileEditorGUI:
-	def __init__(self, parent, board_width, board_height, tile_size, tile_data, glue_data, preview_tile_data = None):
+	def __init__(self, parent, tumbleGUI, board, glue_data, previewTileList):
 
 		#open two windows
 		#`w1` will be the tile editor
 		#`w2` will be a tile config previewer
 
+
 		self.parent = parent
-		self.board = None
-		self.board_w = board_width
-		self.board_h = board_height
+		self.board = board
+		self.board_w = board.Cols
+		self.board_h = board.Rows
+
+		#instance of tumbleGUI that created it so methods from that class can be called
+		self.tumbleGUI = tumbleGUI
 
 		#self.rows = self.board.Rows
 		#self.columns = self.board.Cols
-		self.tile_size = tile_size
-		self.width = board_width*tile_size
-		self.height = board_height*tile_size
-		self.tile_data = tile_data
-		self.glue_data = glue_data
-		self.preview_tile_data = preview_tile_data
+		self.tile_size = TILESIZE
+		self.width = self.board_w * self.tile_size
+		self.height = self.board_h * self.tile_size
+
+
+
+		self.prevTileList = previewTileList
+
+		self.selectedTileIndex = -1
 
 		#States for the tile editor
 		self.remove_state = False
@@ -39,119 +56,251 @@ class TileEditorGUI:
 
 		self.glue_label_list = []
 
+		self.glue_data = glue_data
+
 		#A two-dimensional array
-		self.coord2tile = {}
+		self.coord2tile = [[None for x in range(self.board_w)] for y in range(self.board_h)]
+
+		#outline of a preview tile when it is selected
+		self.outline = None
+
+		#boolean for whether or not to randomize the color of a placed tile
+		self.randomizeColor = False
+
+		#the variable associated with the entry in the create new tile window
+		self.newTileN = StringVar()
+		self.newTileE = StringVar()
+		self.newTileS = StringVar()
+		self.newTileW = StringVar()
+		self.concreteChecked = IntVar()
 
 		#populate the array
 		self.populateArray()
 
-		#populate the board
-		self.populateBoard()
-
-		#/////////////////
-		#	Window 1 config
-		#////////////////
-		self.w1 = Toplevel(self.parent, width = self.width, height = self.height)
-		self.w1.wm_title("Tile Editor")
-		self.w1.resizable(True, True)
-		self.w1.protocol("WM_DELETE_WINDOW", lambda: self.closeGUI())
-
-		#populate the window with tiles
-		self.w1f = None
-		self.popWinTiles()
-		#//////////////////
-		#	End Window1 config
-		#/////////////////
 
 		#//////////////////
-		#	Window 2 config
+		#	Window Config
 		#/////////////////
-		self.w2 = Toplevel(self.parent)
-		self.w2.wm_title("Previewer")
-		self.w2.resizable(False, False)
-		self.w2.protocol("WM_DELETE_WINDOW", lambda: self.closeGUI())
-		self.w2.bind("<Button-1>", lambda event: self.onPreviewClick(event))
+		self.newWindow = Toplevel(self.parent)
+		self.newWindow.wm_title("Editor")
+		self.newWindow.resizable(False, False)
+		self.newWindow.protocol("WM_DELETE_WINDOW", lambda: self.closeGUI())
+
+		#Add Menu Bar
+		self.menuBar = Menu(self.newWindow, relief=RAISED, borderwidth=1)
+
+		optionsMenu = Menu(self.menuBar, tearoff=0)
+		optionsMenu.add_command(label="Export", command = lambda: self.exportTiles())
+		optionsMenu.add_command(label="Resize Board", command = lambda: self.boardResizeDial())
+		optionsMenu.add_command(label="Save Configuration", command = lambda: self.saveTileConfig())
 		
-		#create a canvas for window 2
-		self.w2c = Canvas(self.w2, width = self.width, height = self.height)
-		self.w2c.pack()
-		Button(self.w2, text = "Remove tile", command = self.onRemoveState).pack()
-		Button(self.w2, text = "Resize board", command = self.boardResizeDial).pack()
-		Button(self.w2, text = "Save tile config", command = self.saveTileConfig).pack()
+		#add the options menu to the menu bar
+		self.menuBar.add_cascade(label="Option", menu=optionsMenu)
+		self.newWindow.config(menu=self.menuBar)
+		
+		#Create two frames, one to hold the board and the buttons, and one to hold the tiles to be placed
+		self.tileEditorFrame = Frame(self.newWindow, width = self.width, height = self.height, relief=SUNKEN,borderwidth=1)
+		self.tileEditorFrame.pack(side=RIGHT, expand=True)
+
+		self.BoardFrame = Frame(self.newWindow, borderwidth=1,relief=FLAT, width = 500, height = 500)
+		self.BoardFrame.pack(side=LEFT)
+		
+
+		#The button thats toggles randomizing the color of a placed tile
+		self.randomColorButton = Button(self.tileEditorFrame, text="Random Color", width=10, command= self.randomColorToggle)
+		self.randomColorButton.pack(side=TOP)
+
+		#Button that will allow user to add a new preview tile
+		self.addNewPrevTileButton = Button(self.tileEditorFrame, text="New Tile", width=10, command= self.addNewPrevTile)
+		self.addNewPrevTileButton.pack(side=TOP)
+		
+		#Canvas that tile and grid is drawn on
+		self.BoardCanvas = Canvas(self.BoardFrame, width = self.width, height = self.height)
+		self.BoardCanvas.pack(side=TOP)
+
+		#Used to tell when a tile is trying to be placed, will send the event to onBoardClick to determine the location
+		self.BoardCanvas.bind("<Button-1>", lambda event: self.onBoardClick(event)) # -- LEFT CLICK
+		self.BoardCanvas.bind("<Button-3>", lambda event: self.onBoardClick(event)) # -- RIGHT CLICK
+
+		self.tilePrevCanvas = Canvas(self.tileEditorFrame, width = self.tile_size * 3, height = self.height)
+		self.tilePrevCanvas.pack(side=BOTTOM)
+
 
 		#draw the board on the canvas
+		self.popWinTiles()
 		self.redrawPrev()
-		#//////////////////
-		# 	End Window 2 config
-		#/////////////////
 
+	# Called when you click to add a new tile. Will create a small window where you can insert the 4 glues, then add that tile to the
+	# preview tile window
+	def addNewPrevTile(self):
+		self.addTileWindow = Toplevel(self.newWindow)
+
+
+
+		self.addTileWindow.wm_title("Create Tile")
+		self.addTileWindow.resizable(False, False)
+		self.addTileWindow.protocol("WM_DELETE_WINDOW", lambda: self.closeNewTileWindow())
+
+		#Frame that will hold the text boxes that the glues will be entered it
+		self.tileFrame = Frame(self.addTileWindow, borderwidth=1, relief=FLAT, width = self.tile_size * 4, height = NEWTILEWINDOW_H - 40)
+		self.tileFrame.pack(side=TOP)
+
+
+
+		#Labels and entrys that user will enter the new glue configuration into
+		self.glueN = Entry(self.tileFrame, textvariable= self.newTileN)
+		self.glueE = Entry(self.tileFrame, textvariable= self.newTileE)
+		self.glueS = Entry(self.tileFrame, textvariable= self.newTileS)
+		self.glueW = Entry(self.tileFrame, textvariable= self.newTileW)
+		self.concreteCheck = Checkbutton(self.tileFrame, text="Concrete", variable= self.concreteChecked)
+
+		self.labelN = Label(self.tileFrame, text="N:")
+		self.labelE = Label(self.tileFrame, text="E:")
+		self.labelS = Label(self.tileFrame, text="S:")
+		self.labelW = Label(self.tileFrame, text="W:")
+
+		self.labelN.place(x = 40, y = 20)
+		self.labelE.place(x = 40, y = 40)
+		self.labelS.place(x = 40, y = 60)
+		self.labelW.place(x = 40, y = 80)
+		self.concreteCheck.place(x = 35, y = 100)
+
+		self.glueN.place(x = 65, y = 20, width = 20)
+		self.glueE.place(x = 65, y = 40, width = 20)
+		self.glueS.place(x = 65, y = 60, width = 20)
+		self.glueW.place(x = 65, y = 80, width = 20)
+
+		#Frame that till hold the two buttons cancel / create
+		self.buttonFrame = Frame(self.addTileWindow, borderwidth=1, background = "#000",relief=FLAT, width = self.tile_size * 3, height =  200)
+		self.buttonFrame.pack(side=BOTTOM)
+
+		self.createButton = Button(self.buttonFrame, text="Create Tile", width=8, command= self.createTile)
+		self.cancelButton = Button(self.buttonFrame, text="Cancel", width=8, command= self.cancelTileCreation)
+		self.createButton.pack(side=LEFT)
+		self.cancelButton.pack(side=RIGHT)
+
+		#Makes the new window open over the current editor window
+		self.addTileWindow.geometry('%dx%d+%d+%d' % (NEWTILEWINDOW_W, NEWTILEWINDOW_H, 
+			self.newWindow.winfo_x() + self.newWindow.winfo_width() / 2 - NEWTILEWINDOW_W /2, 
+			self.newWindow.winfo_y() + self.newWindow.winfo_height() / 2 - NEWTILEWINDOW_H /2))
+
+
+	def createTile(self):
+
+		print "N ", self.newTileN.get(), "E ", self.newTileE.get(), "S ", self.newTileS.get(), "W ", self.newTileW.get(),
+		r = lambda: random.randint(100,255)
+
+		newPrevTile = {}
+		print(newPrevTile)
+
+		color = ('#%02X%02X%02X' % (r(),r(),r()))
+		northGlue = self.newTileN.get()
+		eastGlue = self.newTileE.get()
+		southGlue = self.newTileS.get()
+		westGlue = self.newTileW.get()
+		label = "x"
+		print "concreteChecked: ", self.concreteChecked.get()
+		if self.concreteChecked.get() == 1:
+			print("adding concrete")
+			isConcrete = "True"
+			color = "#686868"
+		else:
+			isConcrete = "False"
+
+		glues = [northGlue, eastGlue, southGlue, westGlue]
+		newTile = TT.Tile(None, 0, 0, 0, glues, color, isConcrete)
+
+		self.prevTileList.append(newTile)
+		self.popWinTiles()
+
+
+	def cancelTileCreation(self):
+		self.closeNewTileWindow()
+
+	def selected(self, i):
+		
+		self.selectedTileIndex = i
+
+		if self.outline is not None:
+			self.tilePrevCanvas.delete(self.outline)
+
+		self.outline = self.tilePrevCanvas.create_rectangle(PREVTILESTARTX, PREVTILESTARTY + 80 * i, 
+			PREVTILESTARTX + PREVTILESIZE, PREVTILESTARTY + 80 * i + PREVTILESIZE, outline="#FF0000", width = 2)
+
+		self.onAddState()
+
+	# changes whether a tile placed will have a random color assigned to it
+	# also changes the relief of the button to show whether or not it is currently selected
+	def randomColorToggle(self):
+		print(self.randomizeColor)
+		if self.randomizeColor == True:
+			print("raising")
+			self.randomColorButton.config(relief=RAISED)
+			self.randomizeColor = False
+		else:
+			print("sinking")
+			self.randomColorButton.config(relief=SUNKEN)
+			self.randomizeColor = True
+
+
+	#fills the canvas with preview tiles
 	def popWinTiles(self):
+		global PREVTILESIZE
+		self.tilePrevCanvas.delete("all")
+		i = 0
+		for prevTile in self.prevTileList:
+			PREVTILESIZE = TILESIZE * 2
+		 	x = PREVTILESTARTX
+		 	y = PREVTILESTARTY + 80 * i
+		 	size = PREVTILESIZE
 
-		if self.w1f != None:
-			self.w1f.destroy()
+		 	prevTileButton = self.tilePrevCanvas.create_rectangle(x, y, x + size, y + size, fill = prevTile.color)
+		 	#tag_bing can bind an object in a canvas to an event, here the rectangle that bounds the
+		 	#preview tile is bound to a mouse click, and it will call selected() with its index as the argument
+		 	self.tilePrevCanvas.tag_bind(prevTileButton, "<Button-1>", lambda event, a=i: self.selected(a))
+		 	#buttonArray.append(prevTileButton)
 
-		self.w1f = VerticalScrolledFrame(self.w1)
-		self.w1f.pack()
-
-		index = 0
-		data = self.preview_tile_data
-
-		if data == None:
-			data = self.tile_data
-		for td in data:
-			f = Frame(self.w1f)
-			f.pack()
-			b = TT.Board(1, 1)
-			tile = TT.Tile(td["label"],
-                td["location"]["x"], 
-                td["location"]["y"],
-                [td["northGlue"], td["eastGlue"], td["southGlue"], td["westGlue"]],
-                td["color"])
-
-			b.Add(TT.Polyomino(tile, b.poly_id_c))
-			c = Canvas(f, width = self.tile_size * 3, height = self.tile_size * 3,  name = str(index))
-			c.pack()
-			c.bind("<Button-1>", lambda event: self.onAddState(event))
-			redrawCanvas(b, 1, 1, c, self.tile_size * 3)
-
-			index+=1
+		 	
+		 	if prevTile.isConcrete == False:
+			 	#Print Glues
+			 	if prevTile.glues[0] != "None":
+				 	#north
+					self.tilePrevCanvas.create_text(x + size/2, y + size/5, text = prevTile.glues[0], fill="#000", font=('', size/5) )
+				if prevTile.glues[1] != "None":
+					#east
+					self.tilePrevCanvas.create_text(x + size - size/5, y + size/2, text = prevTile.glues[1], fill="#000", font=('', size/5))
+				if prevTile.glues[2] != "None":
+					#south
+					self.tilePrevCanvas.create_text(x + size/2, y + size - size/5, text = prevTile.glues[2], fill="#000", font=('', size/5) )
+				if prevTile.glues[3] != "None":
+					#west
+					self.tilePrevCanvas.create_text(x + size/5, y + size/2, text = prevTile.glues[3], fill="#000", font=('',size/5) )
+			
+			i += 1
 
 	def populateArray(self):
-		for td in self.tile_data:
-			if td["location"]["x"] not in self.coord2tile.keys():
-				self.coord2tile[td["location"]["x"]] = {}
-			self.coord2tile[td["location"]["x"]][td["location"]["y"]] = td
+		self.coord2tile = [[None for x in range(self.board.Cols)] for y in range(self.board.Rows)]
+		for p in self.board.Polyominoes:
+			for tile in p.Tiles:
+				self.coord2tile[tile.x][tile.y] = tile
+		for conc in self.board.ConcreteTiles:
+			self.coord2tile[conc.x][conc.y] = conc
 
 	def populateBoard(self):
 		#flush the board
-		self.board = TT.Board(self.board_h, self.board_w)
+		print("a")
 
-		for x in self.coord2tile:
-			for y in self.coord2tile[x]:
-				td = self.coord2tile[x][y]
 
-				tile = TT.Tile(td["label"],
-					td["location"]["x"], 
-					td["location"]["y"],
-					[td["northGlue"], td["eastGlue"], td["southGlue"], td["westGlue"]],
-					td["color"])
 
-				self.board.Add(TT.Polyomino(tile, self.board.poly_id_c))
-
-	def onAddState(self, event):
-		tile_index = self.getTileIndex(str(event.widget))
-		#print "Clicked on ",tile_index
-		#print "Label: %s\n Location: (%i, %i)\n[NG: %s, EG: %s, SG: %s, WG: %s]\n, C: %s", self.tile_data[tile_index]["label"],self.tile_data[tile_index]["location"]["x"], self.tile_data[tile_index]["location"]["y"],self.tile_data[tile_index]["northGlue"], self.tile_data[tile_index]["eastGlue"], self.tile_data[tile_index]["southGlue"], self.tile_data[tile_index]["westGlue"],self.tile_data[tile_index]["color"]
-		#print "Click on a position in the board to add a tile"
+	def onAddState(self):
 		self.remove_state = False
 		self.add_state = True
-		self.tile_to_add = self.tile_data[tile_index]
-
+		
 	def onRemoveState(self):
-		#print "Click on a position in the board to remove a tile"
 		self.remove_state = True
 		self.add_state = False
-		self.tile_to_add = None
+		self.selectedTileIndex = -1
+
 
 	def onClearState(self):
 		self.remove_state = False
@@ -159,136 +308,238 @@ class TileEditorGUI:
 		self.tile_to_add = None
 
 	def boardResizeDial(self):
-		wr = self.WindowResizeDialogue(self.w2, self.board_w, self.board_h)
-		
-		if wr.pressed_apply:
-			print "Resizing"
+		wr = self.WindowResizeDialogue(self.newWindow, self, self.board_w, self.board_h)
 
-			self.board_w = int(wr.bw.get())
-			self.board_h = int(wr.bh.get())
+	def resizeBoard(self, w, h):
+		self.board_w = w
+		self.board_h = h
 
-			print self.board_w
-			print self.board_h
+		self.board.Cols = self.board_w
+		self.board.Rows = self.board_h
+		self.board.resizeBoard(w,h)
 
-			#self.w2.config(width=self.board_w*self.tile_size, height=self.board_h*self.tile_size)
-			self.w2.geometry(str(self.board_w*self.tile_size)+'x'+str(self.board_h*self.tile_size+76))
-			self.w2c.config(width=self.board_w*self.tile_size, height=self.board_h*self.tile_size)
-
-			self.populateBoard()
-			self.redrawPrev()
-		else:
-			print "Closed regularly"
+		self.newWindow.geometry(str(self.board_w*self.tile_size + self.tilePrevCanvas.winfo_width() + 20)+'x'+str(self.board_h*self.tile_size+76))
+		self.BoardCanvas.config(width=self.board_w*self.tile_size, height=self.board_h*self.tile_size)
+		self.BoardCanvas.pack(side=LEFT)
+		self.populateArray()
+		self.redrawPrev()
 
 	def getTileIndex(self, widget_name):
 		names = widget_name.split('.')
 		return int(names[len(names) - 1].strip())
 
-	def onPreviewClick(self, event):
+	def onBoardClick(self, event):
 		#Determine the position on the board the player clicked
 		#print "x: ", (event.x/self.tile_size)
 		#print "y: ", (event.y/self.tile_size)
 
-		if self.remove_state:
+		if self.remove_state or event.num == 3:
 			self.removeTileAtPos(event.x/self.tile_size, event.y/self.tile_size)
-		elif self.add_state:
+		elif self.add_state and event.num == 1:
 			self.addTileAtPos(event.x/self.tile_size, event.y/self.tile_size)
 
 	def removeTileAtPos(self, x, y):
-		tile = self.getTileAtPos(x, y)
+		tile = self.coord2tile[x][y]
 
-		if tile != None:
-			del self.coord2tile[x][y]
-			self.populateBoard()
-			self.redrawPrev()
+		if tile == None:
+			return
 
-		self.onClearState()
+		if tile.isConcrete:
+			self.board.ConcreteTiles.remove(tile)
+			self.coord2tile[x][y] = None
+		
+		else:
+			tile.parent.Tiles.remove(tile) #remove tile from the polyomino that its in
+			if len(tile.parent.Tiles) == 0:
+				self.board.Polyominoes.remove(tile.parent) #remove polyomino from the array
+			
+			self.coord2tile[x][y] = None
 
-	def addTileAtPos(self, x, y):
-		if x not in self.coord2tile.keys():
-			self.coord2tile[x] = {}
-		#create a copy of the tile
-		ntile = {}
-		ntile["label"] = self.tile_to_add["label"]
-		ntile["location"] = {}
-		ntile["location"]["x"] = x
-		ntile["location"]["y"] = y
-		ntile["northGlue"] = self.tile_to_add["northGlue"]
-		ntile["eastGlue"] = self.tile_to_add["eastGlue"]
-		ntile["southGlue"] = self.tile_to_add["southGlue"]
-		ntile["westGlue"] = self.tile_to_add["westGlue"]
-		ntile["color"] = self.tile_to_add["color"]
+		self.board.coordToTile[x][y]= None
 
 
-		self.coord2tile[x][y] = ntile
-
+		#self.verifyTileLocations()
 		self.populateBoard()
 		self.redrawPrev()
-		self.onClearState()
 
-	def getTileAtPos(self, x, y):
-		if x in self.coord2tile.keys():
-			if y in self.coord2tile[x].keys():
-				return self.coord2tile[x][y]
+		
 
-		return None
+	def addTileAtPos(self, x, y):
+		
+		i = self.selectedTileIndex
+
+		if self.coord2tile[x][y] != None:
+			return
+
+
+		#random color function: https://stackoverflow.com/questions/13998901/generating-a-random-hex-color-in-python
+		r = lambda: random.randint(100,255)
+		if self.randomizeColor:
+			color = ('#%02X%02X%02X' % (r(),r(),r()))
+		else:
+			color = self.prevTileList[i].color
+
+		if not self.prevTileList[i].isConcrete:
+			newPoly = TT.Polyomino(0, x, y, self.prevTileList[i].glues, color)
+			self.board.Add(newPoly)
+			self.coord2tile[x][y] = newPoly.Tiles[0]
+			self.board.coordToTile[x][y]= newPoly.Tiles[0]
+		else:
+			newConcTile = TT.Tile(None, 0, x, y, [], self.prevTileList[i].color, "True")
+			self.board.AddConc(newConcTile)
+			self.coord2tile[x][y] = newConcTile
+			self.board.coordToTile[x][y]= newConcTile
+
+
+		#self.verifyTileLocations()
+		self.redrawPrev()
+
+	def verifyTileLocations(self):
+		verified = True
+		for p in self.board.Polyominoes:
+			for tile in p.Tiles:
+				if self.coord2tile[tile.x][tile.y] != tile:
+					print "ERROR: Tile at ", tile.x, ", ", tile.y, " is not in array properly \n",
+					verified = False
+
+		for tile in self.board.ConcreteTiles:
+			if self.coord2tile[tile.x][tile.y] != tile:
+				print "ERROR: Tile at ", tile.x, ", ", tile.y, " is not in array properly \n",
+				verified = False
+
+		if verified:
+			print("Tile Locations Verified")
+		if not verified:
+			print("TIle Locations Incorrect")
+
+
 
 	def redrawPrev(self):
-		redrawCanvas(self.board, self.board_w, self.board_h, self.w2c, self.tile_size, b_drawGrid = True, b_drawLoc = True)
+		redrawCanvas(self.board, self.board.Cols, self.board.Rows, self.BoardCanvas, self.tile_size, b_drawGrid = True, b_drawLoc = True)
+
+
+	def exportTiles(self):
+		self.tumbleGUI.setTilesFromEditor(self.board, self.glue_data, self.prevTileList, self.board.Cols, self.board.Rows)
 
 	def saveTileConfig(self):
 		filename = tkFileDialog.asksaveasfilename()
 		tile_config = ET.Element("TileConfiguration")
+		board_size = ET.SubElement(tile_config, "BoardSize")
 		glue_func = ET.SubElement(tile_config, "GlueFunction")
 
-		#Save preview tiles
-		#First check if there are any preview tiles
-		#if not, this is a fresh edit of a versaTile file.
-		#create a new preview tile block
+		board_size.set("width", str(self.board.Cols))		
+		board_size.set("height", str(self.board.Rows))
+
+		#Add all preview tiles to the .xml file if there are any
 		p_tiles = ET.SubElement(tile_config, "PreviewTiles")
-		if self.preview_tile_data == None:
-			for td in self.tile_data:
+		if len(self.prevTileList) != 0:
+			for td in self.prevTileList:
+				print(td.color)
+				if td.glues == [] or len(td.glues) == 0:
+					td.glues = [0,0,0,0]
+
 				#Save the tile data exactly as is
-				tt = ET.SubElement(p_tiles, "TileType")
-				t = ET.SubElement(tt, "Tile")
+				prevTile = ET.SubElement(p_tiles, "PrevTile")
+	
+
+				c = ET.SubElement(prevTile, "Color")
+				c.text = str(td.color).replace("#", "")
+
+
+				ng = ET.SubElement(prevTile, "NorthGlue")
+				
+
+				sg = ET.SubElement(prevTile, "SouthGlue")
+				
+
+				eg = ET.SubElement(prevTile, "EastGlue")
+				
+
+				wg = ET.SubElement(prevTile, "WestGlue")
+				
+
+				if len(td.glues) > 0:
+					ng.text = str(td.glues[0])
+					sg.text = str(td.glues[2])
+					eg.text = str(td.glues[1])
+					wg.text = str(td.glues[3])
+
+				co = ET.SubElement(prevTile, "Concrete")
+				co.text = str(td.isConcrete)
+
+				la = ET.SubElement(prevTile, "Label")
+				la.text = str(td.id)
+
+		tiles = ET.SubElement(tile_config, "TileData")
+		# save all tiles on the board to the .xml file
+		for p in self.board.Polyominoes:
+			for tile in p.Tiles:
+				print(tile)
+				if tile.glues == None or len(tile.glues) == 0:
+					tile.glues = [0,0,0,0]
+
+				t = ET.SubElement(tiles, "Tile")
+
 				loc = ET.SubElement(t, "Location")
-				loc.set("x", str(td["location"]["x"]))
-				loc.set("y", str(td["location"]["y"]))
+				loc.set("x", str(tile.x))
+				loc.set("y", str(tile.y))
+
 				c = ET.SubElement(t, "Color")
-				c.text = str(td["color"]).replace("#", "")
+				c.text = str(str(tile.color).replace("#", ""))
+
 				ng = ET.SubElement(t, "NorthGlue")
-				ng.text = td["northGlue"]
+				ng.text = str(tile.glues[0])
+
 				sg = ET.SubElement(t, "SouthGlue")
-				sg.text = td["southGlue"]
+				sg.text = str(tile.glues[2])
+
 				eg = ET.SubElement(t, "EastGlue")
-				eg.text = td["eastGlue"]
+				eg.text = str(tile.glues[1])
+
 				wg = ET.SubElement(t, "WestGlue")
-				wg.text = td["westGlue"]
+				wg.text = str(tile.glues[3])
+
+				co = ET.SubElement(t, "Concrete")
+				co.text = str(tile.isConcrete)
+
 				la = ET.SubElement(t, "Label")
-				la.text = td["label"]
-		else:
-			#do the same as above, but with the
-			#preview tiles object
-			for td in self.preview_tile_data:
-				#Save the tile data exactly as is
-				tt = ET.SubElement(p_tiles, "TileType")
-				t = ET.SubElement(tt, "Tile")
-				loc = ET.SubElement(t, "Location")
-				loc.set("x", str(td["location"]["x"]))
-				loc.set("y", str(td["location"]["y"]))
-				c = ET.SubElement(t, "Color")
-				c.text = str(td["color"]).replace("#", "")
-				ng = ET.SubElement(t, "NorthGlue")
-				ng.text = td["northGlue"]
-				sg = ET.SubElement(t, "SouthGlue")
-				sg.text = td["southGlue"]
-				eg = ET.SubElement(t, "EastGlue")
-				eg.text = td["eastGlue"]
-				wg = ET.SubElement(t, "WestGlue")
-				wg.text = td["westGlue"]
-				la = ET.SubElement(t, "Label")
-				la.text = td["label"]
+				la.text = str(tile.id)
+
+		for conc in self.board.ConcreteTiles:
+		
+			print(conc)
+			if conc.glues == None or len(conc.glues) == 0:
+				conc.glues = [0,0,0,0]
+
+			t = ET.SubElement(tiles, "Tile")
+
+			loc = ET.SubElement(t, "Location")
+			loc.set("x", str(conc.x))
+			loc.set("y", str(conc.y))
+
+			c = ET.SubElement(t, "Color")
+			c.text = str(str(conc.color).replace("#", ""))
+
+			ng = ET.SubElement(t, "NorthGlue")
+			ng.text = str(conc.glues[0])
+
+			sg = ET.SubElement(t, "SouthGlue")
+			sg.text = str(conc.glues[2])
+
+			eg = ET.SubElement(t, "EastGlue")
+			eg.text = str(conc.glues[1])
+
+			wg = ET.SubElement(t, "WestGlue")
+			wg.text = str(conc.glues[3])
+
+			co = ET.SubElement(t, "Concrete")
+			co.text = str(conc.isConcrete)
+
+			la = ET.SubElement(t, "Label")
+			la.text = str(conc.id)
 
 		#Just port the glue function data over to the new file
+		print "glue data in tumbleedit.py ", self.glue_data
 		for gl in self.glue_data:
 			gs = self.glue_data[gl]
 			f = ET.SubElement(glue_func, "Function")
@@ -297,28 +548,6 @@ class TileEditorGUI:
 			s = ET.SubElement(f, "Strength")
 			s.text = str(gs)
 
-		#For each tile type on the board, save it to the xml file
-		for x in self.coord2tile:
-			for y in self.coord2tile[x]:
-				td = self.coord2tile[x][y]
-				tt = ET.SubElement(tile_config, "TileType")
-				t = ET.SubElement(tt, "Tile")
-				loc = ET.SubElement(t, "Location")
-				loc.set("x", str(td["location"]["x"]))
-				loc.set("y", str(td["location"]["y"]))
-				c = ET.SubElement(t, "Color")
-				c.text = str(td["color"]).replace("#", "")
-				ng = ET.SubElement(t, "NorthGlue")
-				ng.text = td["northGlue"]
-				sg = ET.SubElement(t, "SouthGlue")
-				sg.text = td["southGlue"]
-				eg = ET.SubElement(t, "EastGlue")
-				eg.text = td["eastGlue"]
-				wg = ET.SubElement(t, "WestGlue")
-				wg.text = td["westGlue"]
-				la = ET.SubElement(t, "Label")
-				la.text = td["label"]
-
 		#print tile_config
 		mydata = ET.tostring(tile_config)
 		file = open(filename+".xml", "w")
@@ -326,14 +555,19 @@ class TileEditorGUI:
 
 
 	def closeGUI(self):
-		self.w1.destroy()
-		self.w2.destroy()
+		self.newWindow.destroy()
+		self.newWindow.destroy()
+
+	def closeNewTileWindow(self):
+		self.addTileWindow.destroy()
 
 
 	class WindowResizeDialogue:
-		def __init__(self, parent, board_w, board_h):
+		def __init__(self, parent, tumbleEdit, board_w, board_h):
 
 			self.parent = parent
+
+			self.tumbleEdit = tumbleEdit
 
 			#self.bw = board_w
 			#self.bh = board_h
@@ -369,6 +603,7 @@ class TileEditorGUI:
 			self.w.wait_window(self.w)
 
 		def onApply(self):
+			self.tumbleEdit.resizeBoard(int(self.bw.get()), int(self.bh.get()))
 			self.pressed_apply = True
 			self.w.destroy()
 

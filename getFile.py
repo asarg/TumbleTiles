@@ -5,122 +5,169 @@ import xml.etree.ElementTree as ET
 import random
 import time
 import os,sys
+import tumbletiles as TT
 
 def getFile():
     return tkFileDialog.askopenfilename()
 
+#parse file will get the data from a file and now return both a board object and a preview tile object
 def parseFile(filename):
 
 
-    #print "doing stuff with "+filename
     tree = ET.parse(filename)
     treeroot = tree.getroot()
     #self.Log("\nLoad "+filename+"\n")
 
-    preview_tiles_exist = False
+    #default size of board, changes if new board size data is read from the file
+    rows = 15
+    columns = 15
+
+    boardSizeExits = False
+    glueFuncExists = False
+    previewTilesExist = False
+    tileDataExists = False
+
+    #check if the xml attributes are found
+    if tree.find("GlueFunction") != None:
+        glueFuncExists = True
+
     if tree.find("PreviewTiles") != None:
-        glue_index = False
-        preview_tiles_exist = True
+        previewTilesExist = True
 
-    gluefun = treeroot[0]
+    if tree.find("BoardSize") != None:
+        boardSizeExists = True
 
-    tile_set_data = {"prevTiles": [], "glueFunc": {}, "tileData": []}
+    if tree.find("TileData") != None:
+        tileDataExists = True
+
+
+
+
+    #data set that will be passed back to tumblegui
+    tile_set_data = {"glueFunc": {}, "prevTiles": [], "tileData": []}
+
+    if boardSizeExists:
+        rows = treeroot[0].attrib["height"]
+        columns = treeroot[0].attrib["width"]
+
+    #add glue function to the data set
+    if glueFuncExists:
+        glueFuncTree = treeroot[1]
+        for fun in glueFuncTree:
+            tile_set_data["glueFunc"][fun.find('Labels').attrib['L1']] = (fun.find('Strength').text)
+    
+    #add preview tiles to the data set
+    if previewTilesExist:
+        prevTilesTree = treeroot[2];
+        for prev in prevTilesTree:
+
+            newPrevTile = {}
+
+            newPrevTile["color"] = "#555555"
+            newPrevTile["northGlue"] = " "
+            newPrevTile["southGlue"] = " "
+            newPrevTile["westGlue"] = " "
+            newPrevTile["eastGlue"] = " "
+            newPrevTile["label"] = "X"
+            newPrevTile["concrete"] = " "
 
     
-    #flush board
-    #del tumble_board.Polyominoes[:]
-    #tumble_board.LookUp = {}
-    #tumble_t.GLUEFUNC = {}
-    #tumble_board = tumble_t.Board(tumble_t.BOARDHEIGHT,  tumble_t.BOARDWIDTH)
-    #print "get glue function"
-    for fun in gluefun:
-        tile_set_data["glueFunc"][fun.find('Labels').attrib['L1']] = (fun.find('Strength').text)
-        #tumble_t.GLUEFUNC[fun.find('Labels').attrib['L1']] = int(fun.find('Strength').text)
+
+            if prev.find('Color') != None:
+                if prev.find('Concrete').text == "True":
+                    newPrevTile["color"] = "#686868"
+                else:
+                    newPrevTile["color"] = "#" + prev.find('Color').text
+
+            if prev.find('NorthGlue') != None:
+                newPrevTile["northGlue"] = prev.find('NorthGlue').text
+
+            if prev.find('EastGlue') != None:
+                newPrevTile["eastGlue"] = prev.find('EastGlue').text
+
+            if prev.find('SouthGlue') != None:
+                newPrevTile["southGlue"] = prev.find('SouthGlue').text
+
+            if prev.find('WestGlue') != None:
+                newPrevTile["westGlue"] = prev.find('WestGlue').text
+
+            if prev.find('label') != None:
+                newPrevTile["label"] = prev.find('label').text
+
+            if prev.find('Concrete') != None:
+                newPrevTile["concrete"] = prev.find('Concrete').text
+
+            tile_set_data["prevTiles"].append(newPrevTile)
+
+
+    #add tile data to the data set, these are the tiles that will actually be loaded onto the plane
+    if tileDataExists:
+        tileDataTree = treeroot[3]
+        for tile in tileDataTree:
+
+            newTile = {}
+
+            newTile["location"] = {'x': 0, 'y': 0}
+            newTile["color"] = "#555555"
+            newTile["northGlue"] = " "
+            newTile["southGlue"] = " "
+            newTile["westGlue"] = " "
+            newTile["eastGlue"] = " "
+            newTile["label"] = "X"
+            newTile["concrete"] = " "
+
+            if tile.find('Location') != None:
+                newTile["location"]["x"] = int(tile.find('Location').attrib['x'])
+                newTile["location"]["y"] = int(tile.find('Location').attrib['y'])
+
+        
+            if tile.find('Color') != None:
+                if tile.find('Concrete').text == "True":
+                    newTile["color"] = "#686868"
+                else:
+                    newTile["color"] = "#" + tile.find('Color').text
+
+            if tile.find('NorthGlue') != None:
+                newTile["northGlue"] = tile.find('NorthGlue').text
+
+            if tile.find('EastGlue') != None:
+                newTile["eastGlue"] = tile.find('EastGlue').text
+
+            if tile.find('SouthGlue') != None:
+                newTile["southGlue"] = tile.find('SouthGlue').text
+
+            if tile.find('WestGlue') != None:
+                newTile["westGlue"] = tile.find('WestGlue').text
+
+            if tile.find('label') != None:
+                newTile["label"] = tile.find('label').text
+
+            if tile.find('Concrete') != None:
+                newTile["concrete"] = tile.find('Concrete').text
+        
+
+            tile_set_data["tileData"].append(newTile)
+
+    board = TT.Board(int(rows), int(columns))
+    glueFunc = tile_set_data["glueFunc"]
+    prevTiles = tile_set_data["prevTiles"]
+    prevTileList = []
+
+    for tile in tile_set_data["tileData"]:
+        if tile["concrete"] != "True":
+            glues = [tile["northGlue"],tile["eastGlue"],tile["southGlue"],tile["westGlue"]]
+            board.Add(TT.Polyomino(0, tile["location"]["x"], tile["location"]["y"], glues, tile["color"]))
+        else:
+            glues = []
+            board.AddConc(TT.Tile(None, 0, tile["location"]["x"], tile["location"]["y"], glues, tile["color"], "True"))
+
+    for prevTile in prevTiles:
+        prevGlues = [prevTile["northGlue"],prevTile["eastGlue"],prevTile["southGlue"],prevTile["westGlue"]]
+        prevTileList.append(TT.Tile( None, 0, 0, 0, prevGlues, prevTile["color"], prevTile["concrete"]))
+
     
-    tile_index = 1
-    if preview_tiles_exist:
-        tile_index = 2
-    for tt in treeroot[tile_index:]:
-        new_tile_data = {}
 
-        new_tile_data["location"] = {'x': 0, 'y': 0}
-        new_tile_data["color"] = "#555555"
-        new_tile_data["northGlue"] = " "
-        new_tile_data["southGlue"] = " "
-        new_tile_data["westGlue"] = " "
-        new_tile_data["eastGlue"] = " "
-        new_tile_data["label"] = "X"
+    data = [board, glueFunc, prevTileList]
 
 
-        if tt[0].find('Location') != None:
-            new_tile_data["location"]["x"] = int(tt[0].find('Location').attrib['x'])
-            new_tile_data["location"]["y"] = int(tt[0].find('Location').attrib['y'])
-
-        if tt[0].find('Color') != None:
-            new_tile_data["color"] = "#" + tt[0].find('Color').text
-
-        if tt[0].find('NorthGlue') != None:
-            new_tile_data["northGlue"] = tt[0].find('NorthGlue').text
-
-        if tt[0].find('EastGlue') != None:
-            new_tile_data["eastGlue"] = tt[0].find('EastGlue').text
-
-        if tt[0].find('SouthGlue') != None:
-            new_tile_data["southGlue"] = tt[0].find('SouthGlue').text
-
-        if tt[0].find('WestGlue') != None:
-            new_tile_data["westGlue"] = tt[0].find('WestGlue').text
-
-        if tt[0].find('label') != None:
-            new_tile_data["label"] = tt[0].find('label').text
-        
-        tile_set_data["tileData"].append(new_tile_data)
-
-    if not preview_tiles_exist:
-        return tile_set_data
-
-    for tt in treeroot[1]:
-        new_p_tile_data = {}
-
-        new_p_tile_data["location"] = {'x': 0, 'y': 0}
-        new_p_tile_data["color"] = "#555555"
-        new_p_tile_data["northGlue"] = " "
-        new_p_tile_data["southGlue"] = " "
-        new_p_tile_data["westGlue"] = " "
-        new_p_tile_data["eastGlue"] = " "
-        new_p_tile_data["label"] = "X"
-
-
-        if tt[0].find('Location') != None:
-            new_p_tile_data["location"]["x"] = int(tt[0].find('Location').attrib['x'])
-            new_p_tile_data["location"]["y"] = int(tt[0].find('Location').attrib['y'])
-
-        if tt[0].find('Color') != None:
-            new_p_tile_data["color"] = "#" + tt[0].find('Color').text
-
-        if tt[0].find('NorthGlue') != None:
-            new_p_tile_data["northGlue"] = tt[0].find('NorthGlue').text
-
-        if tt[0].find('EastGlue') != None:
-            new_p_tile_data["eastGlue"] = tt[0].find('EastGlue').text
-
-        if tt[0].find('SouthGlue') != None:
-            new_p_tile_data["southGlue"] = tt[0].find('SouthGlue').text
-
-        if tt[0].find('WestGlue') != None:
-            new_p_tile_data["westGlue"] = tt[0].find('WestGlue').text
-
-        if tt[0].find('label') != None:
-            new_p_tile_data["label"] = tt[0].find('label').text
-
-        tile_set_data["prevTiles"].append(new_p_tile_data)
-        
-        #ntile = tumble_t.Tile(ntlab, ntlocx, ntlocy,[ntnort,nteast,ntsouth,ntwest],ntcol)
-        #self.board.Add(tumble_t.Polyomino(ntile))
-        #self.board.SetGrid()
-        #self.RedrawCanvas()
-        #board.GridDraw()
-    #print TT.GLUEFUNC
-
-    #print "returning tile set"
-    return tile_set_data
+    return data
