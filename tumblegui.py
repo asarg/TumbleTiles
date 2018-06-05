@@ -28,7 +28,21 @@ LOGFILE = None
 LOGFILENAME = ""
 TILESIZE = 35
 VERSION = "1.5"
-LASTLOADEDFILE = "A"
+LASTLOADEDFILE = ""
+
+
+# https://stackoverflow.com/questions/19861689/check-if-modifier-key-is-pressed-in-tkinter
+MODS = {
+    0x0001: 'Shift',
+    0x0002: 'Caps Lock',
+    0x0004: 'Control',
+    0x0008: 'Left-hand Alt',
+    0x0010: 'Num Lock',
+    0x0080: 'Right-hand Alt',
+    0x0100: 'Mouse button 1',
+    0x0200: 'Mouse button 2',
+    0x0400: 'Mouse button 3'
+}
 
 
 class MsgAbout:
@@ -169,10 +183,11 @@ class tumblegui:
         #mouse
         self.w.bind("<Button-1>", self.callback)
         #arrow keys
-        self.root.bind("<Up>", self.key)
-        self.root.bind("<Right>", self.key)
-        self.root.bind("<Down>", self.key)
-        self.root.bind("<Left>", self.key)
+        self.root.bind("<Up>", self.keyPressed)
+        self.root.bind("<Right>", self.keyPressed)
+        self.root.bind("<Down>", self.keyPressed)
+        self.root.bind("<Left>", self.keyPressed)
+        self.root.bind("<Key>", self.keyPressed)
         self.w.pack() 
         
         #menu
@@ -294,7 +309,8 @@ class tumblegui:
         self.callCanvasRedraw()
 
     
-    def key(self, event):
+
+    def keyPressed(self, event):
         if event.keysym == "Up":
             self.MoveDirection("N")
         elif event.keysym == "Right":
@@ -303,6 +319,10 @@ class tumblegui:
             self.MoveDirection("S")
         elif event.keysym == "Left":
             self.MoveDirection("W")
+
+        elif event.keysym == "r" and MODS.get( event.state, None ) == 'Control':
+            self.reloadFile()
+
         
     def callback(self, event):
         global TILESIZE

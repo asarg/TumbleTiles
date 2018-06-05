@@ -245,7 +245,7 @@ class TileEditorGUI:
 
 	#fills the canvas with preview tiles
 	def popWinTiles(self):
-
+		global PREVTILESIZE
 		self.tilePrevCanvas.delete("all")
 		i = 0
 		for prevTile in self.prevTileList:
