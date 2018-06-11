@@ -29,6 +29,8 @@ LOGFILENAME = ""
 TILESIZE = 35
 VERSION = "1.5"
 LASTLOADEDFILE = ""
+LASTLOADEDSCRIPT = ""
+SCRIPTSPEED = .3
 
 
 # https://stackoverflow.com/questions/19861689/check-if-modifier-key-is-pressed-in-tkinter
@@ -244,10 +246,14 @@ class tumblegui:
         editormenu = Menu(self.menubar, tearoff=0)
         editormenu.add_command(label="Open Editor", command=self.editCurrentTiles)
         
-        
+        scriptmenu = Menu(self.menubar, tearoff=0)
+        scriptmenu.add_command(label="Run Script", command=self.loadScript)
+
+
         self.menubar.add_cascade(label="File", menu=filemenu)
         self.menubar.add_cascade(label="Settings", menu=settingsmenu)
         self.menubar.add_cascade(label="Editor", menu=editormenu)
+        self.menubar.add_cascade(label="Script", menu=scriptmenu)
         self.menubar.add_cascade(label="Help", menu=aboutmenu)
         self.root.config(menu=self.menubar)
         
@@ -273,9 +279,7 @@ class tumblegui:
         self.toolbar.pack(side=TOP, fill=X)
         
         self.mainframe.pack()
-        
-
-        
+    
         #other class variables
         self.gridcolor = "#000000"
         self.textcolor = "#000000"
@@ -286,6 +290,30 @@ class tumblegui:
     # sets the factory mode variable
     def setFactoryMode(self):
         TT.FACTORYMODE = self.tkFACTORYMODE.get()
+
+    # Gets the path of the script from the gui file browser
+    def loadScript(self):
+        global LASTLOADEDSCRIPT
+        filename = getFile()
+        LASTLOADEDSCRIPT = filename
+        file = open(filename, "r")
+        self.runScript(file)
+
+    # Call the sequence runner
+    def runScript(self, file):
+        script = file.readlines()[0].rstrip('\n')
+        self.runSequence(script)
+
+    # Steps through string in script and tumbles in that direction
+    def runSequence(self, sequence):
+        global SCRIPTSPEED
+
+        for x in range(0, len(sequence)):
+            time.sleep(SCRIPTSPEED)
+            self.MoveDirection(sequence[x])
+            print sequence[x], " - ",
+            
+            self.w.update_idletasks()
     
     def changetile(self):
         global TILESIZE
