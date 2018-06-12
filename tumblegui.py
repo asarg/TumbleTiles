@@ -404,7 +404,12 @@ class tumblegui:
     def picture(self):
         #https://stackoverflow.com/questions/41940945/saving-canvas-from-tkinter-to-file
         try:
-            filename = self.tkFileDialog.asksaveasfilename(initialdir = "./",title = "Select file",filetypes = (("jpeg files","*.jpg"),("all files","*.*")))
+            # filename = self.tkFileDialog.asksaveasfilename(initialdir = "./",title = "Select file",filetypes = (("jpeg files","*.jpg"),("all files","*.*")))
+            i = 0
+            while os.path.exists("Screenshots/%s.png" % i):
+                i += 1
+
+            filename = ("Screenshots/%s.png" % i)
             if filename != '':
                 time.sleep(1)
                 px = self.w.winfo_rootx() + self.w.winfo_x()
@@ -414,7 +419,7 @@ class tumblegui:
                 grabcanvas = ImageGrab.grab(bbox=(px,py,boardx,boardy)).save(filename)
         except Exception as e:
             print "Could not print for some reason"
-            #print e
+            print e
 
     def loadFile(self):
         global LASTLOADEDFILE
