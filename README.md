@@ -13,6 +13,7 @@ Implements the tumble tile model as designed by Robert Schweller and Tim Wylie. 
 
   Optional:
     -pyscreenshot: For screen capture (pip install pyscreenshot)
+    
     -imageio: For GIF export (pip install imageio)
 
 
