@@ -26,6 +26,7 @@ Section 1 - Application
     -Tkinter (installs with python usually)
   Optional:
     -pyscreenshot (install using pip)
+    -imageio (install using pip)
 
 
 ## 1.2 Usage
@@ -49,6 +50,12 @@ Main Menu
     - Grid Color
     - Show Locations
     - Board Options
+ + Editor
+    - Open Editor
+ + Script
+    - Record Script
+    - Run Script
+    - Export GIF
  + Help
     - About 
     
@@ -93,8 +100,18 @@ Main Menu
 1.4.2.7 Board Options
   This brings up the "Board Options" dialog box, which lets the user modify the size of the board (rows and columns in grid), and the ability to change the size of each cell/tile displayed.   
 
-1.4.3 Help Menu
-1.4.3.1 About
+1.4.3 Editor
+1.4.3.1 Open Editor
+  This loads the current board that is shown on the simulator into the editor
+1.4.4 Script
+1.4.4.1 Record Script
+  Clicking this once will start logging the tumbles that the board makes, clicking again will save this file
+1.4.4.2 Run Script
+  This will let you open a file that contains a sequence of directions e.g "NWSNESNWENSNNESWNENS", it will then play them back in the simulator
+1.4.4.3 Export GIF
+  This will run a script and record an image after each tumble, it will then combine these images into a gif and save it in ./Gifs/
+1.4.5 Help Menu
+1.4.5.1 About
   Standard about menu showing the current version, author, and the all-important contact email for any issues whatsoever. Even if you just want to chat, or are having a hard day, contact this email and get help.
   
 ## 1.3 Controls
