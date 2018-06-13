@@ -606,7 +606,9 @@ class tumblegui:
 
     #Opens the editor and loads the cuurent tiles from the simulator
     def editCurrentTiles(self):
+        global TILESIZE
         self.glueFunc = TT.GLUEFUNC
+        TE.TILESIZE = TILESIZE
         TGBox = TE.TileEditorGUI(self.root, self, self.board, self.glueFunc, self.prevTileList)
     
     #Turns the list of polyominoes and concrete tiles into a list of tiles including their position
