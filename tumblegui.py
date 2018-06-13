@@ -14,6 +14,7 @@ import tumbleEdit as TE
 from getFile import getFile, parseFile
 from boardgui import redrawCanvas, drawGrid
 import os,sys
+import imageio as io
 #https://pypi.python.org/pypi/pyscreenshot
 
 try:
@@ -26,9 +27,13 @@ except ImportError:
 
 LOGFILE = None
 LOGFILENAME = ""
-TILESIZE = 35
+TILESIZE = 25
 VERSION = "1.5"
 LASTLOADEDFILE = ""
+LASTLOADEDSCRIPT = ""
+SCRIPTSPEED = .3
+RECORDING = False
+SCRIPTSEQUENCE = ""
 
 
 # https://stackoverflow.com/questions/19861689/check-if-modifier-key-is-pressed-in-tkinter
@@ -188,31 +193,32 @@ class tumblegui:
         self.root.bind("<Down>", self.keyPressed)
         self.root.bind("<Left>", self.keyPressed)
         self.root.bind("<Key>", self.keyPressed)
-        self.w.pack() 
+        self.w.pack()
+
         
         #menu
         #menu - https://www.tutorialspoint.com/python/tk_menu.htm
         self.menubar = Menu(self.root, relief=RAISED)
-        filemenu = Menu(self.menubar, tearoff=0)
-        filemenu.add_command(label="Example", command=self.CreateInitial)
+        self.filemenu = Menu(self.menubar, tearoff=0)
+        self.filemenu.add_command(label="Example", command=self.CreateInitial)
         #filemenu.add_command(label="Generate Tiles", command=self.openTileEditDial)
-        filemenu.add_command(label="Load", command = lambda: self.loadFile())
-        filemenu.add_command(label="Reload Last File", command = lambda: self.reloadFile()) 
+        self.filemenu.add_command(label="Load", command = lambda: self.loadFile())
+        self.filemenu.add_command(label="Reload Last File", command = lambda: self.reloadFile()) 
         
         self.tkLOG = BooleanVar()
         self.tkLOG.set(False)
-        filemenu.add_checkbutton(label="Log Actions",onvalue=True, offvalue=False, variable=self.tkLOG,command=self.EnableLogging)
+        self.filemenu.add_checkbutton(label="Log Actions",onvalue=True, offvalue=False, variable=self.tkLOG,command=self.EnableLogging)
         
         if PYSCREEN == True:
-            filemenu.add_command(label="Picture", command=self.picture)
+            self.filemenu.add_command(label="Picture", command=self.picture)
         else:
-            filemenu.add_command(label="Picture", command=self.picture, state=DISABLED)
+            self.filemenu.add_command(label="Picture", command=self.picture, state=DISABLED)
             
-        filemenu.add_separator()
-        filemenu.add_command(label="Exit", command=self.root.quit)
+        self.filemenu.add_separator()
+        self.filemenu.add_command(label="Exit", command=self.root.quit)
         
-        aboutmenu = Menu(self.menubar, tearoff=0)
-        aboutmenu.add_command(label="About", command=self.about)
+        self.aboutmenu = Menu(self.menubar, tearoff=0)
+        self.aboutmenu.add_command(label="About", command=self.about)
 
         
         
@@ -227,28 +233,39 @@ class tumblegui:
         self.tkSHOWLOC.set(False)
         self.tkFACTORYMODE = BooleanVar()
         self.tkFACTORYMODE.set(False)
+
+        # This text will change from "Record Script" to "Stop Recording"
+        self.recordScriptText = "Record Script"
        
         
-        settingsmenu = Menu(self.menubar, tearoff=0)
-        settingsmenu.add_checkbutton(label="Single Step", onvalue=True, offvalue=False, variable=self.tkSTEPVAR) #,command=stepmodel)
-        settingsmenu.add_checkbutton(label="Glue on Step", onvalue=True, offvalue=False, variable=self.tkGLUESTEP) #,state=DISABLED)
-        settingsmenu.add_separator()
-        settingsmenu.add_command(label="Background Color", command=self.changecanvas)
-        settingsmenu.add_checkbutton(label="Show Grid", onvalue=True, offvalue=False, variable=self.tkDRAWGRID, command = lambda: self.callCanvasRedraw())
-        settingsmenu.add_command(label="Grid Color", command=self.changegridcolor)
-        settingsmenu.add_checkbutton(label="Show Locations", onvalue=True, offvalue=False, variable=self.tkSHOWLOC, command = lambda: self.callCanvasRedraw())
-        settingsmenu.add_separator()
-        settingsmenu.add_command(label="Board Options", command=self.changetile)
-        settingsmenu.add_checkbutton(label="Factory Mode", onvalue=True, offvalue=False, variable= self.tkFACTORYMODE, command= self.setFactoryMode)
+        self.settingsmenu = Menu(self.menubar, tearoff=0)
+        self.settingsmenu.add_checkbutton(label="Single Step", onvalue=True, offvalue=False, variable=self.tkSTEPVAR) #,command=stepmodel)
+        self.settingsmenu.add_checkbutton(label="Glue on Step", onvalue=True, offvalue=False, variable=self.tkGLUESTEP) #,state=DISABLED)
+        self.settingsmenu.add_separator()
+        self.settingsmenu.add_command(label="Background Color", command=self.changecanvas)
+        self.settingsmenu.add_checkbutton(label="Show Grid", onvalue=True, offvalue=False, variable=self.tkDRAWGRID, command = lambda: self.callCanvasRedraw())
+        self.settingsmenu.add_command(label="Grid Color", command=self.changegridcolor)
+        self.settingsmenu.add_checkbutton(label="Show Locations", onvalue=True, offvalue=False, variable=self.tkSHOWLOC, command = lambda: self.callCanvasRedraw())
+        self.settingsmenu.add_separator()
+        self.settingsmenu.add_command(label="Board Options", command=self.changetile)
+        self.settingsmenu.add_checkbutton(label="Factory Mode", onvalue=True, offvalue=False, variable= self.tkFACTORYMODE, command= self.setFactoryMode)
 
-        editormenu = Menu(self.menubar, tearoff=0)
-        editormenu.add_command(label="Open Editor", command=self.editCurrentTiles)
+        
+
+        self.editormenu = Menu(self.menubar, tearoff=0)
+        self.editormenu.add_command(label="Open Editor", command=self.editCurrentTiles)
         
         
-        self.menubar.add_cascade(label="File", menu=filemenu)
-        self.menubar.add_cascade(label="Settings", menu=settingsmenu)
-        self.menubar.add_cascade(label="Editor", menu=editormenu)
-        self.menubar.add_cascade(label="Help", menu=aboutmenu)
+        self.scriptmenu = Menu(self.menubar, tearoff=0)
+        self.scriptmenu.add_command(label=self.recordScriptText, command=self.recordScript)
+        self.scriptmenu.add_command(label="Run Script", command=self.loadScript)
+        self.scriptmenu.add_command(label="Export as Gif", command=self.createGif)
+
+        self.menubar.add_cascade(label="File", menu=self.filemenu)
+        self.menubar.add_cascade(label="Settings", menu=self.settingsmenu)
+        self.menubar.add_cascade(label="Editor", menu=self.editormenu)
+        self.menubar.add_cascade(label="Script", menu=self.scriptmenu)
+        self.menubar.add_cascade(label="Help", menu=self.aboutmenu)
         self.root.config(menu=self.menubar)
         
         #toolbar
@@ -273,7 +290,11 @@ class tumblegui:
         self.toolbar.pack(side=TOP, fill=X)
         
         self.mainframe.pack()
-        
+
+
+        toolbarframeheight = 24
+        self.w.config(width=self.board.Cols*TILESIZE, height=self.board.Rows*TILESIZE)
+        self.root.geometry(str(self.board.Cols*TILESIZE)+'x'+str(self.board.Rows*TILESIZE+toolbarframeheight))
 
         
         #other class variables
@@ -283,9 +304,52 @@ class tumblegui:
         self.callGridDraw()
         self.CreateInitial()
 
-    # sets the factory mode variable
+    # Sets the factory mode variable
     def setFactoryMode(self):
         TT.FACTORYMODE = self.tkFACTORYMODE.get()
+
+    def recordScript(self):
+        global RECORDING
+        global SCRIPTSEQUENCE
+
+        if not RECORDING:
+            RECORDING = True
+            SCRIPTSEQUENCE = ""
+            self.scriptmenu.entryconfigure(0, label='Stop Recording')
+        elif RECORDING:
+            self.scriptmenu.entryconfigure(0, label='Record Script')
+            filename = tkFileDialog.asksaveasfilename()
+            file = open(filename, 'w+')
+            file.write(SCRIPTSEQUENCE)
+            file.close()
+            RECORDING = False
+
+
+
+
+    # Gets the path of the script from the gui file browser
+    def loadScript(self):
+        global LASTLOADEDSCRIPT
+        filename = getFile()
+        LASTLOADEDSCRIPT = filename
+        file = open(filename, "r")
+        self.runScript(file)
+
+    # Call the sequence runner
+    def runScript(self, file):
+        script = file.readlines()[0].rstrip('\n')
+        self.runSequence(script)
+
+    # Steps through string in script and tumbles in that direction
+    def runSequence(self, sequence):
+        global SCRIPTSPEED
+
+        for x in range(0, len(sequence)):
+            time.sleep(SCRIPTSPEED)
+            self.MoveDirection(sequence[x])
+            print sequence[x], " - ",
+            
+            self.w.update_idletasks()
     
     def changetile(self):
         global TILESIZE
@@ -309,7 +373,7 @@ class tumblegui:
         self.callCanvasRedraw()
 
     
-
+    # Handles the arrow keys to call the tumbling and the shortcuts for file options
     def keyPressed(self, event):
         if event.keysym == "Up":
             self.MoveDirection("N")
@@ -323,7 +387,7 @@ class tumblegui:
         elif event.keysym == "r" and MODS.get( event.state, None ) == 'Control':
             self.reloadFile()
 
-        
+    
     def callback(self, event):
         global TILESIZE
 
@@ -341,8 +405,15 @@ class tumblegui:
                 
         except:
             pass
-                
+    
+    # Tumbles the board in a direction, then redraws the Canvas        
     def MoveDirection(self, direction):
+        global RECORDING
+        global SCRIPTSEQUENCE
+
+        if RECORDING:
+            SCRIPTSEQUENCE = SCRIPTSEQUENCE + direction
+
         try:            
             #board.GridDraw()
             #normal
@@ -372,11 +443,18 @@ class tumblegui:
             print e
             print sys.exc_info()[0]
             #pass
-    
+
+
+    # Uses pyscreenshot to save an image of the canvas
     def picture(self):
         #https://stackoverflow.com/questions/41940945/saving-canvas-from-tkinter-to-file
         try:
-            filename = self.tkFileDialog.asksaveasfilename(initialdir = "./",title = "Select file",filetypes = (("jpeg files","*.jpg"),("all files","*.*")))
+            # filename = self.tkFileDialog.asksaveasfilename(initialdir = "./",title = "Select file",filetypes = (("jpeg files","*.jpg"),("all files","*.*")))
+            i = 0
+            while os.path.exists("Screenshots/%s.png" % i):
+                i += 1
+
+            filename = ("Screenshots/%s.png" % i)
             if filename != '':
                 time.sleep(1)
                 px = self.w.winfo_rootx() + self.w.winfo_x()
@@ -386,8 +464,64 @@ class tumblegui:
                 grabcanvas = ImageGrab.grab(bbox=(px,py,boardx,boardy)).save(filename)
         except Exception as e:
             print "Could not print for some reason"
-            #print e
+            print e
 
+    # This function will load a script (sequence of directions to tumble) and
+    # step through it, it will save a temp image in ./Gifs/ and compile these
+    # into a gif
+    def createGif(self):
+
+        filename = getFile()
+        file = open(filename, "r")
+
+        images = []
+
+        sequence = file.readlines()[0].rstrip('\n')
+
+        # If path does not exist, create it
+        if not os.path.exists("Gifs"):
+            os.makedirs("Gifs")
+
+        x = 0
+        y = 0
+        z = 0
+        while os.path.exists("Gifs/%s%s%s.gif" % (x, y, z)):
+            z = z + 1
+            if z == 10:
+                z = 0
+                y = y + 1
+            if y == 10:
+                y = 0
+                x = x + 1
+
+        gifPath = ("Gifs/%s%s%s.gif" % (x, y, z))
+
+
+
+
+        for x in range(0, len(sequence)):
+            imagePath = "Gifs/temp.png"
+            time.sleep(.3)
+            self.MoveDirection(sequence[x])
+            px = self.w.winfo_rootx() + self.w.winfo_x()
+            py = self.w.winfo_rooty() + self.w.winfo_y()
+            boardx = px + self.w.winfo_width() 
+            boardy = py + self.w.winfo_height()
+            grabcanvas = ImageGrab.grab(bbox=(px,py,boardx,boardy)).save(imagePath)
+            image = io.imread(imagePath)
+
+            images.append(image)
+            if x ==  0 or x == len(sequence) - 1:
+                images.append(image)
+                images.append(image)
+            
+            self.w.update_idletasks()
+        io.mimsave(gifPath, images, fps = 2)
+
+        if os.path.exists("Gifs/temp.png"):
+            os.remove("Gifs/temp.png")
+
+    # Opens the GUI file browser
     def loadFile(self):
         global LASTLOADEDFILE
         filename = getFile()
@@ -399,6 +533,8 @@ class tumblegui:
         global LASTLOADEDFILE
         self.loadTileSet(LASTLOADEDFILE)
 
+    # Gets the board data, preview tile data, and glue data from getFile.py, modifies all thses
+    # accordingly, then redraws the canvas
     def loadTileSet(self, filename):
         
 
@@ -470,7 +606,9 @@ class tumblegui:
 
     #Opens the editor and loads the cuurent tiles from the simulator
     def editCurrentTiles(self):
+        global TILESIZE
         self.glueFunc = TT.GLUEFUNC
+        TE.TILESIZE = TILESIZE
         TGBox = TE.TileEditorGUI(self.root, self, self.board, self.glueFunc, self.prevTileList)
     
     #Turns the list of polyominoes and concrete tiles into a list of tiles including their position
@@ -526,6 +664,7 @@ class tumblegui:
         self.resizeBoardAndCanvas()
         self.callCanvasRedraw()
 
+    # Creates the initial configuration that shows then you open the gui
     def CreateInitial(self):
         
         self.Log("\nLoad initial\n")
