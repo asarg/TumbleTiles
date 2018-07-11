@@ -14,7 +14,7 @@ import tumbleEdit as TE
 from getFile import getFile, parseFile
 from boardgui import redrawCanvas, drawGrid
 import os,sys
-import imageio as io
+
 #https://pypi.python.org/pypi/pyscreenshot
 
 try:
@@ -24,6 +24,13 @@ try:
     PYSCREEN = True
 except ImportError:
     PYSCREEN = False
+try:
+    IMAGEIO = False
+    import imageio as io
+    IMAGEIO = True
+except ImportError:
+    IMAGEIO = False
+
 
 LOGFILE = None
 LOGFILENAME = ""
