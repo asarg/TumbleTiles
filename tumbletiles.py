@@ -16,6 +16,8 @@ GLUEFUNC = {'N':1, 'E':1, 'S':1, 'W':1,}
 BOARDHEIGHT = 15
 BOARDWIDTH = 15
 FACTORYMODE = False
+N = 0
+COLORCHANGE = False
 
 
 
@@ -95,7 +97,7 @@ class Polyomino:
         self.NumTiles = len(self.Tiles)
         for t in self.Tiles:
             t.symbol = sym
-            if not FACTORYMODE:
+            if False:
                 t.color = color
             t.parent = parent
             
@@ -195,7 +197,7 @@ class Board:
         #a 2 dimensional dict that will be used to find a tile from its position on the board, this should make LookUp redundant
         # and can also speed up ActivateGlues, since right now it runs in O(P * P * N) time since it compares every tile of every polyominoe
         # to every tile of every other polyomino
-        self.coordToTile = [[None for x in range(self.Cols)] for y in range(self.Rows)]
+        self.coordToTile = [[None for x in range(self.Rows)] for y in range(self.Cols)]
 
 
 
@@ -289,6 +291,7 @@ class Board:
 
     # Repeatedly calls Step() in a direction until Step() returns false, then Activates the glues and sets the grid again
     def Tumble(self, direction):
+        print(len(self.Polyominoes))
         
         if direction == "N" or direction == "S" or direction == "E" or direction == "W":
             StepTaken = self.Step(direction)
@@ -300,7 +303,7 @@ class Board:
 
 
         # If in factory mode tiles will be removed if they hit the bottom wall
-        if FACTORYMODE:
+        if False:
             for p in self.Polyominoes:
                 for tile in p.Tiles:
                     if tile.y >= self.Rows - 1:
@@ -432,12 +435,16 @@ class Board:
 
     # Assignes every tile to its new correct position in coordToTile
     def remapArray(self):
-        self.coordToTile = [[None for x in range(self.Cols)] for y in range(self.Rows)]
+        global N
+        self.coordToTile = [[None for x in range(self.Rows)] for y in range(self.Cols)]
         for p in self.Polyominoes:
             for tile in p.Tiles:
+                N = N + 1
                 self.coordToTile[tile.x][tile.y] = tile
         for conc in self.ConcreteTiles:
-                self.coordToTile[conc.x][conc.y] = conc
+            N = N + 1
+            self.coordToTile[conc.x][conc.y] = conc
+        print(N)
 
     # Debugging method
     def printAllTileLocations(self):
