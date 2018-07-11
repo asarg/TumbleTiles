@@ -284,7 +284,7 @@ class TileEditorGUI:
 		i = 0
 		for prevTile in self.prevTileList:
 			# PREVTILESIZE = TILESIZE * 2
-			PREVTILESTARTX = PREVTILESIZE * .4
+			PREVTILESTARTX = (70 - PREVTILESIZE) / 2
 		 	x = (70 - PREVTILESIZE) / 2
 		 	y = PREVTILESTARTY + 80 * i
 		 	size = PREVTILESIZE
