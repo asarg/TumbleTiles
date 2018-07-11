@@ -33,13 +33,15 @@ def redrawCanvas(board, boardwidth, boardheight, canvas, tilesize, textcolor = "
 
 def drawGrid(board, boardwidth, boardheight, canvas, tilesize, gridcolor = "#000000", b_drawGrid = False, b_drawLoc = False):
 
-    if b_drawGrid == True:
-        for row in range(board.Rows):
-            canvas.create_line(0, row*tilesize, boardwidth*tilesize, row*tilesize, fill=gridcolor, width=.50)
-        for col in range(board.Cols):
-            canvas.create_line(col*tilesize, 0, col*tilesize, boardheight*tilesize, fill=gridcolor, width=.50)
+
+	if b_drawGrid == True:
+		for row in range(board.Rows):
+			canvas.create_line(0, row*tilesize, boardwidth*tilesize, row*tilesize, fill=gridcolor, width=.50)
+		for col in range(board.Cols):
+			canvas.create_line(col*tilesize, 0, col*tilesize, boardheight*tilesize, fill=gridcolor, width=.50)
                 
-    if b_drawLoc == True:
-        for row in range(boardheight):
-            for col in range(boardwidth):
-                canvas.create_text(tilesize*(col+1) - tilesize/2, tilesize*(row+1) - tilesize/2, text = "("+str(row)+","+str(col)+")", fill=gridcolor,font=('',tilesize/5))
+	if b_drawLoc == True:
+		for row in range(boardheight):
+			for col in range(boardwidth):
+				canvas.create_text(tilesize*(col+1) - tilesize/2, tilesize*(row+1) - tilesize/2, text = "("+str(row)+","+str(col)+")", fill=gridcolor,font=('',tilesize/5))
+

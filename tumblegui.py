@@ -28,7 +28,7 @@ except ImportError:
 LOGFILE = None
 LOGFILENAME = ""
 TILESIZE = 25
-VERSION = "1.5"
+VERSION = "2.0"
 LASTLOADEDFILE = ""
 LASTLOADEDSCRIPT = ""
 SCRIPTSPEED = .3
@@ -114,10 +114,10 @@ class Settings:
         self.tilesize_sbx = Spinbox(self.t, from_=10, to=100, width=5, increment=5, textvariable=self.tkTILESIZE).grid(row=0, column=1, padx=5, pady=5)
         #board width
         self.l2 = Label(self.t, text="Board Width").grid(row=1, column=0, padx=5, pady=5, sticky=W)
-        self.boardwidth_sbx = Spinbox(self.t, from_=10, to=100, width=5,  textvariable=self.tkBOARDWIDTH).grid(row=1, column=1, padx=5, pady=5)
+        self.boardwidth_sbx = Spinbox(self.t, from_=10, to=500, width=5,  textvariable=self.tkBOARDWIDTH).grid(row=1, column=1, padx=5, pady=5)
         #board height
         self.l3 = Label(self.t, text="Board Height").grid(row=2, column=0,  padx=5, pady=5, sticky=W)
-        self.boardheight_sbx = Spinbox(self.t, from_=10, to=100, width=5, textvariable=self.tkBOARDHEIGHT).grid(row=2, column=1,  padx=5, pady=5)
+        self.boardheight_sbx = Spinbox(self.t, from_=10, to=500, width=5, textvariable=self.tkBOARDHEIGHT).grid(row=2, column=1,  padx=5, pady=5)
         #temperature
         self.l4 = Label(self.t, text="Temperature").grid(row=3, column=0,  padx=5, pady=5, sticky=W)
         self.temperature_sbx = Spinbox(self.t, from_=1, to=10, width=5, textvariable=self.tkTEMP).grid(row=3, column=1,  padx=5, pady=5)
@@ -362,6 +362,7 @@ class tumblegui:
         
         self.board.Cols = TT.BOARDWIDTH
         self.board.Rows = TT.BOARDHEIGHT
+        self.board.remapArray()
         #resize canvas
         self.w.config(width=self.board.Cols*TILESIZE, height=self.board.Rows*TILESIZE)
         self.tkWidthText.set(self.board.Cols)
