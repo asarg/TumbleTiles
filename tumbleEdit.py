@@ -52,7 +52,6 @@ class TileEditorGUI:
 		#`w1` will be the tile editor
 		#`w2` will be a tile config previewer
 
-		print "board.Cols: ", board.Cols, "board.Rows: ", board.Rows
 		self.parent = parent
 		self.board = board
 		self.board_w = board.Cols
@@ -219,7 +218,6 @@ class TileEditorGUI:
 
 	def createTile(self):
 
-		print "N ", self.newTileN.get(), "E ", self.newTileE.get(), "S ", self.newTileS.get(), "W ", self.newTileW.get(),
 		r = lambda: random.randint(100,255)
 
 		newPrevTile = {}
@@ -231,7 +229,6 @@ class TileEditorGUI:
 		southGlue = self.newTileS.get()
 		westGlue = self.newTileW.get()
 		label = "x"
-		print "concreteChecked: ", self.concreteChecked.get()
 		if self.concreteChecked.get() == 1:
 			print("adding concrete")
 			isConcrete = "True"
@@ -320,10 +317,6 @@ class TileEditorGUI:
 				self.coord2tile[tile.x][tile.y] = tile
 		for conc in self.board.ConcreteTiles:
 			self.coord2tile[conc.x][conc.y] = conc
-
-	def populateBoard(self):
-		#flush the board
-		print("a")
 
 
 
@@ -440,7 +433,6 @@ class TileEditorGUI:
 		global SELECTIONX2
 		global SELECTIONY2
 
-		print "selecting, ", x, y
 
 
 		if not SELECTIONSTARTED:
@@ -498,7 +490,6 @@ class TileEditorGUI:
 			self.board.coordToTile[x][y] = None
 
 		#self.verifyTileLocations()
-		self.populateBoard()
 		self.redrawPrev()
 
 		
@@ -506,8 +497,6 @@ class TileEditorGUI:
 	def addTileAtPos(self, x, y):
 		
 		i = self.selectedTileIndex
-		print "X: ", x, "Y: ", y
-		print "self.board.coordToTile", len(self.board.coordToTile), len(self.board.coordToTile[0])
 		if self.board.coordToTile[x][y] != None:
 			return
 
@@ -530,9 +519,7 @@ class TileEditorGUI:
 
 
 		#self.verifyTileLocations()
-		print("tile added")
 		self.redrawPrev()
-		print("window redrawn")
 
 	def verifyTileLocations(self):
 		verified = True

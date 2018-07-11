@@ -1,7 +1,6 @@
 from Tkinter import *
 
 def redrawCanvas(board, boardwidth, boardheight, canvas, tilesize, textcolor = "#000000", gridcolor = "#000000", b_drawGrid = False, b_drawLoc = False):
-	print("drawing tiles")
 	canvas.delete(ALL)
 	drawGrid(board, boardwidth, boardheight, canvas, tilesize, gridcolor, b_drawGrid, b_drawLoc)
 
@@ -31,11 +30,9 @@ def redrawCanvas(board, boardwidth, boardheight, canvas, tilesize, textcolor = "
 	for c in board.ConcreteTiles:
 		canvas.create_rectangle(tilesize*c.x, tilesize*c.y, tilesize*c.x + tilesize, tilesize*c.y + tilesize, fill = "#686868")
 
-	print("done")
 
 def drawGrid(board, boardwidth, boardheight, canvas, tilesize, gridcolor = "#000000", b_drawGrid = False, b_drawLoc = False):
 
-	print("drawing grid")
 
 	if b_drawGrid == True:
 		for row in range(board.Rows):
@@ -48,4 +45,3 @@ def drawGrid(board, boardwidth, boardheight, canvas, tilesize, gridcolor = "#000
 			for col in range(boardwidth):
 				canvas.create_text(tilesize*(col+1) - tilesize/2, tilesize*(row+1) - tilesize/2, text = "("+str(row)+","+str(col)+")", fill=gridcolor,font=('',tilesize/5))
 
-	print("done")

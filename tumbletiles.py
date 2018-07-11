@@ -16,8 +16,8 @@ GLUEFUNC = {'N':1, 'E':1, 'S':1, 'W':1,}
 BOARDHEIGHT = 15
 BOARDWIDTH = 15
 FACTORYMODE = False
-N = 0
 COLORCHANGE = False
+
 
 
 
@@ -291,7 +291,6 @@ class Board:
 
     # Repeatedly calls Step() in a direction until Step() returns false, then Activates the glues and sets the grid again
     def Tumble(self, direction):
-        print(len(self.Polyominoes))
         
         if direction == "N" or direction == "S" or direction == "E" or direction == "W":
             StepTaken = self.Step(direction)
@@ -435,16 +434,12 @@ class Board:
 
     # Assignes every tile to its new correct position in coordToTile
     def remapArray(self):
-        global N
         self.coordToTile = [[None for x in range(self.Rows)] for y in range(self.Cols)]
         for p in self.Polyominoes:
             for tile in p.Tiles:
-                N = N + 1
                 self.coordToTile[tile.x][tile.y] = tile
         for conc in self.ConcreteTiles:
-            N = N + 1
             self.coordToTile[conc.x][conc.y] = conc
-        print(N)
 
     # Debugging method
     def printAllTileLocations(self):
