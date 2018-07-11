@@ -266,7 +266,11 @@ class tumblegui:
         self.scriptmenu = Menu(self.menubar, tearoff=0)
         self.scriptmenu.add_command(label=self.recordScriptText, command=self.recordScript)
         self.scriptmenu.add_command(label="Run Script", command=self.loadScript)
-        self.scriptmenu.add_command(label="Export as Gif", command=self.createGif)
+
+        if IMAGEIO == True:
+            self.scriptmenu.add_command(label="Export as Gif", command=self.createGif)
+        else:
+            self.scriptmenu.add_command(label="Export as Gif", command=self.createGif, state=DISABLED)
 
         self.menubar.add_cascade(label="File", menu=self.filemenu)
         self.menubar.add_cascade(label="Settings", menu=self.settingsmenu)
