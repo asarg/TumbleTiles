@@ -14,7 +14,7 @@ import tumbleEdit as TE
 from getFile import getFile, parseFile
 from boardgui import redrawCanvas, drawGrid
 import os,sys
-import imageio as io
+
 #https://pypi.python.org/pypi/pyscreenshot
 
 try:
@@ -24,6 +24,13 @@ try:
     PYSCREEN = True
 except ImportError:
     PYSCREEN = False
+try:
+    IMAGEIO = False
+    import imageio as io
+    IMAGEIO = True
+except ImportError:
+    IMAGEIO = False
+
 
 LOGFILE = None
 LOGFILENAME = ""
@@ -259,7 +266,11 @@ class tumblegui:
         self.scriptmenu = Menu(self.menubar, tearoff=0)
         self.scriptmenu.add_command(label=self.recordScriptText, command=self.recordScript)
         self.scriptmenu.add_command(label="Run Script", command=self.loadScript)
-        self.scriptmenu.add_command(label="Export as Gif", command=self.createGif)
+
+        if IMAGEIO == True:
+            self.scriptmenu.add_command(label="Export as Gif", command=self.createGif)
+        else:
+            self.scriptmenu.add_command(label="Export as Gif", command=self.createGif, state=DISABLED)
 
         self.menubar.add_cascade(label="File", menu=self.filemenu)
         self.menubar.add_cascade(label="Settings", menu=self.settingsmenu)
