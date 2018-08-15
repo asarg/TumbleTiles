@@ -152,6 +152,7 @@ class TileEditorGUI:
 		#Used to tell when a tile is trying to be placed, will send the event to onBoardClick to determine the location
 		self.BoardCanvas.bind("<Button-1>", lambda event: self.onBoardClick(event)) # -- LEFT CLICK
 		self.BoardCanvas.bind("<Button-3>", lambda event: self.onBoardClick(event)) # -- RIGHT CLICK
+		self.BoardCanvas.bind("<Button-2>", lambda event: self.onBoardClick(event)) 
 
 		self.tilePrevCanvas = Canvas(self.tileEditorFrame, width = 70, height = self.height)
 		self.tilePrevCanvas.pack(side=BOTTOM)
@@ -460,6 +461,7 @@ class TileEditorGUI:
 		if sys.platform == 'darwin': #value for OSX
 			rightClick =  2
 
+		print(event.num)
 
 		#Determine the position on the board the player clicked
 
