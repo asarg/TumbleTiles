@@ -157,7 +157,7 @@ class TileEditorGUI:
 		self.tilePrevCanvas.pack(side=BOTTOM)
 
 
-		#draw the board on the canvas
+		#draw the board on the canvas os
 		self.popWinTiles()
 		self.redrawPrev()
 
@@ -452,8 +452,18 @@ class TileEditorGUI:
 		global CURRENTSELECTIONX
 		global CURRENTSELECTIONY
 
+
+		#sets right and left click depending on os
+		leftClick = 1
+		rightClick = 3
+
+		if sys.platform == 'darwin': #value for OSX
+			rightClick =  2
+
+
 		#Determine the position on the board the player clicked
-		
+
+
 
 		x = (event.x/self.tile_size)
 		y = (event.y/self.tile_size)
@@ -464,9 +474,9 @@ class TileEditorGUI:
 
 		if MODS.get( event.state, None ) == 'Control':
 			self.CtrlSelect(x,y)
-		elif self.remove_state or event.num == 3:
+		elif self.remove_state or event.num == rightClick:
 			self.removeTileAtPos(event.x/self.tile_size, event.y/self.tile_size)
-		elif self.add_state and event.num == 1:
+		elif self.add_state and event.num == leftClick:
 			self.addTileAtPos(event.x/self.tile_size, event.y/self.tile_size)
 
 		elif event.keysym == "r" and MODS.get( event.state, None ) == 'Control':
