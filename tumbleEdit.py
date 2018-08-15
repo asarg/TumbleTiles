@@ -23,15 +23,13 @@ NEWTILEWINDOW_H = 180
 # Used to know where to paste a selection that was made
 CURRENTSELECTION = 0
 
-# Defines the area of a selection
-SELECTIONX1 = 0
-SELECTIONY1 = 0
-SELECTIONX2 = 0
-SELECTIONY2 = 0
+
+
 
 #Defines the current state of selecting an area
 SELECTIONSTARTED = False
 SELECTIONMADE = True
+COPYMADE = False
 
 MODS = {
     0x0001: 'Shift',
@@ -99,6 +97,8 @@ class TileEditorGUI:
 		self.newTileW = StringVar()
 		self.concreteChecked = IntVar()
 
+
+
 		#populate the array
 		self.populateArray()
 
@@ -154,6 +154,24 @@ class TileEditorGUI:
 		self.BoardCanvas.bind("<Button-3>", lambda event: self.onBoardClick(event)) # -- RIGHT CLICK
 		self.BoardCanvas.bind("<Button-2>", lambda event: self.onBoardClick(event)) 
 
+
+		#Location of last square clicked
+		self.CURRENTCLICKX = 0
+		self.CURRENTCLICKY = 0
+
+		# Defines the area of a selection
+		self.SELECTIONX1 = 0
+		self.SELECTIONY1 = 0
+		self.SELECTIONX2 = 0
+		self.SELECTIONY2 = 0
+
+		#Selection box that appears when ctrl clicking
+		self.selection = self.BoardCanvas.create_rectangle(0, 0, 0, 0, fill = "#0000FF", stipple="gray50")
+		self.squareSelection = self.BoardCanvas.create_rectangle(0, 0, 0, 0, fill = "#0000FF", stipple="gray50")
+
+		# Contains the data of a copied region
+		self.copiedSelection =  []
+
 		self.tilePrevCanvas = Canvas(self.tileEditorFrame, width = 70, height = self.height)
 		self.tilePrevCanvas.pack(side=BOTTOM)
 
@@ -161,6 +179,33 @@ class TileEditorGUI:
 		#draw the board on the canvas os
 		self.popWinTiles()
 		self.redrawPrev()
+
+
+
+	# populates the array of tiles
+	def populateArray(self):
+		self.coord2tile = [[None for x in range(self.board.Rows)] for y in range(self.board.Cols)]
+		for p in self.board.Polyominoes:
+			for tile in p.Tiles:
+				self.coord2tile[tile.x][tile.y] = tile
+		for conc in self.board.ConcreteTiles:
+			self.coord2tile[conc.x][conc.y] = conc
+
+
+
+
+
+
+
+
+
+
+
+	# ***********************************************************************************************
+
+			# PREVIEW TILE CODE
+
+	# ***********************************************************************************************
 
 	# Called when you click to add a new tile. Will create a small window where you can insert the 4 glues, then add that tile to the
 	# preview tile window
@@ -247,18 +292,6 @@ class TileEditorGUI:
 	def cancelTileCreation(self):
 		self.closeNewTileWindow()
 
-	def selected(self, i):
-		
-		self.selectedTileIndex = i
-
-		if self.outline is not None:
-			self.tilePrevCanvas.delete(self.outline)
-
-		self.outline = self.tilePrevCanvas.create_rectangle(PREVTILESTARTX, PREVTILESTARTY + 80 * i, 
-			PREVTILESTARTX + PREVTILESIZE, PREVTILESTARTY + 80 * i + PREVTILESIZE, outline="#FF0000", width = 2)
-
-		self.onAddState()
-
 	# changes whether a tile placed will have a random color assigned to it
 	# also changes the relief of the button to show whether or not it is currently selected
 	def randomColorToggle(self):
@@ -311,49 +344,366 @@ class TileEditorGUI:
 			
 			i += 1
 
-	def populateArray(self):
-		self.coord2tile = [[None for x in range(self.board.Rows)] for y in range(self.board.Cols)]
-		for p in self.board.Polyominoes:
-			for tile in p.Tiles:
-				self.coord2tile[tile.x][tile.y] = tile
-		for conc in self.board.ConcreteTiles:
-			self.coord2tile[conc.x][conc.y] = conc
 
 
 
-	def onAddState(self):
-		self.remove_state = False
-		self.add_state = True
-		
-	def onRemoveState(self):
-		self.remove_state = True
-		self.add_state = False
-		self.selectedTileIndex = -1
 
 
-	def onClearState(self):
-		self.remove_state = False
-		self.add_state = False
-		self.tile_to_add = None
 
-	def boardResizeDial(self):
-		wr = self.WindowResizeDialogue(self.newWindow, self, self.board_w, self.board_h)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	# ***********************************************************************************************
+
+			# **INPUT CODE
+
+	# ***********************************************************************************************
+
+	def onBoardClick(self, event):
+
+		self.BoardCanvas.delete(self.squareSelection)
+
+		#sets right and left click depending on os
+		leftClick = 1
+		rightClick = 3
+
+		if sys.platform == 'darwin': #value for OSX
+			rightClick =  2
+
+		print(event.num)
+
+		#Determine the position on the board the player clicked
+
+
+
+		x = (event.x/self.tile_size)
+		y = (event.y/self.tile_size)
+
+		print(x, ", ", y)
+
+
+
+		if MODS.get( event.state, None ) == 'Control':
+			self.CtrlSelect(x,y)
+		elif self.remove_state or event.num == rightClick:
+			self.removeTileAtPos(event.x/self.tile_size, event.y/self.tile_size, True)
+		elif event.num == leftClick:
+
+			self.CURRENTSELECTIONX = x
+			self.CURRENTSELECTIONY = y
+
+			self.drawSquareSelection()
+
+			if self.add_state:
+				self.addTileAtPos(event.x/self.tile_size, event.y/self.tile_size)
+
+
+
+		elif event.keysym == "r" and MODS.get( event.state, None ) == 'Control':
+			self.reloadFile()
+
+
+
+
 
 	def keyPressed(self, event):
-		print(event.keysym)
-		if True:
-			if event.keysym == "Up":
-				print("Moving up")
-				self.stepAllTiles("N")
-			elif event.keysym == "Right":
-				print("Moving Right")
-				self.stepAllTiles("E")
-			elif event.keysym == "Down":
-				print("Moving Down")
-				self.stepAllTiles("S")
-			elif event.keysym == "Left":
-				print("Mving Left")
-				self.stepAllTiles("W")
+			global SELECTIONMADE
+			print(event.keysym)
+
+
+			if not SELECTIONMADE:
+				if event.keysym == "Up":
+					print("Moving up")
+					self.stepAllTiles("N")
+				elif event.keysym == "Right":
+					print("Moving Right")
+					self.stepAllTiles("E")
+				elif event.keysym == "Down":
+					print("Moving Down")
+					self.stepAllTiles("S")
+				elif event.keysym == "Left":
+					print("Mving Left")
+					self.stepAllTiles("W")
+			elif SELECTIONMADE:
+				if event.keysym == "Up":
+					print("Moving up")
+					self.stepSelection("N")
+				elif event.keysym == "Right":
+					print("Moving Right")
+					self.stepSelection("E")
+				elif event.keysym == "Down":
+					print("Moving Down")
+					self.stepSelection("S")
+				elif event.keysym == "Left":
+					print("Mving Left")
+					self.stepSelection("W")
+			if MODS.get( event.state, None ) == 'Control':
+				if event.keysym == "d":
+					self.deleteTilesInSelection()
+				if event.keysym == "c":
+					self.copySelection()
+				if event.keysym == "p":
+					self.pasteSelection()
+
+
+
+
+
+	def CtrlSelect(self, x, y):
+		global SELECTIONSTARTED
+		global SELECTIONMADE
+
+
+		if not SELECTIONSTARTED:
+			self.deleteSelection()
+			SELECTIONSTARTED = True
+			SELECTIONMADE = False
+			self.SELECTIONX1 = x
+			self.SELECTIONY1 = y
+
+		elif SELECTIONSTARTED:
+			print ("selection made")
+			
+			SELECTIONMADE = True
+			SELECTIONSTARTED = False
+			self.SELECTIONX2 = x
+			self.SELECTIONY2 = y
+
+			self.drawSelection(self.SELECTIONX1, self.SELECTIONY1, self.SELECTIONX2, self.SELECTIONY2)
+
+
+
+
+
+
+
+
+
+
+
+
+
+	# ***********************************************************************************************
+
+			# SELECTION CODE
+
+	# ***********************************************************************************************
+
+
+	def selected(self, i):
+		
+		self.selectedTileIndex = i
+
+		if self.outline is not None:
+			self.tilePrevCanvas.delete(self.outline)
+
+		self.outline = self.tilePrevCanvas.create_rectangle(PREVTILESTARTX, PREVTILESTARTY + 80 * i, 
+			PREVTILESTARTX + PREVTILESIZE, PREVTILESTARTY + 80 * i + PREVTILESIZE, outline="#FF0000", width = 2)
+
+		self.onAddState()
+
+
+
+	def deleteTilesInSelection(self):
+		for x in range(self.SELECTIONX1, self.SELECTIONX2 + 1):
+			for y in range(self.SELECTIONY1, self.SELECTIONY2 + 1):
+				print "Removing tile at ", x, ", ", y
+				self.removeTileAtPos(x,y, False)
+		self.redrawPrev()
+
+
+	# When you control click in two locations this method will draw the resulting rectangle
+	def drawSelection(self, x1, y1, x2, y2):
+		print("x1: ", x1, "    y1: ", y1, "   x2: ", x2, "   y2: ", y2)
+
+		self.selection = self.BoardCanvas.create_rectangle(self.tile_size*x1, self.tile_size*y1, self.tile_size*x2 + self.tile_size, self.tile_size*y2 + self.tile_size, fill = "#0000FF", stipple="gray50")
+
+
+	def deleteSelection(self):
+		self.BoardCanvas.delete(self.selection)
+
+	def copySelection(self):
+		global COPYMADE
+
+		print("COPIED")
+		COPYMADE = True
+
+		self.copiedSelection = [[None for x in range(abs(self.SELECTIONX2 - self.SELECTIONX1))] for y in range(abs(self.SELECTIONY2 - self.SELECTIONY1))]
+
+		for x in range(self.SELECTIONX1, self.SELECTIONX2 + 1):
+			for y in range(self.SELECTIONY1, self.SELECTIONY2 + 1):
+				print "Copying tile at ", x, ", ", y, " to ", x - self.SELECTIONX1, ", ", y - self.SELECTIONY1
+				self.copiedSelection[x - self.SELECTIONX1][y - self.SELECTIONY1] = copy.deepcopy(self.board.coordToTile[x][y])
+
+
+	def pasteSelection(self):
+		global COPYMADE
+
+		if not COPYMADE:
+			print "Nothing to paste"
+
+		else:
+
+			for x in range(self.SELECTIONX1, self.SELECTIONX2):
+				for y in range(self.SELECTIONY1, self.SELECTIONY2):
+					print "Removing tile at ", x, ", ", y
+					self.removeTileAtPos(self.CURRENTSELECTIONX + x,self.CURRENTSELECTIONY + y, False)
+					
+
+			print("pasting")
+
+			for x in range(self.SELECTIONX1, self.SELECTIONX2 + 1):
+				for y in range(self.SELECTIONY1, self.SELECTIONY2 + 1):
+
+					tile = self.copiedSelection[x][y]
+
+					if tile == None:
+						continue
+
+					newX = self.CURRENTSELECTIONX + x
+					newY = self.CURRENTSELECTIONY + y
+
+
+					self.copiedSelection[x][y].x = newX
+					self.copiedSelection[x][y].y = newY
+
+					if self.copiedSelection[x][y].isConcrete:
+						print "is concrete"
+						self.board.AddConc(self.copiedSelection[x][y])
+					elif not self.copiedSelection[x][y].isConcrete:
+						self.board.Add(self.copiedSelection[x][y])
+
+
+
+	def drawSquareSelection(self):
+		self.BoardCanvas.delete(self.squareSelection)
+		self.squareSelection = self.BoardCanvas.create_rectangle(self.tile_size*self.CURRENTSELECTIONX, self.tile_size*self.CURRENTSELECTIONY, self.tile_size*self.CURRENTSELECTIONX + self.tile_size, self.tile_size*self.CURRENTSELECTIONY + self.tile_size, outline = "#FF0000", stipple="gray50")
+	
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	# ***********************************************************************************************
+
+			# Utility Code
+
+	# ***********************************************************************************************
+
+
+	
+
+	def getTileIndex(self, widget_name):
+		names = widget_name.split('.')
+		return int(names[len(names) - 1].strip())
+	
+	# Removes tile at (x,y), redraw is a flag whether or not to redraw after removal
+	def removeTileAtPos(self, x, y, redraw):
+		print "trying to remove tile at ", x, ", ", y
+		tile = self.board.coordToTile[x][y]
+
+		if tile == None:
+			return
+
+		if tile.isConcrete:
+			self.board.ConcreteTiles.remove(tile)
+			self.board.coordToTile[x][y] = None
+		
+		else:
+			tile.parent.Tiles.remove(tile) #remove tile from the polyomino that its in
+			if len(tile.parent.Tiles) == 0:
+				self.board.Polyominoes.remove(tile.parent) #remove polyomino from the array
+			
+			self.board.coordToTile[x][y] = None
+
+		#self.verifyTileLocations()
+		if redraw:
+			self.redrawPrev()
+
+		
+
+	def addTileAtPos(self, x, y):
+		
+		i = self.selectedTileIndex
+		if self.board.coordToTile[x][y] != None:
+			return
+
+
+		#random color function: https://stackoverflow.com/questions/13998901/generating-a-random-hex-color-in-python
+		r = lambda: random.randint(100,255)
+		if self.randomizeColor:
+			color = ('#%02X%02X%02X' % (r(),r(),r()))
+		else:
+			color = self.prevTileList[i].color
+
+		if not self.prevTileList[i].isConcrete:
+			newPoly = TT.Polyomino(0, x, y, self.prevTileList[i].glues, color)
+			self.board.Add(newPoly)
+			self.board.coordToTile[x][y]= newPoly.Tiles[0]
+		else:
+			newConcTile = TT.Tile(None, 0, x, y, [], self.prevTileList[i].color, "True")
+			self.board.AddConc(newConcTile)
+			self.board.coordToTile[x][y]= newConcTile
+
+
+		#self.verifyTileLocations()
+		self.redrawPrev()
+
+
+
+
+
+	def verifyTileLocations(self):
+		verified = True
+		for p in self.board.Polyominoes:
+			for tile in p.Tiles:
+				if self.board.coordToTile[tile.x][tile.y] != tile:
+					print "ERROR: Tile at ", tile.x, ", ", tile.y, " is not in array properly \n",
+					verified = False
+
+		for tile in self.board.ConcreteTiles:
+			if self.board.coordToTile[tile.x][tile.y] != tile:
+				print "ERROR: Tile at ", tile.x, ", ", tile.y, " is not in array properly \n",
+				verified = False
+
+		if verified:
+			print("Tile Locations Verified")
+		if not verified:
+			print("Tile Locations Incorrect")
+
+
+
+
 
 	def stepAllTiles(self, direction):
 		print "STEPPING", direction	
@@ -400,161 +750,50 @@ class TileEditorGUI:
 		self.populateArray()
 		self.redrawPrev()
 
-	def getTileIndex(self, widget_name):
-		names = widget_name.split('.')
-		return int(names[len(names) - 1].strip())
-
-
-
-	# def pasteSelection(self):
-	# 	global CURRENTSELECTIONX
-	# 	global CURRENTSELECTIONY
-
-	# 	if not SELECTIONMADE:
-	# 		print ("No Selection Made")
-
-	# 	selectionWidth = SELECTIONX2 - SELECTIONX1
-	# 	selectionHeight = SELECTIONY2 - SELECTIONY1
-
-	# 	for x in range(selectionWidth):
-	# 		for y in range(selectionHeight):
-	# 			tile 
+	
 
 
 
 
-
-
-
-	def CtrlSelect(self, x, y):
-		global SELECTIONSTARTED
-		global SELECTIONMADE
-		global SELECTIONX1
-		global SELECTIONY1
-		global SELECTIONX2
-		global SELECTIONY2
-
-
-
-		if not SELECTIONSTARTED:
-			SELECTIONSTARTED = True
-			SELECTIONMADE = False
-			SELECTIONX1 = x
-			SELECTIONY1 = y
-
-		elif SELECTIONSTARTED:
-			SELECTIONMADE = True
-			SELECTIONSTARTED = False
-			SELECTIONX2 = x
-			SELECTIONY2 = y
-
-
-	def onBoardClick(self, event):
-		global CURRENTSELECTIONX
-		global CURRENTSELECTIONY
-
-
-		#sets right and left click depending on os
-		leftClick = 1
-		rightClick = 3
-
-		if sys.platform == 'darwin': #value for OSX
-			rightClick =  2
-
-		print(event.num)
-
-		#Determine the position on the board the player clicked
-
-
-
-		x = (event.x/self.tile_size)
-		y = (event.y/self.tile_size)
-
-		CURRENTSELECTIONX = x
-		CURRENTSELECTIONY = y
-
-
-		if MODS.get( event.state, None ) == 'Control':
-			self.CtrlSelect(x,y)
-		elif self.remove_state or event.num == rightClick:
-			self.removeTileAtPos(event.x/self.tile_size, event.y/self.tile_size)
-		elif self.add_state and event.num == leftClick:
-			self.addTileAtPos(event.x/self.tile_size, event.y/self.tile_size)
-
-		elif event.keysym == "r" and MODS.get( event.state, None ) == 'Control':
-			self.reloadFile()
-
-	def removeTileAtPos(self, x, y):
-		tile = self.board.coordToTile[x][y]
-
-		if tile == None:
-			return
-
-		if tile.isConcrete:
-			self.board.ConcreteTiles.remove(tile)
-			self.board.coordToTile[x][y] = None
-		
-		else:
-			tile.parent.Tiles.remove(tile) #remove tile from the polyomino that its in
-			if len(tile.parent.Tiles) == 0:
-				self.board.Polyominoes.remove(tile.parent) #remove polyomino from the array
-			
-			self.board.coordToTile[x][y] = None
-
-		#self.verifyTileLocations()
-		self.redrawPrev()
-
-		
-
-	def addTileAtPos(self, x, y):
-		
-		i = self.selectedTileIndex
-		if self.board.coordToTile[x][y] != None:
-			return
-
-
-		#random color function: https://stackoverflow.com/questions/13998901/generating-a-random-hex-color-in-python
-		r = lambda: random.randint(100,255)
-		if self.randomizeColor:
-			color = ('#%02X%02X%02X' % (r(),r(),r()))
-		else:
-			color = self.prevTileList[i].color
-
-		if not self.prevTileList[i].isConcrete:
-			newPoly = TT.Polyomino(0, x, y, self.prevTileList[i].glues, color)
-			self.board.Add(newPoly)
-			self.board.coordToTile[x][y]= newPoly.Tiles[0]
-		else:
-			newConcTile = TT.Tile(None, 0, x, y, [], self.prevTileList[i].color, "True")
-			self.board.AddConc(newConcTile)
-			self.board.coordToTile[x][y]= newConcTile
-
-
-		#self.verifyTileLocations()
-		self.redrawPrev()
-
-	def verifyTileLocations(self):
-		verified = True
-		for p in self.board.Polyominoes:
-			for tile in p.Tiles:
-				if self.board.coordToTile[tile.x][tile.y] != tile:
-					print "ERROR: Tile at ", tile.x, ", ", tile.y, " is not in array properly \n",
-					verified = False
-
-		for tile in self.board.ConcreteTiles:
-			if self.board.coordToTile[tile.x][tile.y] != tile:
-				print "ERROR: Tile at ", tile.x, ", ", tile.y, " is not in array properly \n",
-				verified = False
-
-		if verified:
-			print("Tile Locations Verified")
-		if not verified:
-			print("Tile Locations Incorrect")
-
-
+	def boardResizeDial(self):
+		wr = self.WindowResizeDialogue(self.newWindow, self, self.board_w, self.board_h)
 
 	def redrawPrev(self):
 		redrawCanvas(self.board, self.board.Cols, self.board.Rows, self.BoardCanvas, self.tile_size, b_drawGrid = True, b_drawLoc = False)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	# ***********************************************************************************************
+
+			# File I/O Code
+
+	# ***********************************************************************************************
+
+
 
 
 	def exportTiles(self):
@@ -693,6 +932,13 @@ class TileEditorGUI:
 		file.write(mydata)
 
 
+
+
+
+
+
+
+
 	def closeGUI(self):
 		self.newWindow.destroy()
 		self.newWindow.destroy()
@@ -741,9 +987,54 @@ class TileEditorGUI:
 			## Display the window and wait for it to close
 			self.w.wait_window(self.w)
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	# ***********************************************************************************************
+
+			# LEGACY CODE
+
+	# ***********************************************************************************************
+
+
+
+
 		def onApply(self):
 			self.tumbleEdit.resizeBoard(int(self.bw.get()), int(self.bh.get()))
 			self.pressed_apply = True
 			self.w.destroy()
+
+		def onAddState(self):
+			self.remove_state = False
+			self.add_state = True
+			
+		def onRemoveState(self):
+			self.remove_state = True
+			self.add_state = False
+			self.selectedTileIndex = -1
+
+
+		def onClearState(self):
+			self.remove_state = False
+			self.add_state = False
+			self.tile_to_add = None
+
+
+
+
 
 
