@@ -406,6 +406,7 @@ class TileEditorGUI:
 
 			self.drawSquareSelection()
 
+			print(self.add_state)
 			if self.add_state:
 				self.addTileAtPos(event.x/self.tile_size, event.y/self.tile_size)
 
@@ -481,6 +482,16 @@ class TileEditorGUI:
 			self.SELECTIONX2 = x
 			self.SELECTIONY2 = y
 
+			if self.SELECTIONX2 < self.SELECTIONX1:
+				temp = self.SELECTIONX2
+				self.SELECTIONX2 = self.SELECTIONX1
+				self.SELECTIONX1 = temp
+
+			if self.SELECTIONY2 < self.SELECTIONY1:
+				temp = self.SELECTIONY2
+				self.SELECTIONY2 = self.SELECTIONY1
+				self.SELECTIONY1 = temp
+
 			self.drawSelection(self.SELECTIONX1, self.SELECTIONY1, self.SELECTIONX2, self.SELECTIONY2)
 
 
@@ -504,6 +515,7 @@ class TileEditorGUI:
 
 	def selected(self, i):
 		
+		self.add_state = True
 		self.selectedTileIndex = i
 
 		if self.outline is not None:
@@ -512,7 +524,7 @@ class TileEditorGUI:
 		self.outline = self.tilePrevCanvas.create_rectangle(PREVTILESTARTX, PREVTILESTARTY + 80 * i, 
 			PREVTILESTARTX + PREVTILESIZE, PREVTILESTARTY + 80 * i + PREVTILESIZE, outline="#FF0000", width = 2)
 
-		self.onAddState()
+		
 
 
 
@@ -531,6 +543,7 @@ class TileEditorGUI:
 		self.selection = self.BoardCanvas.create_rectangle(self.tile_size*x1, self.tile_size*y1, self.tile_size*x2 + self.tile_size, self.tile_size*y2 + self.tile_size, fill = "#0000FF", stipple="gray50")
 
 
+	# Deletes the selection drawing from the board
 	def deleteSelection(self):
 		self.BoardCanvas.delete(self.selection)
 
@@ -591,26 +604,6 @@ class TileEditorGUI:
 		self.BoardCanvas.delete(self.squareSelection)
 		self.squareSelection = self.BoardCanvas.create_rectangle(self.tile_size*self.CURRENTSELECTIONX, self.tile_size*self.CURRENTSELECTIONY, self.tile_size*self.CURRENTSELECTIONX + self.tile_size, self.tile_size*self.CURRENTSELECTIONY + self.tile_size, outline = "#FF0000", stipple="gray50")
 	
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -736,6 +729,8 @@ class TileEditorGUI:
 		self.redrawPrev()
 		self.board.remapArray()
 
+
+
 	def resizeBoard(self, w, h):
 		self.board_w = w
 		self.board_h = h
@@ -753,8 +748,6 @@ class TileEditorGUI:
 	
 
 
-
-
 	def boardResizeDial(self):
 		wr = self.WindowResizeDialogue(self.newWindow, self, self.board_w, self.board_h)
 
@@ -763,26 +756,25 @@ class TileEditorGUI:
 
 
 
+	def onApply(self):
+		self.tumbleEdit.resizeBoard(int(self.bw.get()), int(self.bh.get()))
+		self.pressed_apply = True
+		self.w.destroy()
+
+	def onAddState(self):
+		self.remove_state = False
+		self.add_state = True
+		
+	def onRemoveState(self):
+		self.remove_state = True
+		self.add_state = False
+		self.selectedTileIndex = -1
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+	def onClearState(self):
+		self.remove_state = False
+		self.add_state = False
+		self.tile_to_add = None
 
 
 
@@ -990,20 +982,6 @@ class TileEditorGUI:
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 	# ***********************************************************************************************
 
 			# LEGACY CODE
@@ -1013,25 +991,7 @@ class TileEditorGUI:
 
 
 
-		def onApply(self):
-			self.tumbleEdit.resizeBoard(int(self.bw.get()), int(self.bh.get()))
-			self.pressed_apply = True
-			self.w.destroy()
-
-		def onAddState(self):
-			self.remove_state = False
-			self.add_state = True
-			
-		def onRemoveState(self):
-			self.remove_state = True
-			self.add_state = False
-			self.selectedTileIndex = -1
-
-
-		def onClearState(self):
-			self.remove_state = False
-			self.add_state = False
-			self.tile_to_add = None
+		
 
 
 
