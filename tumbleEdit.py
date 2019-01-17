@@ -567,16 +567,22 @@ class TileEditorGUI:
 		print("COPIED")
 		COPYMADE = True
 
-		self.copiedSelection = [[None for x in range(abs(self.SELECTIONX2 - self.SELECTIONX1) + 2)] for y in range(abs(self.SELECTIONY2 - self.SELECTIONY1) + 2)]
+		self.copiedSelection = [[None for x in range(abs(self.SELECTIONY2 - self.SELECTIONY1) + 2)] for y in range(abs(self.SELECTIONX2 - self.SELECTIONX1) + 2)]
 
 		for x in range(self.SELECTIONX1, self.SELECTIONX2 + 1):
 			print "X index: ", x
 			for y in range(self.SELECTIONY1, self.SELECTIONY2 + 1):
 				print "y index: ", y
 				print "Copying tile at ", x, ", ", y, " to ", x - self.SELECTIONX1, ", ", y - self.SELECTIONY1
-				self.copiedSelection[x - self.SELECTIONX1][y - self.SELECTIONY1] = copy.deepcopy(self.board.coordToTile[x][y])
 
+				try:
+					self.copiedSelection[x - self.SELECTIONX1][y - self.SELECTIONY1] = copy.deepcopy(self.board.coordToTile[x][y])
+				except IndexError:
+					print "Error: tried to access self.copiedSelection[", x - self.SELECTIONX1, "][", y - self.SELECTIONY1, "]"
+					print "Its size is ", len(self.copiedSelection), ", ", len(self.copiedSelection[0])
 
+					print "Error: tried to access self.board.coordToTile[", x, "][", y, "]"
+					print "Its size is ", len(self.board.coordToTile[x]), ", ", len(self.board.coordToTile[x])
 	# Paste all tiles in the stored selection in the new selected spot
 	def pasteSelection(self):
 		global COPYMADE
@@ -603,13 +609,20 @@ class TileEditorGUI:
 			for x in range(0, selectionWidth):
 				for y in range(0, selectionHeight):
 
-					if(self.copiedSelection[x][y] == None):
-						continue
+					try:	
+						if(self.copiedSelection[x][y] == None):
+							continue
+						else:
+							tile = self.copiedSelection[x][y]
+
+					except IndexError:
+						print "Error: tried to access self.copiedSelection[", x, "][", y, "]"
+						print "Its size is ", len(self.copiedSelection), ", ", len(self.copiedSelection[0])
 
 					print "x: ",x
 					print "y: ", y
 
-					tile = self.copiedSelection[x][y]
+					
 
 					if tile == None:
 						continue
