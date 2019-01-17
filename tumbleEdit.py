@@ -397,6 +397,9 @@ class TileEditorGUI:
 
 		if MODS.get( event.state, None ) == 'Control':
 			self.CtrlSelect(x,y)
+			self.CURRENTSELECTIONX = x
+			self.CURRENTSELECTIONY = y
+			self.drawSquareSelection()
 		elif self.remove_state or event.num == rightClick:
 			self.removeTileAtPos(event.x/self.tile_size, event.y/self.tile_size, True)
 		elif event.num == leftClick:
@@ -418,7 +421,7 @@ class TileEditorGUI:
 
 
 
-
+	# Handles most key press events
 	def keyPressed(self, event):
 			global SELECTIONMADE
 			print(event.keysym)
@@ -455,13 +458,14 @@ class TileEditorGUI:
 					self.deleteTilesInSelection()
 				if event.keysym == "c":
 					self.copySelection()
-				if event.keysym == "p":
+				if event.keysym == "v":
 					self.pasteSelection()
 
 
 
 
-
+	# This function is called when Ctrl + left click are pressed at the same time. Handles 
+	# The creation and deletion of a selection
 	def CtrlSelect(self, x, y):
 		global SELECTIONSTARTED
 		global SELECTIONMADE
@@ -481,6 +485,10 @@ class TileEditorGUI:
 			SELECTIONSTARTED = False
 			self.SELECTIONX2 = x
 			self.SELECTIONY2 = y
+
+			print "x1: ", self.SELECTIONX1, "y1: ", self.SELECTIONY1
+			print "x2: ", self.SELECTIONX2, "y2: ", self.SELECTIONY2
+
 
 			if self.SELECTIONX2 < self.SELECTIONX1:
 				temp = self.SELECTIONX2
@@ -512,7 +520,7 @@ class TileEditorGUI:
 
 	# ***********************************************************************************************
 
-
+	# This method will outline a square that is clicked on with a red line
 	def selected(self, i):
 		
 		self.add_state = True
@@ -527,7 +535,7 @@ class TileEditorGUI:
 		
 
 
-
+	# Will delete all tile in a selection square.
 	def deleteTilesInSelection(self):
 		for x in range(self.SELECTIONX1, self.SELECTIONX2 + 1):
 			for y in range(self.SELECTIONY1, self.SELECTIONY2 + 1):
@@ -547,20 +555,29 @@ class TileEditorGUI:
 	def deleteSelection(self):
 		self.BoardCanvas.delete(self.selection)
 
+	# WIll store a copy of all the tiles in a seleciton so that it can be pasted
 	def copySelection(self):
 		global COPYMADE
+
+		print self.SELECTIONX1
+		print self.SELECTIONX2
+		print self.SELECTIONY1
+		print self.SELECTIONY2
 
 		print("COPIED")
 		COPYMADE = True
 
-		self.copiedSelection = [[None for x in range(abs(self.SELECTIONX2 - self.SELECTIONX1))] for y in range(abs(self.SELECTIONY2 - self.SELECTIONY1))]
+		self.copiedSelection = [[None for x in range(abs(self.SELECTIONX2 - self.SELECTIONX1) + 2)] for y in range(abs(self.SELECTIONY2 - self.SELECTIONY1) + 2)]
 
 		for x in range(self.SELECTIONX1, self.SELECTIONX2 + 1):
+			print "X index: ", x
 			for y in range(self.SELECTIONY1, self.SELECTIONY2 + 1):
+				print "y index: ", y
 				print "Copying tile at ", x, ", ", y, " to ", x - self.SELECTIONX1, ", ", y - self.SELECTIONY1
 				self.copiedSelection[x - self.SELECTIONX1][y - self.SELECTIONY1] = copy.deepcopy(self.board.coordToTile[x][y])
 
 
+	# Paste all tiles in the stored selection in the new selected spot
 	def pasteSelection(self):
 		global COPYMADE
 
@@ -569,16 +586,28 @@ class TileEditorGUI:
 
 		else:
 
-			for x in range(self.SELECTIONX1, self.SELECTIONX2):
-				for y in range(self.SELECTIONY1, self.SELECTIONY2):
-					print "Removing tile at ", x, ", ", y
+			for x in range(0, self.SELECTIONX2 - self.SELECTIONX1):
+				for y in range(0, self.SELECTIONY2 - self.SELECTIONY1):
+					print "Removing tile at ", x + self.CURRENTSELECTIONX, ", ", y + self.CURRENTSELECTIONY
 					self.removeTileAtPos(self.CURRENTSELECTIONX + x,self.CURRENTSELECTIONY + y, False)
 					
 
 			print("pasting")
 
-			for x in range(self.SELECTIONX1, self.SELECTIONX2 + 1):
-				for y in range(self.SELECTIONY1, self.SELECTIONY2 + 1):
+			selectionWidth = self.SELECTIONX2 - self.SELECTIONX1 + 1
+			selectionHeight = self.SELECTIONY2 - self.SELECTIONY1  + 1
+
+			print "Width: ", selectionWidth
+			print "Height: ", selectionHeight
+
+			for x in range(0, selectionWidth):
+				for y in range(0, selectionHeight):
+
+					if(self.copiedSelection[x][y] == None):
+						continue
+
+					print "x: ",x
+					print "y: ", y
 
 					tile = self.copiedSelection[x][y]
 
@@ -586,7 +615,11 @@ class TileEditorGUI:
 						continue
 
 					newX = self.CURRENTSELECTIONX + x
+					print "NEWX: ", newX
 					newY = self.CURRENTSELECTIONY + y
+					print "NEWY: ", newY
+
+					p = TT.Polyomino(0, newX, newY, tile.glues, tile.color)
 
 
 					self.copiedSelection[x][y].x = newX
@@ -596,7 +629,12 @@ class TileEditorGUI:
 						print "is concrete"
 						self.board.AddConc(self.copiedSelection[x][y])
 					elif not self.copiedSelection[x][y].isConcrete:
-						self.board.Add(self.copiedSelection[x][y])
+						self.board.Add(p)
+
+
+
+			self.redrawPrev()
+			self.board.remapArray()
 
 
 
@@ -675,7 +713,7 @@ class TileEditorGUI:
 
 
 
-
+	
 	def verifyTileLocations(self):
 		verified = True
 		for p in self.board.Polyominoes:
@@ -922,11 +960,6 @@ class TileEditorGUI:
 		mydata = ET.tostring(tile_config)
 		file = open(filename+".xml", "w")
 		file.write(mydata)
-
-
-
-
-
 
 
 
