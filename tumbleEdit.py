@@ -9,6 +9,7 @@ from boardgui import redrawCanvas, drawGrid
 import random
 import time
 import os,sys
+from tkColorChooser import askcolor  
 
 #the x and y coordinate that the preview tiles will begin to be drawn on
 
@@ -17,8 +18,10 @@ PREVTILESTARTX = 20
 PREVTILESTARTY = 21
 PREVTILESIZE = 50
 
-NEWTILEWINDOW_W = 150
+NEWTILEWINDOW_W = 250
 NEWTILEWINDOW_H = 180
+
+CURRENTNEWTILECOLOR = '#ffff00'
 
 # Used to know where to paste a selection that was made
 CURRENTSELECTION = 0
@@ -210,6 +213,8 @@ class TileEditorGUI:
 	# Called when you click to add a new tile. Will create a small window where you can insert the 4 glues, then add that tile to the
 	# preview tile window
 	def addNewPrevTile(self):
+		global CURRENTNEWTILECOLOR
+
 		self.addTileWindow = Toplevel(self.newWindow)
 
 
@@ -218,43 +223,70 @@ class TileEditorGUI:
 		self.addTileWindow.resizable(False, False)
 		self.addTileWindow.protocol("WM_DELETE_WINDOW", lambda: self.closeNewTileWindow())
 
+		self.prevFrame = Frame(self.addTileWindow, borderwidth=1, relief=FLAT, width = 200, height = NEWTILEWINDOW_H - 40)
+
 		#Frame that will hold the text boxes that the glues will be entered it
-		self.tileFrame = Frame(self.addTileWindow, borderwidth=1, relief=FLAT, width = self.tile_size * 4, height = NEWTILEWINDOW_H - 40)
-		self.tileFrame.pack(side=TOP)
+		self.tileFrame = Frame(self.prevFrame, borderwidth=1, relief=FLAT, width = 50, height = NEWTILEWINDOW_H - 40)
+		self.colorFrame = Frame(self.prevFrame, borderwidth=1, relief=FLAT, width = 100, height = NEWTILEWINDOW_H - 40)
 
 
+		#Canvas that will draw color preview
+		self.colorPrevCanvas = Canvas(self.colorFrame, width = 100, height = 100)
+
+		self.drawColorPreview()
+		
+		self.colorPrevCanvas.pack()
+
+		#Frames that hold a label and an entry next to each other
+		self.nFrame = Frame(self.tileFrame, borderwidth=1, relief=FLAT, width = self.tile_size * 3, height = 20)
+		self.eFrame = Frame(self.tileFrame, borderwidth=1, relief=FLAT, width = self.tile_size * 3, height = 20)
+		self.sFrame = Frame(self.tileFrame, borderwidth=1, relief=FLAT, width = self.tile_size * 3, height = 20)
+		self.wFrame = Frame(self.tileFrame, borderwidth=1, relief=FLAT, width = self.tile_size * 3, height = 20)
 
 		#Labels and entrys that user will enter the new glue configuration into
-		self.glueN = Entry(self.tileFrame, textvariable= self.newTileN)
-		self.glueE = Entry(self.tileFrame, textvariable= self.newTileE)
-		self.glueS = Entry(self.tileFrame, textvariable= self.newTileS)
-		self.glueW = Entry(self.tileFrame, textvariable= self.newTileW)
+		self.glueN = Entry(self.nFrame, textvariable= self.newTileN, width = 5)
+		self.glueE = Entry(self.eFrame, textvariable= self.newTileE, width = 5)
+		self.glueS = Entry(self.sFrame, textvariable= self.newTileS, width = 5)
+		self.glueW = Entry(self.wFrame, textvariable= self.newTileW, width = 5)
 		self.concreteCheck = Checkbutton(self.tileFrame, text="Concrete", variable= self.concreteChecked)
 
-		self.labelN = Label(self.tileFrame, text="N:")
-		self.labelE = Label(self.tileFrame, text="E:")
-		self.labelS = Label(self.tileFrame, text="S:")
-		self.labelW = Label(self.tileFrame, text="W:")
+		self.labelN = Label(self.nFrame, text="N:")
+		self.labelE = Label(self.eFrame, text="E:")
+		self.labelS = Label(self.sFrame, text="S:")
+		self.labelW = Label(self.wFrame, text="W:")
 
-		self.labelN.place(x = 40, y = 20)
-		self.labelE.place(x = 40, y = 40)
-		self.labelS.place(x = 40, y = 60)
-		self.labelW.place(x = 40, y = 80)
+		self.labelN.pack(fill=None, side=LEFT)
+		self.labelE.pack(fill=None, side=LEFT)
+		self.labelS.pack(fill=None, side=LEFT)
+		self.labelW.pack(fill=None, side=LEFT)
 		self.concreteCheck.place(x = 35, y = 100)
 
-		self.glueN.place(x = 65, y = 20, width = 20)
-		self.glueE.place(x = 65, y = 40, width = 20)
-		self.glueS.place(x = 65, y = 60, width = 20)
-		self.glueW.place(x = 65, y = 80, width = 20)
+		self.glueN.pack(fill=None, side=RIGHT) 
+		self.glueE.pack(fill=None, side=RIGHT)
+		self.glueS.pack(fill=None, side=RIGHT)
+		self.glueW.pack(fill=None, side=RIGHT)
+
+		self.nFrame.pack(side=TOP)
+		self.eFrame.pack(side=TOP)
+		self.sFrame.pack(side=TOP)
+		self.wFrame.pack(side=TOP)
+
+		self.tileFrame.pack(side=LEFT)
+		self.colorFrame.pack(side=RIGHT)
+
+		self.prevFrame.pack(side=TOP)
 
 		#Frame that till hold the two buttons cancel / create
-		self.buttonFrame = Frame(self.addTileWindow, borderwidth=1, background = "#000",relief=FLAT, width = self.tile_size * 3, height =  200)
+		self.buttonFrame = Frame(self.addTileWindow, borderwidth=1, background = "#000",relief=FLAT, width = 300, height =  200)
 		self.buttonFrame.pack(side=BOTTOM)
 
 		self.createButton = Button(self.buttonFrame, text="Create Tile", width=8, command= self.createTile)
-		self.cancelButton = Button(self.buttonFrame, text="Cancel", width=8, command= self.cancelTileCreation)
+		self.cancelButton = Button(self.buttonFrame, text="Cancel", width=5, command= self.cancelTileCreation)
+		self.setColorButton = Button(self.buttonFrame, text="Set Color", width=8, command= self.getColor)
+
 		self.createButton.pack(side=LEFT)
 		self.cancelButton.pack(side=RIGHT)
+		self.setColorButton.pack(side=LEFT)
 
 		#Makes the new window open over the current editor window
 		self.addTileWindow.geometry('%dx%d+%d+%d' % (NEWTILEWINDOW_W, NEWTILEWINDOW_H, 
@@ -262,8 +294,27 @@ class TileEditorGUI:
 			self.newWindow.winfo_y() + self.newWindow.winfo_height() / 2 - NEWTILEWINDOW_H /2))
 
 
-	def createTile(self):
 
+	def getColor(self):
+		global CURRENTNEWTILECOLOR
+		color = askcolor()
+		CURRENTNEWTILECOLOR = color[1]
+		self.drawColorPreview()
+
+
+
+	def drawColorPreview(self):
+		global CURRENTNEWTILECOLOR
+		self.colorPrevCanvas.delete("all")
+		self.colorPrevCanvas.create_rectangle(0, 0, 50, 50, fill = CURRENTNEWTILECOLOR)	
+
+
+
+
+
+	def createTile(self):
+		global CURRENTNEWTILECOLOR
+		
 		r = lambda: random.randint(100,255)
 
 		newPrevTile = {}
@@ -283,7 +334,7 @@ class TileEditorGUI:
 			isConcrete = "False"
 
 		glues = [northGlue, eastGlue, southGlue, westGlue]
-		newTile = TT.Tile(None, 0, 0, 0, glues, color, isConcrete)
+		newTile = TT.Tile(None, 0, 0, 0, glues, CURRENTNEWTILECOLOR, isConcrete)
 
 		self.prevTileList.append(newTile)
 		self.popWinTiles()
@@ -583,6 +634,8 @@ class TileEditorGUI:
 
 					print "Error: tried to access self.board.coordToTile[", x, "][", y, "]"
 					print "Its size is ", len(self.board.coordToTile[x]), ", ", len(self.board.coordToTile[x])
+
+
 	# Paste all tiles in the stored selection in the new selected spot
 	def pasteSelection(self):
 		global COPYMADE
@@ -632,11 +685,14 @@ class TileEditorGUI:
 					newY = self.CURRENTSELECTIONY + y
 					print "NEWY: ", newY
 
+					if newX > self.board.Rows or newY > self.board.Cols:
+						continue
+
 					p = TT.Polyomino(0, newX, newY, tile.glues, tile.color)
 
 
-					self.copiedSelection[x][y].x = newX
-					self.copiedSelection[x][y].y = newY
+					# self.copiedSelection[x][y].x = newX
+					# self.copiedSelection[x][y].y = newY
 
 					if self.copiedSelection[x][y].isConcrete:
 						print "is concrete"
@@ -674,7 +730,11 @@ class TileEditorGUI:
 	# Removes tile at (x,y), redraw is a flag whether or not to redraw after removal
 	def removeTileAtPos(self, x, y, redraw):
 		print "trying to remove tile at ", x, ", ", y
-		tile = self.board.coordToTile[x][y]
+
+		try:
+			tile = self.board.coordToTile[x][y]
+		except IndexError:
+			return
 
 		if tile == None:
 			return

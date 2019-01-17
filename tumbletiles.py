@@ -218,13 +218,17 @@ class Board:
     def AddConc(self,t):
 
         #print "trying to add conc at", t.x, ", ", t.y, "\n"
+        try:
+            if self.coordToTile[t.x][t.y] == None:
+                    self.coordToTile[t.x][t.y] = t
+                    self.ConcreteTiles.append(t)
+            elif DEBUGGING:
+                print "tumbletiles.py - Board.AddConc(): Can not add tile. A tile already exists at this location - Line ", lineno(), "\n",
 
-        if self.coordToTile[t.x][t.y] == None:
-                self.coordToTile[t.x][t.y] = t
-                self.ConcreteTiles.append(t)
-        elif DEBUGGING:
-            print "tumbletiles.py - Board.AddConc(): Can not add tile. A tile already exists at this location - Line ", lineno(), "\n",
+        except IndexError:
+            print "Can't add concrete there"
 
+       
     
     #Joins two polyominos, deletes the 2nd redundant polyomino, calls setGrid() to make the character grid
     #accurately represent the new polyominos.
