@@ -216,6 +216,7 @@ class TileEditorGUI:
 		global CURRENTNEWTILECOLOR
 
 		self.addTileWindow = Toplevel(self.newWindow)
+		self.addTileWindow.lift(aboveThis= self.newWindow)
 
 
 
@@ -300,6 +301,11 @@ class TileEditorGUI:
 		color = askcolor()
 		CURRENTNEWTILECOLOR = color[1]
 		self.drawColorPreview()
+
+		#lift editor and new tile above simulator
+		self.newWindow.lift(aboveThis= self.parent)
+		self.addTileWindow.lift(aboveThis= self.newWindow)
+		
 
 
 
