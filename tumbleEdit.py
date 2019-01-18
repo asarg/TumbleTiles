@@ -314,7 +314,7 @@ class TileEditorGUI:
 
 	def createTile(self):
 		global CURRENTNEWTILECOLOR
-		
+
 		r = lambda: random.randint(100,255)
 
 		newPrevTile = {}
@@ -477,8 +477,8 @@ class TileEditorGUI:
 			global SELECTIONMADE
 			print(event.keysym)
 
-
-			if not SELECTIONMADE:
+			#TODO: Change this
+			if True:
 				if event.keysym == "Up":
 					print("Moving up")
 					self.stepAllTiles("N")
@@ -512,7 +512,10 @@ class TileEditorGUI:
 				if event.keysym == "v":
 					self.pasteSelection()
 
+	#TODO: Add stepping seleciton funcitonality
 
+	def stepSelection(self, dir):
+		return
 
 
 	# This function is called when Ctrl + left click are pressed at the same time. Handles 
