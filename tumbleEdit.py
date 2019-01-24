@@ -260,8 +260,7 @@ class TileEditorGUI:
 		self.labelE.pack(fill=None, side=LEFT)
 		self.labelS.pack(fill=None, side=LEFT)
 		self.labelW.pack(fill=None, side=LEFT)
-		self.concreteCheck.place(x = 35, y = 100)
-
+		self.concreteCheck.pack(side=BOTTOM)
 		self.glueN.pack(fill=None, side=RIGHT) 
 		self.glueE.pack(fill=None, side=RIGHT)
 		self.glueS.pack(fill=None, side=RIGHT)
