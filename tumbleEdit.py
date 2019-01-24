@@ -325,7 +325,7 @@ class TileEditorGUI:
 		newPrevTile = {}
 		print(newPrevTile)
 
-		color = ('#%02X%02X%02X' % (r(),r(),r()))
+		color = CURRENTNEWTILECOLOR
 		northGlue = self.newTileN.get()
 		eastGlue = self.newTileE.get()
 		southGlue = self.newTileS.get()
@@ -339,7 +339,7 @@ class TileEditorGUI:
 			isConcrete = "False"
 
 		glues = [northGlue, eastGlue, southGlue, westGlue]
-		newTile = TT.Tile(None, 0, 0, 0, glues, CURRENTNEWTILECOLOR, isConcrete)
+		newTile = TT.Tile(None, 0, 0, 0, glues, color, isConcrete)
 
 		self.prevTileList.append(newTile)
 		self.popWinTiles()
