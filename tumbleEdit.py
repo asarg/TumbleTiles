@@ -460,7 +460,7 @@ class TileEditorGUI:
 			rightClick =  2
 
 		print(event.num)
-
+                print(" mods : ", MODS.get( event.state, None ))
 		#Determine the position on the board the player clicked
 
 
@@ -485,12 +485,6 @@ class TileEditorGUI:
                                 self.ShftSelect(x,y,True, False)
 			self.CURRENTSELECTIONX = x
 			self.CURRENTSELECTIONY = y
-			
-		elif MODS.get( event.state, None ) == 'Left-hand Alt':
-                        if event.num == rightClick:
-                                self.ShftSelect(x,y,False, True)
-                        else:
-                                self.ShftSelect(x,y,True, True)
 			
 		elif self.remove_state or event.num == rightClick:
 			self.removeTileAtPos(x, y, True)
@@ -564,7 +558,7 @@ class TileEditorGUI:
 				if event.keysym == "c" and SELECTIONMADE:
 					self.copySelection()
 					self.clearSelection()
-				if event.keysym == "v" and SELECTIONMADE:
+				if event.keysym == "v":
 					self.pasteSelection()
 				if event.keysym == "t" and SELECTIONMADE:
 					self.selectionVerticallyFlipped()
@@ -792,6 +786,9 @@ class TileEditorGUI:
 					print "Its size is ", len(self.board.coordToTile[x]), ", ", len(self.board.coordToTile[x])
 
         def selectionVerticallyFlipped(self):
+                global CURRENTNEWTILECOLOR
+                color = CURRENTNEWTILECOLOR
+                
                 self.copySelection()
 
                 self.CURRENTSELECTIONX = self.SELECTIONX1
@@ -850,13 +847,24 @@ class TileEditorGUI:
 
                                 p = TT.Polyomino(0, newX, newY, tile.glues, tile.color)
 
+                                northGlue = self.newTileN.get()
+                                eastGlue = self.newTileE.get()
+                                southGlue = self.newTileS.get()
+                                westGlue = self.newTileW.get()
+                                
 
-                                self.copiedSelection[x][y].x = newX
-                                self.copiedSelection[x][y].y = newY
+                                glues = [northGlue, eastGlue, southGlue, westGlue]
+                                color = "#686868"
+                        
+                            
+                                newConcTile = TT.Tile(None, 0, newX, newY, glues , color , True)
+
+                                ##self.copiedSelection[x][y].x = newX
+                                ##self.copiedSelection[x][y].y = newY
 
                                 if self.copiedSelection[x][y].isConcrete:
                                         print "is concrete"
-                                        self.board.AddConc(self.copiedSelection[x][y])
+                                        self.board.AddConc(newConcTile)
                                 elif not self.copiedSelection[x][y].isConcrete:
                                         self.board.Add(p)
 
@@ -864,6 +872,8 @@ class TileEditorGUI:
                 self.board.remapArray()
                 
 	def selectionHorizontallyFlipped(self):
+                global CURRENTNEWTILECOLOR
+                color = CURRENTNEWTILECOLOR
                 self.copySelection()
 
                 self.CURRENTSELECTIONX = self.SELECTIONX1
@@ -920,15 +930,24 @@ class TileEditorGUI:
                                 if newX > self.board.Rows or newY > self.board.Cols:
                                         continue
 
-                                p = TT.Polyomino(0, newX, newY, tile.glues, tile.color)
+                                northGlue = self.newTileN.get()
+                                eastGlue = self.newTileE.get()
+                                southGlue = self.newTileS.get()
+                                westGlue = self.newTileW.get()
+                                
 
+                                glues = [northGlue, eastGlue, southGlue, westGlue]
+                                color = "#686868"
+                        
+                            
+                                newConcTile = TT.Tile(None, 0, newX, newY, glues , color , True)
 
-                                self.copiedSelection[x][y].x = newX
-                                self.copiedSelection[x][y].y = newY
+                                ##self.copiedSelection[x][y].x = newX
+                                ##self.copiedSelection[x][y].y = newY
 
                                 if self.copiedSelection[x][y].isConcrete:
                                         print "is concrete"
-                                        self.board.AddConc(self.copiedSelection[x][y])
+                                        self.board.AddConc(newConcTile)
                                 elif not self.copiedSelection[x][y].isConcrete:
                                         self.board.Add(p)
 
@@ -987,6 +1006,9 @@ class TileEditorGUI:
                 
 	# Paste all tiles in the stored selection in the new selected spot
 	def pasteSelection(self):
+                global CURRENTNEWTILECOLOR
+                color = CURRENTNEWTILECOLOR
+                
 		global COPYMADE
 
 		if not COPYMADE:
@@ -1038,16 +1060,26 @@ class TileEditorGUI:
 						continue
 
 					p = TT.Polyomino(0, newX, newY, tile.glues, tile.color)
+                                        northGlue = self.newTileN.get()
+                                        eastGlue = self.newTileE.get()
+                                        southGlue = self.newTileS.get()
+                                        westGlue = self.newTileW.get()
+                                        
 
+                                        glues = [northGlue, eastGlue, southGlue, westGlue]
+                                        color = "#686868"
+                                
+                                    
+                                        newConcTile = TT.Tile(None, 0, newX, newY, glues , color , True)
 
-					self.copiedSelection[x][y].x = newX
-					self.copiedSelection[x][y].y = newY
+                                        ##self.copiedSelection[x][y].x = newX
+                                        ##self.copiedSelection[x][y].y = newY
 
-					if self.copiedSelection[x][y].isConcrete:
-						print "is concrete"
-						self.board.AddConc(self.copiedSelection[x][y])
-					elif not self.copiedSelection[x][y].isConcrete:
-						self.board.Add(p)
+                                        if self.copiedSelection[x][y].isConcrete:
+                                                print "is concrete"
+                                                self.board.AddConc(newConcTile)
+                                        elif not self.copiedSelection[x][y].isConcrete:
+                                                self.board.Add(p)
 
 
 
