@@ -136,10 +136,14 @@ class TileEditorGUI:
 		self.menuBar.add_cascade(label="Option", menu=optionsMenu)
 		self.newWindow.config(menu=self.menuBar)
 		
+		
 		#Create two frames, one to hold the board and the buttons, and one to hold the tiles to be placed
 		self.tileEditorFrame = Frame(self.newWindow, width = 500, height = 500, relief=SUNKEN,borderwidth=1)
 		self.tileEditorFrame.pack(side=RIGHT)
 
+                
+
+                
 		self.BoardFrame = Frame(self.newWindow, borderwidth=1,relief=FLAT, width = 500, height = 500)
 	
 		self.BoardFrame.pack(side=LEFT, expand=True)
@@ -153,6 +157,65 @@ class TileEditorGUI:
 		self.addNewPrevTileButton = Button(self.tileEditorFrame, text="New Tile", width=10, command= self.addNewPrevTile)
 		self.addNewPrevTileButton.pack(side=TOP)
 		
+		self.controlsInstructionFrame = Frame(self.tileEditorFrame, width = 20, height = 20, relief=SUNKEN,borderwidth=1)
+		
+		self.T = Text(self.controlsInstructionFrame , height=20, width=20, wrap = NONE)
+                		
+		quote = """Controls [Num-Lock MUST BE OFF!!]
+
+Left-Click:
+        - Delesect Selection
+        - Select Single Square
+        - Place Selected Tile
+        
+Right-Click:
+        - Delete Single Tile
+
+AREA SELECTION TOOL
+Ctrl + Left-Click:
+        - First sqaure clicked will be highlighted green.
+        - Second square will highlight the area between both clicks blue.
+
+        Ctrl + C, copy selection
+        Ctrl + V, Select Single Square First
+                  If something has been copied then its will paste
+        Ctrl + F, Fill Selection with Selected Tile
+        Ctrl + D, Deletes the Selection
+        Ctrl + T, Flip Vertically
+        Ctrl + Y, Flip Horizontally
+
+SPECIAL SELECTION TOOL [Incomplete]
+Shift + Left-Click:
+        - While holding Left Shift, you can click and highlight a square
+          and outline in yellow. The current clicked tile is outline in yellow.
+          When clicking on other squares it will start highlighting the area
+          between previous clicked and currently clicked square.
+          
+Shift + Right-Click:
+        - Same as Shift + Left-Click, but deletes the highlight. To use properly
+          use a combination of the Shift + Left-Click and Shift + Right-Click.
+
+        Ctrl + F, Fill Selection with Selected Tile
+        Ctrl + D, Deletes the Selection
+        
+                """
+                self.T.insert(END, quote)
+		self.T.config(state=DISABLED)
+                
+
+                self.scrollbarTextV = Scrollbar(self.controlsInstructionFrame )
+                self.scrollbarTextV.pack(side=RIGHT, fill=Y)
+                self.T.config(yscrollcommand=self.scrollbarTextV.set)
+                self.scrollbarTextV.config(command=self.T.yview)
+
+                self.scrollbarTextH = Scrollbar(self.controlsInstructionFrame , orient=HORIZONTAL)
+                self.scrollbarTextH.pack(side=BOTTOM, fill=X)
+                self.T.config(xscrollcommand=self.scrollbarTextH.set)
+                self.scrollbarTextH.config(command=self.T.xview)
+                
+                self.T.pack()
+                self.controlsInstructionFrame.pack(side = BOTTOM)
+                
 		#Canvas that tile and grid is drawn on
 		self.BoardCanvas = Canvas(self.BoardFrame, width = self.width, height = self.height, scrollregion=(0, 0, self.width, self.height))
 
@@ -929,7 +992,7 @@ class TileEditorGUI:
 
                                 if newX > self.board.Rows or newY > self.board.Cols:
                                         continue
-
+                                p = TT.Polyomino(0, newX, newY, tile.glues, tile.color)
                                 northGlue = self.newTileN.get()
                                 eastGlue = self.newTileE.get()
                                 southGlue = self.newTileS.get()
