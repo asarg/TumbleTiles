@@ -1,5 +1,6 @@
 import copy
 from Tkinter import *
+import tkFont
 from scrollableFrame import VerticalScrolledFrame
 import tkFileDialog, tkMessageBox, tkColorChooser
 import xml.etree.ElementTree as ET
@@ -200,7 +201,8 @@ Shift + Right-Click:
         
                 """
                 self.T.insert(END, quote)
-		self.T.config(state=DISABLED)
+                myFont = tkFont.Font(family='Helvetica', size=12, weight='bold')
+		self.T.config(state=DISABLED, font = myFont)
                 
 
                 self.scrollbarTextV = Scrollbar(self.controlsInstructionFrame )
