@@ -15,7 +15,7 @@ from tkColorChooser import askcolor
 
 #the x and y coordinate that the preview tiles will begin to be drawn on
 
-TILESIZE = 35
+TILESIZE = 15
 PREVTILESTARTX = 20
 PREVTILESTARTY = 21
 PREVTILESIZE = 50
@@ -65,7 +65,7 @@ class TileEditorGUI:
 
 		#self.rows = self.board.Rows
 		#self.columns = self.board.Cols
-		self.tile_size = TILESIZE
+		self.tile_size = 10
 		self.width = self.board_w * self.tile_size
 		self.height = self.board_h * self.tile_size
 
@@ -140,7 +140,7 @@ class TileEditorGUI:
 		
 		#Create two frames, one to hold the board and the buttons, and one to hold the tiles to be placed
 		self.tileEditorFrame = Frame(self.newWindow, width = 500, height = 500, relief=SUNKEN,borderwidth=1)
-		self.tileEditorFrame.pack(side=RIGHT)
+		self.tileEditorFrame.pack(side=RIGHT, expand=True)
 
                 
 
@@ -257,9 +257,24 @@ Shift + Right-Click:
 		# Contains the data of a copied region
 		self.copiedSelection =  []
                 self.ShiftSelectionMatrix = [[None for x in range(self.board.Cols)] for y in range(self.board.Rows)]
+
+                self.TilesFrame = Frame(self.tileEditorFrame, width = 200, height = 200, relief=SUNKEN,borderwidth=1)
+		self.tilePrevCanvas = Canvas(self.TilesFrame, width = 200, height = 300, scrollregion=(0, 0, 200, 2000))
+
+
+		self.scrollbarCanvasV = Scrollbar(self.TilesFrame )
+                self.scrollbarCanvasV.pack(side=RIGHT, fill=Y)
+                self.tilePrevCanvas.config(yscrollcommand=self.scrollbarCanvasV.set)
+                self.scrollbarCanvasV.config(command=self.tilePrevCanvas.yview)
+
+                self.scrollbarCanvasH = Scrollbar(self.TilesFrame  , orient=HORIZONTAL)
+                self.scrollbarCanvasH.pack(side=BOTTOM, fill=X)
+                self.tilePrevCanvas.config(xscrollcommand=self.scrollbarCanvasH.set)
+                self.scrollbarCanvasH.config(command=self.tilePrevCanvas.xview)
                 
-		self.tilePrevCanvas = Canvas(self.tileEditorFrame, width = 70, height = self.height)
-		self.tilePrevCanvas.pack(side=BOTTOM)
+                self.tilePrevCanvas.pack()
+                self.TilesFrame.pack(side = TOP)
+		self.tilePrevCanvas.pack()
 
                 
                 
@@ -583,8 +598,10 @@ Shift + Right-Click:
 			#TODO: Change this
 			if True:
                                 if event.keysym == "space":
-                                        print(self.scrollbarV.get())
+                                        #self.tumbleGUI.setTilesFromEditor(self.board, self.glue_data, self.prevTileList, self.board.Cols, self.board.Rows)
                                         
+                                        self.glue_data = {'N':1, 'E':1, 'S':1, 'W':1,  'A': 1, 'B': 1, 'C': 1, 'D': 1, 'X': 1, 'Y': 1, 'Z': 1}
+                                        print(self.glue_data)
 				if event.keysym == "Up":
 					print("Moving up")
 					self.stepAllTiles("N")

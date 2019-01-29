@@ -12,7 +12,7 @@ import random
 DEBUGGING = False
 
 TEMP = 1
-GLUEFUNC = {'N':1, 'E':1, 'S':1, 'W':1,}
+GLUEFUNC = {'N':1, 'E':1, 'S':1, 'W':1,  'A': 1, 'B': 1, 'C': 1, 'D': 1, 'X': 1, 'Y': 1, 'Z': 1}
 BOARDHEIGHT = 15
 BOARDWIDTH = 15
 FACTORYMODE = False

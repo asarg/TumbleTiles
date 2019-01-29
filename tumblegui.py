@@ -84,7 +84,7 @@ class myThread (threading.Thread):
                     time.sleep(self.counter)
                     self.tg.MoveDirection(self.f[x])
                     print self.f[x], " - ",
-                    self.tg.w.update_idletasks()
+                    #self.tg.w.update_idletasks()
         else:
              for x in range(0, len(self.f)):
                     if self.counter == 0:
@@ -93,7 +93,7 @@ class myThread (threading.Thread):
                     time.sleep(self.counter)
                     self.tg.MoveDirection(self.f[x])
                     print self.f[x], " - ",
-                    self.tg.w.update_idletasks()
+                    #self.tg.w.update_idletasks()
         self.tg.reinitialzeRunScript()
 
       
@@ -420,7 +420,7 @@ class tumblegui:
     def runScript(self,file):
         self.scriptmenu.entryconfigure(1, label='Stop Script')
         script = file.readlines()[0].rstrip('\n')
-        self.thread1.counter = 1
+        self.thread1.counter = 0.3
         self.thread1.setScript(script)
         self.thread1.start()
         #self.runSequence(script)
@@ -763,7 +763,7 @@ class tumblegui:
         self.board = TT.Board(TT.BOARDHEIGHT,  TT.BOARDWIDTH)
         bh = TT.BOARDHEIGHT
         bw = TT.BOARDWIDTH
-        TT.GLUEFUNC = {'N':1, 'E':1, 'S':1, 'W':1,}
+        TT.GLUEFUNC = {'N':1, 'E':1, 'S':1, 'W':1, 'A': 1, 'B': 1, 'C': 1, 'D': 1, 'X': 1, 'Y': 1, 'Z': 1}
         self.callCanvasRedraw()
                 
     # Creates the initial configuration that shows then you open the gui
@@ -777,7 +777,7 @@ class tumblegui:
         self.board = TT.Board(TT.BOARDHEIGHT,  TT.BOARDWIDTH)
         bh = TT.BOARDHEIGHT
         bw = TT.BOARDWIDTH
-        TT.GLUEFUNC = {'N':1, 'E':1, 'S':1, 'W':1,}
+        TT.GLUEFUNC = {'N':1, 'E':1, 'S':1, 'W':1, 'A': 1, 'B': 1, 'C': 1, 'D': 1, 'X': 1, 'Y': 1, 'Z': 1}
         #initial
         #CreateTiles(board)
         colorb = "#000"
@@ -791,7 +791,7 @@ class tumblegui:
             if len(colorb) > 4:
                 colorb = colorb[:4]
 
-            p = TT.Polyomino(self.board.poly_id_c, bh-i-2, bh - 1, ['N','E','S','W'],colorb)
+            p = TT.Polyomino(self.board.poly_id_c, bh-i-2, bh - 1, ['N','E','S','W', 'A', 'B', 'C', 'D', 'X', 'Y', 'Z'],colorb)
             self.board.Add(p)
             #left tiles
             #colorl = str(colorl[0]+chr(ord(colorl[1])-1)+colorl[2:])
@@ -800,7 +800,7 @@ class tumblegui:
                 colorl = colorl[:4]
 
             char = chr(ord('a')+i)
-            p = TT.Polyomino(self.board.poly_id_c, 0, bh-i-2, ['S','W','N','E'],colorb)
+            p = TT.Polyomino(self.board.poly_id_c, 0, bh-i-2, ['S','W','N','E', 'A', 'B', 'C', 'D', 'X', 'Y', 'Z'],colorb)
 
             self.board.Add(p)
 
