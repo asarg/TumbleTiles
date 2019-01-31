@@ -139,7 +139,7 @@ class TileEditorGUI:
 		
 		
 		#Create two frames, one to hold the board and the buttons, and one to hold the tiles to be placed
-		self.tileEditorFrame = Frame(self.newWindow, width = 500, height = 500, relief=SUNKEN,borderwidth=1)
+		self.tileEditorFrame = Frame(self.newWindow, width = 200, height = 500, relief=SUNKEN,borderwidth=1)
 		self.tileEditorFrame.pack(side=RIGHT, expand=True)
 
                 
@@ -443,6 +443,7 @@ Shift + Right-Click:
 		self.prevTileList.append(newTile)
 		self.popWinTiles()
 
+		
 
 	def cancelTileCreation(self):
 		self.closeNewTileWindow()
@@ -465,7 +466,7 @@ Shift + Right-Click:
 	def popWinTiles(self):
 		global PREVTILESIZE
 		global PREVTILESTARTX
-
+                frame_size = 0
 		self.tilePrevCanvas.delete("all")
 		i = 0
 		for prevTile in self.prevTileList:
@@ -498,7 +499,14 @@ Shift + Right-Click:
 					self.tilePrevCanvas.create_text(x + size/5, y + size/2, text = prevTile.glues[3], fill="#000", font=('',size/5) )
 			
 			i += 1
-
+			frame_size = y + size + 10
+			
+                ##frame_size = (PREVTILESIZE)*len(self.prevTileList) + 20
+                self.TilesFrame.config(width = 100, height = 500)
+		self.tilePrevCanvas.config(width = 100, height = frame_size, scrollregion=(0, 0, 200, frame_size))
+		
+		self.TilesFrame.pack(side = TOP)
+		self.tilePrevCanvas.pack()
 
 
 
