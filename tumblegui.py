@@ -14,7 +14,7 @@ import time
 import tumbletiles as TT
 import tumbleEdit as TE
 from getFile import getFile, parseFile
-from boardgui import redrawCanvas, drawGrid
+from boardgui import redrawCanvas, drawGrid, redrawTumbleTiles
 import os,sys
 
 #https://pypi.python.org/pypi/pyscreenshot
@@ -420,7 +420,7 @@ class tumblegui:
     def runScript(self,file):
         self.scriptmenu.entryconfigure(1, label='Stop Script')
         script = file.readlines()[0].rstrip('\n')
-        self.thread1.counter = 0.3
+        self.thread1.counter = 0.0000001
         self.thread1.setScript(script)
         self.thread1.start()
         #self.runSequence(script)
@@ -511,13 +511,13 @@ class tumblegui:
             #normal
             if direction != "" and self.tkSTEPVAR.get() == False and self.tkGLUESTEP.get()==False:
                 self.board.Tumble(direction)
-                self.callCanvasRedraw()
                 self.Log("T"+direction+", ")
+                
             #normal with glues 
             elif direction != "" and self.tkSTEPVAR.get() == False and self.tkGLUESTEP.get() == True:
                 self.board.TumbleGlue(direction)
-                self.callCanvasRedraw()
                 self.Log("TG"+direction+", ")
+                
             #single step
             elif direction != "" and self.tkSTEPVAR.get() == True:
                 s = True
@@ -530,7 +530,8 @@ class tumblegui:
                 if s == False and self.tkGLUESTEP.get()==False:
                     self.board.ActivateGlues()
                     self.Log("G, ")
-                self.callCanvasRedraw()
+                
+            self.callCanvasRedrawTumbleTiles()
         except Exception as e:
             print e
             print sys.exc_info()[0]
@@ -665,6 +666,10 @@ class tumblegui:
     def callCanvasRedraw(self):
         global TILESIZE
         redrawCanvas(self.board, self.board.Cols, self.board.Rows, self.w, TILESIZE, self.textcolor, self.gridcolor, self.tkDRAWGRID.get(), self.tkSHOWLOC.get())
+
+    def callCanvasRedrawTumbleTiles(self):
+        global TILESIZE
+        redrawTumbleTiles(self.board, self.board.Cols, self.board.Rows, self.w, TILESIZE, self.textcolor, self.gridcolor, self.tkDRAWGRID.get(), self.tkSHOWLOC.get())
 
     def callGridDraw(self):
         global TILESIZE

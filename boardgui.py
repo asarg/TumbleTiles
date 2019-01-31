@@ -7,7 +7,7 @@ def redrawCanvas(board, boardwidth, boardheight, canvas, tilesize, textcolor = "
 	for p in board.Polyominoes:
 		for tile in p.Tiles:
 			color = tile.color
-			canvas.create_rectangle(tilesize*tile.x, tilesize*tile.y, tilesize*tile.x + tilesize, tilesize*tile.y + tilesize, fill = color)
+			board.rectangles.append(canvas.create_rectangle(tilesize*tile.x, tilesize*tile.y, tilesize*tile.x + tilesize, tilesize*tile.y + tilesize, fill = color))
 
 			# DRAW THE GLUES
 			if tile.glues == [] or tile.glues == None:
@@ -16,21 +16,52 @@ def redrawCanvas(board, boardwidth, boardheight, canvas, tilesize, textcolor = "
 			
 			if tile.glues[0] != "None":
 				#north
-				canvas.create_text(tilesize*tile.x + tilesize/2, tilesize*tile.y + tilesize/5, text = tile.glues[0], fill=textcolor, font=('',tilesize/5) )
+				board.glueText.append(canvas.create_text(tilesize*tile.x + tilesize/2, tilesize*tile.y + tilesize/5, text = tile.glues[0], fill=textcolor, font=('',tilesize/5)) )
 			if tile.glues[1] != "None":	
 				#east
-				canvas.create_text(tilesize*tile.x + tilesize - tilesize/5, tilesize*tile.y + tilesize/2, text = tile.glues[1], fill=textcolor, font=('',tilesize/5))
+				board.glueText.append(canvas.create_text(tilesize*tile.x + tilesize - tilesize/5, tilesize*tile.y + tilesize/2, text = tile.glues[1], fill=textcolor, font=('',tilesize/5)))
 			if tile.glues[2] != "None":	
 				#south
-				canvas.create_text(tilesize*tile.x + tilesize/2, tilesize*tile.y+ tilesize - tilesize/5, text = tile.glues[2], fill=textcolor, font=('',tilesize/5) )
+				board.glueText.append(canvas.create_text(tilesize*tile.x + tilesize/2, tilesize*tile.y+ tilesize - tilesize/5, text = tile.glues[2], fill=textcolor, font=('',tilesize/5) ))
 			if tile.glues[3] != "None":	
 				#west
-				canvas.create_text(tilesize*tile.x + tilesize/5, tilesize*tile.y + tilesize/2, text = tile.glues[3], fill=textcolor, font=('',tilesize/5) )
+				board.glueText.append(canvas.create_text(tilesize*tile.x + tilesize/5, tilesize*tile.y + tilesize/2, text = tile.glues[3], fill=textcolor, font=('',tilesize/5) ))
 
 	for c in board.ConcreteTiles:
 		canvas.create_rectangle(tilesize*c.x, tilesize*c.y, tilesize*c.x + tilesize, tilesize*c.y + tilesize, fill = "#686868")
 
+def redrawTumbleTiles(board, boardwidth, boardheight, canvas, tilesize, textcolor = "#000000", gridcolor = "#000000", b_drawGrid = False, b_drawLoc = False):
+        i = 0
+        while i < len(board.rectangles):
+                canvas.delete(board.rectangles[i])
+                i=i+1
+        i = 0
+        while i < len(board.glueText):
+                canvas.delete(board.glueText[i])
+                i=i+1
+                
+        board.rectangles = []
+        board.glueText = []
+        for p in board.Polyominoes:
+                
+		for tile in p.Tiles:
+			color = tile.color
+			board.rectangles.append(canvas.create_rectangle(tilesize*tile.x, tilesize*tile.y, tilesize*tile.x + tilesize, tilesize*tile.y + tilesize, fill = color))
 
+			# DRAW THE GLUES
+			if tile.glues[0] != "None":
+				#north
+				board.glueText.append(canvas.create_text(tilesize*tile.x + tilesize/2, tilesize*tile.y + tilesize/5, text = tile.glues[0], fill=textcolor, font=('',tilesize/5)) )
+			if tile.glues[1] != "None":	
+				#east
+				board.glueText.append(canvas.create_text(tilesize*tile.x + tilesize - tilesize/5, tilesize*tile.y + tilesize/2, text = tile.glues[1], fill=textcolor, font=('',tilesize/5)))
+			if tile.glues[2] != "None":	
+				#south
+				board.glueText.append(canvas.create_text(tilesize*tile.x + tilesize/2, tilesize*tile.y+ tilesize - tilesize/5, text = tile.glues[2], fill=textcolor, font=('',tilesize/5) ))
+			if tile.glues[3] != "None":	
+				#west
+				board.glueText.append(canvas.create_text(tilesize*tile.x + tilesize/5, tilesize*tile.y + tilesize/2, text = tile.glues[3], fill=textcolor, font=('',tilesize/5) ))
+				
 def drawGrid(board, boardwidth, boardheight, canvas, tilesize, gridcolor = "#000000", b_drawGrid = False, b_drawLoc = False):
 
 

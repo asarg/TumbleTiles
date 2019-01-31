@@ -181,6 +181,8 @@ class Polyomino:
 class Board:
     #constructor for polyomino, assigns the size of Rows and Colums and creates an empty board
     def __init__(self,R,C):
+        self.rectangles = []
+        self.glueText = []
         self.poly_id_c = 0  #the number of seperate polyominos?
         self.Rows = R
         self.Cols = C
