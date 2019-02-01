@@ -33,6 +33,9 @@ try:
 except ImportError:
     IMAGEIO = False
 
+NEWTILEWINDOW_W = 400
+
+NEWTILEWINDOW_H = 180
 
 LOGFILE = None
 LOGFILENAME = ""
@@ -235,9 +238,11 @@ class tumblegui:
 
         FACTORYMODE = BooleanVar()
         FACTORYMODE.set(False)
-        
+        self.rightFrame = Frame(self.mainframe, width = 200, height = 500, relief=SUNKEN,borderwidth=1)
+	self.BoardFrame = Frame(self.mainframe, borderwidth=1,relief=FLAT, width = TT.BOARDWIDTH*TILESIZE, height = TT.BOARDHEIGHT*TILESIZE)
+	
         #main canvas to draw on
-        self.w = Canvas(self.mainframe, width=TT.BOARDWIDTH*TILESIZE, height=TT.BOARDHEIGHT*TILESIZE, scrollregion=(0, 0, TT.BOARDWIDTH*TILESIZE, TT.BOARDHEIGHT*TILESIZE))
+        self.w = Canvas(self.BoardFrame, width=TT.BOARDWIDTH*TILESIZE, height=TT.BOARDHEIGHT*TILESIZE, scrollregion=(0, 0, TT.BOARDWIDTH*TILESIZE, TT.BOARDHEIGHT*TILESIZE))
         #mouse
         self.w.bind("<Button-1>", self.callback)
         #arrow keys
@@ -248,16 +253,18 @@ class tumblegui:
         self.root.bind("<space>", self.keyPressed)
         self.root.bind("<Key>", self.keyPressed)
 
-        self.scrollbarV = Scrollbar(root)
+        self.scrollbarV = Scrollbar(self.BoardFrame)
         self.scrollbarV.pack(side=RIGHT, fill=Y)
         self.w.config(yscrollcommand=self.scrollbarV.set)
         self.scrollbarV.config(command=self.w.yview)
 
-        self.scrollbarH = Scrollbar(root, orient=HORIZONTAL)
+        self.scrollbarH = Scrollbar(self.BoardFrame, orient=HORIZONTAL)
         self.scrollbarH.pack(side=BOTTOM, fill=X)
         self.w.config(xscrollcommand=self.scrollbarH.set)
         self.scrollbarH.config(command=self.w.xview)
         self.w.pack()
+        self.rightFrame.pack(side=RIGHT, expand=True)
+        self.BoardFrame.pack(side=LEFT, expand=True)
 
         
         #menu
@@ -342,7 +349,7 @@ class tumblegui:
         
         #toolbar
         #http://zetcode.com/gui/tkinter/menustoolbars/
-        self.toolbar = Frame(self.mainframe, bd=0, relief=FLAT, height=10)
+        self.toolbar = Frame(self.rightFrame, bd=0, relief=FLAT, height=10)
         lab1 = Label(self.toolbar, text="Width:", justify=RIGHT).pack(side=LEFT)
         self.tkWidthText = StringVar()
         self.tkWidthText.set(TT.BOARDWIDTH)
@@ -358,9 +365,38 @@ class tumblegui:
         self.tkTempText = StringVar()
         self.tkTempText.set(TT.TEMP)
         Label(self.toolbar, textvariable=self.tkTempText, width=3, padx=0, justify=LEFT, relief=FLAT).pack(side=LEFT)
+
+
+#################################################
+        self.addSequenceButton = Button(self.rightFrame, text="Add Sequence", width=10, command= self.addSequenceWin)
+
+	self.newCommandName = StringVar()
+        self.newCommandFile = StringVar()
+
+        self.listOfCommands = []
+        self.listOfCommandButtons = []
+#################################################
+        self.TilesFrame = Frame(self.rightFrame, width = 200, height = 200, relief=SUNKEN,borderwidth=1)
+        self.tilePrevCanvas = Canvas(self.TilesFrame, width = 200, height = 300, scrollregion=(0, 0, 200, 2000))
+
+
+        self.scrollbarCanvasV = Scrollbar(self.TilesFrame )
+        self.scrollbarCanvasV.pack(side=RIGHT, fill=Y)
+        self.tilePrevCanvas.config(yscrollcommand=self.scrollbarCanvasV.set)
+        self.scrollbarCanvasV.config(command=self.tilePrevCanvas.yview)
+
+        self.scrollbarCanvasH = Scrollbar(self.TilesFrame  , orient=HORIZONTAL)
+        self.scrollbarCanvasH.pack(side=BOTTOM, fill=X)
+        self.tilePrevCanvas.config(xscrollcommand=self.scrollbarCanvasH.set)
+        self.scrollbarCanvasH.config(command=self.tilePrevCanvas.xview)
         
+        self.tilePrevCanvas.pack()
+
+#################################################
+		
         self.toolbar.pack(side=TOP, fill=X)
-        
+        self.addSequenceButton.pack(side=TOP)
+        self.TilesFrame.pack(side = TOP)
         self.mainframe.pack()
 
 
@@ -485,8 +521,10 @@ class tumblegui:
         elif event.keysym == "space":
             clear = lambda: os.system('cls')
             clear()
-            if RECORDING:
-                print SCRIPTSEQUENCE
+            for x in self.listOfCommands:
+                print x[0]," ",x[1]
+##            if RECORDING:
+##                print SCRIPTSEQUENCE
 ##            print "Current State: ",self.CurrentState
 ##            print "Length of states: ", len(self.stateTmpSaves)
 ##            for z in self.stateTmpSaves:
@@ -527,6 +565,114 @@ class tumblegui:
                 
         except:
             pass
+        
+    def performSequence(self, i):
+        print "some Function: ", i
+        print "Command Name: ", self.listOfCommands[i][0]
+        print "File Name: ", self.listOfCommands[i][1]
+        file = open(self.listOfCommands[i][1], "r")
+        self.runScript(file)
+        
+        
+    def popWinSequences(self):
+    ##		global PREVTILESIZE
+    ##		global PREVTILESTARTX
+        frame_size = 0
+        for prevTile in self.listOfCommandButtons:
+            prevTile.destroy()
+        for x in range(0, len(self.listOfCommandButtons)):
+            self.listOfCommandButtons.pop()
+        i = -1
+        for prevTile in self.listOfCommands:
+            i += 1
+            # PREVTILESIZE = TILESIZE * 2
+    ##			PREVTILESTARTX = (70 - PREVTILESIZE) / 2
+    ##		 	x = (70 - PREVTILESIZE) / 2
+    ##		 	y = PREVTILESTARTY + 80 * i
+    ##		 	size = PREVTILESIZE
+
+
+            
+            #prevTileButton = self.tilePrevCanvas.create_rectangle(x, y, x + size, y + size, fill = prevTile.color)
+            #tag_bing can bind an object in a canvas to an event, here the rectangle that bounds the
+            #preview tile is bound to a mouse click, and it will call selected() with its index as the argument
+            #self.tilePrevCanvas.tag_bind(prevTileButton, "<Button-1>", lambda event, a=i: self.someFunction(a))
+
+            #buttonArray.append(prevTileButton)
+            
+            frame_size = 10
+            self.listOfCommandButtons.append(Button(self.tilePrevCanvas, text=prevTile[0], width=8, command= lambda a=i: self.performSequence(a), padx = 10))
+
+        for prevTile in self.listOfCommandButtons:
+            prevTile.pack()
+            
+        ##frame_size = (PREVTILESIZE)*len(self.prevTileList) + 20
+        self.TilesFrame.config(width = 100, height = 500)
+        self.tilePrevCanvas.config(width = 100, height = frame_size, scrollregion=(0, 0, 200, frame_size))
+        
+        self.TilesFrame.pack(side = TOP)
+        self.tilePrevCanvas.pack()
+
+    def closeNewSequenceWindow(self):
+	self.addSequenceWindow.destroy()
+    def addSequence(self):
+        if(self.newCommandFile.get() == "No File Selected"):
+            print "No File Seleceted"
+        elif(self.newCommandName.get().strip() == ""):
+            print "No Name Entered"
+        else:
+           print "There was a file Selected: ", self.newCommandFile.get()
+           print "Command Name Entered: ", self.newCommandName.get()
+           self.listOfCommands.append((self.newCommandName.get().strip(), self.newCommandFile.get()))
+           self.popWinSequences()
+        self.closeNewSequenceWindow()
+    def selectSequence(self):
+        filename = getFile()
+        self.newCommandFile.set(filename)
+    def addSequenceWin(self):
+        global CURRENTNEWTILECOLOR
+    
+	
+        self.addSequenceWindow = Toplevel(self.root)
+	self.addSequenceWindow.lift(aboveThis= self.root)
+        self.addSequenceWindow.wm_title("Create Sequence")
+        self.addSequenceWindow.resizable(False, False)
+        self.addSequenceWindow.protocol("WM_DELETE_WINDOW", lambda: self.closeNewSequenceWindow())
+        
+
+        
+
+        self.prevFrame = Frame(self.addSequenceWindow, borderwidth=1, relief=FLAT, width = 200, height = NEWTILEWINDOW_H - 40)
+        self.filename = Label(self.prevFrame, textvariable= self.newCommandFile)
+        self.newCommandFile.set("No File Selected")
+        self.filename.pack()
+        self.prevFrame.pack()
+        
+        self.nameFrame = Frame(self.prevFrame, borderwidth=1, relief=FLAT)
+        self.nameLabel = Label(self.nameFrame, text="Command Name:")
+        self.commandName = Entry(self.nameFrame, textvariable= self.newCommandName, width = 20)
+        
+
+        self.nameLabel.pack(side = LEFT)
+        self.commandName.pack(side = RIGHT)
+        self.nameFrame.pack(side = TOP)
+        
+        #Frame that till hold the two buttons cancel / create
+        self.buttonFrame = Frame(self.addSequenceWindow, borderwidth=1, background = "#000",relief=FLAT, width = 300, height =  200)
+        self.buttonFrame.pack(side=BOTTOM)
+
+        self.createButton = Button(self.buttonFrame, text="Create Sequence", width=8, command= self.addSequence, padx = 10)
+        self.selectScriptButton = Button(self.buttonFrame, text="Select Script", width=8, command= self.selectSequence, padx = 10)
+        self.cancelButton = Button(self.buttonFrame, text="Cancel", width=5, command= self.closeNewSequenceWindow, padx = 10)
+
+        self.createButton.pack(side=LEFT)
+        self.selectScriptButton.pack(side=LEFT)
+        self.cancelButton.pack(side=RIGHT)
+
+        #Makes the new window open over the current editor window
+        self.addSequenceWindow.geometry('%dx%d+%d+%d' % (NEWTILEWINDOW_W, NEWTILEWINDOW_H, 
+                self.root.winfo_x() + self.root.winfo_width() / 2 - NEWTILEWINDOW_W /2, 
+                self.root.winfo_y() + self.root.winfo_height() / 2 - NEWTILEWINDOW_H /2))
         
     def Zoom(self, x):
         global TILESIZE
