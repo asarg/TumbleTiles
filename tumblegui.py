@@ -926,6 +926,9 @@ class tumblegui:
         self.stateTmpSaves = []
         self.SaveStates()
         #self.board.SetGrid()
+
+        self.listOfCommands = data[3]
+        self.popWinSequences()
         self.callCanvasRedraw()
 
     def callCanvasRedraw(self):

@@ -1536,10 +1536,12 @@ Shift + Right-Click:
 		tile_config = ET.Element("TileConfiguration")
 		board_size = ET.SubElement(tile_config, "BoardSize")
 		glue_func = ET.SubElement(tile_config, "GlueFunction")
-
+                
 		board_size.set("width", str(self.board.Cols))		
 		board_size.set("height", str(self.board.Rows))
 
+                
+                
 		#Add all preview tiles to the .xml file if there are any
 		p_tiles = ET.SubElement(tile_config, "PreviewTiles")
 		if len(self.prevTileList) != 0:
@@ -1658,6 +1660,13 @@ Shift + Right-Click:
 			s = ET.SubElement(f, "Strength")
 			s.text = str(gs)
 
+                commands = ET.SubElement(tile_config, "Commands")
+                for c in self.tumbleGUI.listOfCommands:
+                        command = ET.SubElement(commands, "Command")
+                        command.set("name", str(c[0]))
+                        command.set("filename", str(c[1]))
+                        print "Name: ", c[0],", Filename: ", c[1]
+                        
 		#print tile_config
 		mydata = ET.tostring(tile_config)
 		file = open(filename+".xml", "w")

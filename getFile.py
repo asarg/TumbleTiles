@@ -26,7 +26,7 @@ def parseFile(filename):
     glueFuncExists = False
     previewTilesExist = False
     tileDataExists = False
-
+    CommandsExists = False
     #check if the xml attributes are found
     if tree.find("GlueFunction") != None:
         glueFuncExists = True
@@ -40,12 +40,14 @@ def parseFile(filename):
     if tree.find("TileData") != None:
         tileDataExists = True
 
-
+    if tree.find("Commands") != None:
+        CommandsExists = True
 
 
     #data set that will be passed back to tumblegui
     tile_set_data = {"glueFunc": {}, "prevTiles": [], "tileData": []}
 
+    
     if boardSizeExists:
         rows = treeroot[0].attrib["height"]
         columns = treeroot[0].attrib["width"]
@@ -165,9 +167,17 @@ def parseFile(filename):
         prevGlues = [prevTile["northGlue"],prevTile["eastGlue"],prevTile["southGlue"],prevTile["westGlue"]]
         prevTileList.append(TT.Tile( None, 0, 0, 0, prevGlues, prevTile["color"], prevTile["concrete"]))
 
-    
+    commands = []
 
-    data = [board, glueFunc, prevTileList]
+    listOfCommands = treeroot[4]
+    print listOfCommands
+    if CommandsExists:
+        for c in listOfCommands:
+            print c
+            print "NAME: ",c.attrib["name"],"  FILENAME: ",c.attrib["filename"]
+            commands.append((c.attrib["name"], c.attrib["filename"]))
+
+    data = [board, glueFunc, prevTileList, commands]
 
 
     return data
