@@ -471,6 +471,9 @@ class tumblegui:
     
     # Handles the arrow keys to call the tumbling and the shortcuts for file options
     def keyPressed(self, event):
+        global RECORDING
+        global SCRIPTSEQUENCE
+        
         if event.keysym == "Up":
             self.MoveDirection("N")
         elif event.keysym == "Right":
@@ -482,17 +485,21 @@ class tumblegui:
         elif event.keysym == "space":
             clear = lambda: os.system('cls')
             clear()
-            print "Current State: ",self.CurrentState
-            print "Length of states: ", len(self.stateTmpSaves)
-            for z in self.stateTmpSaves:
-                i=0
-                for x in z:
-                    print "polyomino",i, ", \n"
-                    i = i+1
-                    for y in x.Tiles:
-                        print "     tile:",y.x,", ",y.y
+            if RECORDING:
+                print SCRIPTSEQUENCE
+##            print "Current State: ",self.CurrentState
+##            print "Length of states: ", len(self.stateTmpSaves)
+##            for z in self.stateTmpSaves:
+##                i=0
+##                for x in z:
+##                    print "polyomino",i, ", \n"
+##                    i = i+1
+##                    for y in x.Tiles:
+##                        print "     tile:",y.x,", ",y.y
         elif event.keysym == "z":
             self.Undo()
+        elif event.keysym == "a":
+            self.ApplyUndo()
         elif event.keysym == "x":
             self.Redo()
         elif event.keysym == "1":
@@ -536,6 +543,8 @@ class tumblegui:
             self.callCanvasRedraw() 
         
     def SaveStates(self):
+        global RECORDING
+        global SCRIPTSEQUENCE
         if len(self.stateTmpSaves) == self.maxStates:
             if(self.CurrentState == self.maxStates - 1):     
                 self.stateTmpSaves.pop(0)
@@ -559,12 +568,22 @@ class tumblegui:
                 for x in range(0,  len(self.stateTmpSaves) - self.CurrentState - 1):
                     print "x :", x
                     self.stateTmpSaves.pop()
+                    if RECORDING:
+                        SCRIPTSEQUENCE = SCRIPTSEQUENCE[:-1]
                 
                 self.stateTmpSaves.append(copy.deepcopy(self.board.Polyominoes))
                 self.CurrentState = self.CurrentState + 1
             
 
-
+    def ApplyUndo(self):
+        global RECORDING
+        global SCRIPTSEQUENCE
+        print "Removing some states 2"
+        for x in range(0,  len(self.stateTmpSaves) - self.CurrentState - 1):
+            print "x :", x
+            self.stateTmpSaves.pop()
+            if RECORDING:
+                SCRIPTSEQUENCE = SCRIPTSEQUENCE[:-1]
     def Undo(self):
         
         if self.CurrentState == 0:
@@ -594,8 +613,7 @@ class tumblegui:
         global RECORDING
         global SCRIPTSEQUENCE
 
-        if RECORDING:
-            SCRIPTSEQUENCE = SCRIPTSEQUENCE + direction
+        
 
     #try:
         
@@ -628,6 +646,8 @@ class tumblegui:
                 self.board.ActivateGlues()
                 self.Log("G, ")
         self.SaveStates()
+        if RECORDING:
+            SCRIPTSEQUENCE = SCRIPTSEQUENCE + direction
         self.callCanvasRedrawTumbleTiles()
     #except Exception as e:
      #   print e
