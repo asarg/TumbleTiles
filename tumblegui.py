@@ -465,7 +465,6 @@ class tumblegui:
         self.thread1.setScript(script)
         self.thread1.start()
         #self.runSequence(script)
-        
 
         
     # Steps through string in script and tumbles in that direction
@@ -570,8 +569,14 @@ class tumblegui:
         print "some Function: ", i
         print "Command Name: ", self.listOfCommands[i][0]
         print "File Name: ", self.listOfCommands[i][1]
-        file = open(self.listOfCommands[i][1], "r")
-        self.runScript(file)
+        #file = open(self.listOfCommands[i][1], "r")
+
+        self.scriptmenu.entryconfigure(1, label='Stop Script')
+        script = self.listOfCommands[i][1]
+        self.thread1.counter = 0.0000001
+        self.thread1.setScript(script)
+        self.thread1.start()
+    
         
         
     def popWinSequences(self):
@@ -621,10 +626,21 @@ class tumblegui:
         elif(self.newCommandName.get().strip() == ""):
             print "No Name Entered"
         else:
-           print "There was a file Selected: ", self.newCommandFile.get()
-           print "Command Name Entered: ", self.newCommandName.get()
-           self.listOfCommands.append((self.newCommandName.get().strip(), self.newCommandFile.get()))
-           self.popWinSequences()
+            print "There was a file Selected: ", self.newCommandFile.get()
+            print "Command Name Entered: ", self.newCommandName.get()
+
+            filename = self.newCommandFile.get()
+            file = open(filename, "r")
+            script = file.readlines()[0].rstrip('\n')
+            sequence = ""
+            for x in range(0, len(script)):
+                print script[x], " - ",
+                sequence = sequence + script[x]
+                #self.tg.w.update_idletasks()
+                    
+            self.listOfCommands.append((self.newCommandName.get().strip(), sequence))
+            self.popWinSequences()
+            
         self.closeNewSequenceWindow()
     def selectSequence(self):
         filename = getFile()
