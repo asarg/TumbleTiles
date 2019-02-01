@@ -35,6 +35,7 @@ class Tile:
         self.y = 0
         self.color = COLOR[0]
         self.glues = ['N','E','S','W']
+        self.isConcrete = False
 
     def __init__(self,s,r,c,g):
         self.symbol = s
@@ -43,6 +44,7 @@ class Tile:
         self.x = r
         self.y = c
         self.glues = g
+        self.isConcrete = False
         
     def __init__(self, parent, s,r,c,g,color, isConcrete):
         self.parent = parent #polyomino that this tile is a part of

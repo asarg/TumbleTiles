@@ -100,6 +100,12 @@ class TileEditorGUI:
 		self.newTileE = StringVar()
 		self.newTileS = StringVar()
 		self.newTileW = StringVar()
+		
+		self.editTileN = StringVar()
+		self.editTileE = StringVar()
+		self.editTileS = StringVar()
+		self.editTileW = StringVar()
+		
 		self.concreteChecked = IntVar()
 
 
@@ -393,7 +399,98 @@ Shift + Right-Click:
 			self.newWindow.winfo_y() + self.newWindow.winfo_height() / 2 - NEWTILEWINDOW_H /2))
 
 
+        def editTilePrevTile(self):
+		global CURRENTNEWTILECOLOR
+                i = self.selectedTileIndex
+		tile = self.prevTileList[i]
+		
+		self.addTileWindow = Toplevel(self.newWindow)
+		self.addTileWindow.lift(aboveThis= self.newWindow)
 
+
+
+		self.addTileWindow.wm_title("Edit Tile")
+		self.addTileWindow.resizable(False, False)
+		self.addTileWindow.protocol("WM_DELETE_WINDOW", lambda: self.closeNewTileWindow())
+
+		self.prevFrame = Frame(self.addTileWindow, borderwidth=1, relief=FLAT, width = 200, height = NEWTILEWINDOW_H - 40)
+
+		#Frame that will hold the text boxes that the glues will be entered it
+		self.tileFrame = Frame(self.prevFrame, borderwidth=1, relief=FLAT, width = 50, height = NEWTILEWINDOW_H - 40)
+		self.colorFrame = Frame(self.prevFrame, borderwidth=1, relief=FLAT, width = 100, height = NEWTILEWINDOW_H - 40)
+
+
+		#Canvas that will draw color preview
+		self.colorPrevCanvas = Canvas(self.colorFrame, width = 100, height = 100)
+
+		self.drawColorPreviewEdit(tile.color)
+		CURRENTNEWTILECOLOR = tile.color
+		self.colorPrevCanvas.pack()
+
+		#Frames that hold a label and an entry next to each other
+		self.nFrame = Frame(self.tileFrame, borderwidth=1, relief=FLAT, width = self.tile_size * 3, height = 20)
+		self.eFrame = Frame(self.tileFrame, borderwidth=1, relief=FLAT, width = self.tile_size * 3, height = 20)
+		self.sFrame = Frame(self.tileFrame, borderwidth=1, relief=FLAT, width = self.tile_size * 3, height = 20)
+		self.wFrame = Frame(self.tileFrame, borderwidth=1, relief=FLAT, width = self.tile_size * 3, height = 20)
+
+		#Labels and entrys that user will enter the new glue configuration into
+		self.glueN = Entry(self.nFrame, textvariable= self.editTileN, width = 5)
+		self.glueE = Entry(self.eFrame, textvariable= self.editTileE, width = 5)
+		self.glueS = Entry(self.sFrame, textvariable= self.editTileS, width = 5)
+		self.glueW = Entry(self.wFrame, textvariable= self.editTileW, width = 5)
+
+                self.editTileN.set(tile.glues[0])
+                self.editTileE.set(tile.glues[1])
+                self.editTileS.set(tile.glues[2])
+                self.editTileW.set(tile.glues[3])
+		
+		
+
+		self.labelN = Label(self.nFrame, text="N:")
+		self.labelE = Label(self.eFrame, text="E:")
+		self.labelS = Label(self.sFrame, text="S:")
+		self.labelW = Label(self.wFrame, text="W:")
+
+		self.labelN.pack(fill=None, side=LEFT)
+		self.labelE.pack(fill=None, side=LEFT)
+		self.labelS.pack(fill=None, side=LEFT)
+		self.labelW.pack(fill=None, side=LEFT)
+
+		self.glueN.pack(fill=None, side=RIGHT) 
+		self.glueE.pack(fill=None, side=RIGHT)
+		self.glueS.pack(fill=None, side=RIGHT)
+		self.glueW.pack(fill=None, side=RIGHT)
+
+		self.nFrame.pack(side=TOP)
+		self.eFrame.pack(side=TOP)
+		self.sFrame.pack(side=TOP)
+		self.wFrame.pack(side=TOP)
+
+		self.tileFrame.pack(side=LEFT)
+		self.colorFrame.pack(side=RIGHT)
+
+		self.prevFrame.pack(side=TOP)
+
+		#Frame that till hold the two buttons cancel / create
+		self.buttonFrame = Frame(self.addTileWindow, borderwidth=1, background = "#000",relief=FLAT, width = 300, height =  200)
+		self.buttonFrame.pack(side=BOTTOM)
+
+		self.ApplyButton = Button(self.buttonFrame, text="Apply", width=8, command= self.editTile)
+		self.DeleteButton = Button(self.buttonFrame, text="Delete", width=8, command= self.deleteTile)
+		self.cancelButton = Button(self.buttonFrame, text="Cancel", width=5, command= self.cancelTileCreation)
+		self.setColorButton = Button(self.buttonFrame, text="Set Color", width=8, command= self.getColor)
+
+		self.ApplyButton.pack(side=LEFT)
+		self.setColorButton.pack(side=LEFT)
+		self.DeleteButton.pack(side=LEFT)
+		self.cancelButton.pack(side=RIGHT)
+		
+
+		#Makes the new window open over the current editor window
+		self.addTileWindow.geometry('%dx%d+%d+%d' % (NEWTILEWINDOW_W, NEWTILEWINDOW_H, 
+			self.newWindow.winfo_x() + self.newWindow.winfo_width() / 2 - NEWTILEWINDOW_W /2, 
+			self.newWindow.winfo_y() + self.newWindow.winfo_height() / 2 - NEWTILEWINDOW_H /2))
+		
 	def getColor(self):
 		global CURRENTNEWTILECOLOR
 		color = askcolor()
@@ -406,7 +503,10 @@ Shift + Right-Click:
 		
 
 
-
+        def drawColorPreviewEdit(self, color):
+		self.colorPrevCanvas.delete("all")
+		self.colorPrevCanvas.create_rectangle(0, 0, 50, 50, fill = color)
+		
 	def drawColorPreview(self):
 		global CURRENTNEWTILECOLOR
 		self.colorPrevCanvas.delete("all")
@@ -430,20 +530,38 @@ Shift + Right-Click:
 		southGlue = self.newTileS.get()
 		westGlue = self.newTileW.get()
 		label = "x"
+		
 		if self.concreteChecked.get() == 1:
 			print("adding concrete")
 			isConcrete = "True"
 			color = "#686868"
 		else:
 			isConcrete = "False"
-
+                
 		glues = [northGlue, eastGlue, southGlue, westGlue]
 		newTile = TT.Tile(None, 0, 0, 0, glues, color, isConcrete)
 
 		self.prevTileList.append(newTile)
 		self.popWinTiles()
-
 		
+        def deleteTile(self):
+                self.prevTileList.pop(self.selectedTileIndex)
+                self.selectedTileIndex = -1
+                self.popWinTiles()
+                self.closeNewTileWindow()
+                
+	def editTile(self):
+		color = CURRENTNEWTILECOLOR
+		northGlue = self.editTileN.get()
+		eastGlue = self.editTileE.get()
+		southGlue = self.editTileS.get()
+		westGlue = self.editTileW.get()
+
+		glues = [northGlue, eastGlue, southGlue, westGlue]
+		self.prevTileList[self.selectedTileIndex] = TT.Tile(None, 0, 0, 0, glues, color, False)
+		
+		self.popWinTiles()
+		self.closeNewTileWindow()
 
 	def cancelTileCreation(self):
 		self.closeNewTileWindow()
@@ -804,15 +922,18 @@ Shift + Right-Click:
 		
 	# This method will outline a square that is clicked on with a red line
 	def selected(self, i):
-		
-		self.add_state = True
-		self.selectedTileIndex = i
+                if self.selectedTileIndex == i:
+                        if not self.prevTileList[self.selectedTileIndex].isConcrete:
+                                self.editTilePrevTile()
+                else:
+                        self.add_state = True
+                        self.selectedTileIndex = i
+                
+                        if self.outline is not None:
+                        	self.tilePrevCanvas.delete(self.outline)
 
-		if self.outline is not None:
-			self.tilePrevCanvas.delete(self.outline)
-
-		self.outline = self.tilePrevCanvas.create_rectangle(PREVTILESTARTX, PREVTILESTARTY + 80 * i, 
-			PREVTILESTARTX + PREVTILESIZE, PREVTILESTARTY + 80 * i + PREVTILESIZE, outline="#FF0000", width = 2)
+                        self.outline = self.tilePrevCanvas.create_rectangle(PREVTILESTARTX, PREVTILESTARTY + 80 * i, 
+                        	PREVTILESTARTX + PREVTILESIZE, PREVTILESTARTY + 80 * i + PREVTILESIZE, outline="#FF0000", width = 2)
 
 		
 
@@ -1239,6 +1360,7 @@ Shift + Right-Click:
 	def addTileAtPos(self, x, y):
 		
 		i = self.selectedTileIndex
+		
 		if self.board.coordToTile[x][y] != None:
 			return
 
