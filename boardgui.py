@@ -30,6 +30,16 @@ def redrawCanvas(board, boardwidth, boardheight, canvas, tilesize, textcolor = "
 	for c in board.ConcreteTiles:
 		canvas.create_rectangle(tilesize*c.x, tilesize*c.y, tilesize*c.x + tilesize, tilesize*c.y + tilesize, fill = "#686868")
 
+def deleteTumbleTiles(board, boardwidth, boardheight, canvas, tilesize, textcolor = "#000000", gridcolor = "#000000", b_drawGrid = False, b_drawLoc = False):
+        i = 0
+        while i < len(board.rectangles):
+                canvas.delete(board.rectangles[i])
+                i=i+1
+        i = 0
+        while i < len(board.glueText):
+                canvas.delete(board.glueText[i])
+                i=i+1
+                
 def redrawTumbleTiles(board, boardwidth, boardheight, canvas, tilesize, textcolor = "#000000", gridcolor = "#000000", b_drawGrid = False, b_drawLoc = False):
         i = 0
         while i < len(board.rectangles):

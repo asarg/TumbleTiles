@@ -14,7 +14,7 @@ import time
 import tumbletiles as TT
 import tumbleEdit as TE
 from getFile import getFile, parseFile
-from boardgui import redrawCanvas, drawGrid, redrawTumbleTiles
+from boardgui import redrawCanvas, drawGrid, redrawTumbleTiles, deleteTumbleTiles
 import os,sys
 
 #https://pypi.python.org/pypi/pyscreenshot
@@ -216,6 +216,11 @@ class tumblegui:
     def __init__(self, root):
         global TILESIZE
         self.thread1 = myThread(1, "Thread-1", 0, self)
+        self.stateTmpSaves = []
+        self.polyTmpSaves = []
+        
+        self.maxStates = 255
+        self.CurrentState = -1
         
         #3 sets of data that the class will keep track of, these are used to sending tiles to the editor or updating the board
         #when tile data is received from the editor
@@ -475,7 +480,22 @@ class tumblegui:
         elif event.keysym == "Left":
             self.MoveDirection("W")
         elif event.keysym == "space":
-            print("is Alive : ",self.thread1.isAlive())
+            
+            clear = lambda: os.system('cls')
+            clear()
+            print "Current State: ",self.CurrentState
+            print "Length of states: ", len(self.stateTmpSaves)
+            for z in self.stateTmpSaves:
+                i=0
+                for x in z:
+                    print "polyomino",i, ", \n"
+                    i = i+1
+                    for y in x.Tiles:
+                        print "     tile:",y.x,", ",y.y
+        elif event.keysym == "z":
+            self.Undo()
+        elif event.keysym == "x":
+            self.Redo()
         elif event.keysym == "r" and MODS.get( event.state, None ) == 'Control':
             self.reloadFile()
         #print(event.keysym)
@@ -497,7 +517,61 @@ class tumblegui:
                 
         except:
             pass
-    
+
+    def SaveStates(self):
+        if len(self.stateTmpSaves) == self.maxStates:
+            if(self.CurrentState == self.maxStates - 1):     
+                self.stateTmpSaves.pop(0)
+                self.stateTmpSaves.append(copy.deepcopy(self.board.Polyominoes))
+                self.CurrentState = self.maxStates - 1
+            else:
+                print "Removing some states 1"
+                for x in range(self.CurrentState + 1, len(self.stateTmpSaves) - 1):
+                    self.stateTmpSaves.pop(x)
+                
+                self.stateTmpSaves.append(copy.deepcopy(self.board.Polyominoes))
+                self.CurrentState = self.CurrentState + 1
+        else:
+            if(self.CurrentState == len(self.stateTmpSaves) - 1):     
+                
+                self.stateTmpSaves.append(copy.deepcopy(self.board.Polyominoes))
+                self.CurrentState = self.CurrentState + 1
+                
+            else:
+                print "Removing some states 2"
+                for x in range(0,  len(self.stateTmpSaves) - self.CurrentState - 1):
+                    print "x :", x
+                    self.stateTmpSaves.pop()
+                
+                self.stateTmpSaves.append(copy.deepcopy(self.board.Polyominoes))
+                self.CurrentState = self.CurrentState + 1
+            
+
+
+    def Undo(self):
+        
+        if self.CurrentState == 0:
+            pass
+        else:
+           
+            self.CurrentState = self.CurrentState - 1
+            print "Current is, ",self.CurrentState, "after"    
+            #deleteTumbleTiles(self.board, self.board.Cols, self.board.Rows, self.w, TILESIZE, self.textcolor, self.gridcolor, self.tkDRAWGRID.get(), self.tkSHOWLOC.get())
+            self.board.Polyominoes = copy.deepcopy(self.stateTmpSaves[self.CurrentState])
+            print "undo - ", self.CurrentState
+            self.callCanvasRedrawTumbleTiles()
+        
+    def Redo(self):
+        
+        if self.CurrentState == self.maxStates - 1 or self.CurrentState == len(self.stateTmpSaves)-1:
+            pass
+        
+        else:
+            self.CurrentState = self.CurrentState + 1
+            print "redo",  self.CurrentState
+            self.board.Polyominoes = copy.deepcopy(self.stateTmpSaves[self.CurrentState])
+            self.callCanvasRedrawTumbleTiles()
+        
     # Tumbles the board in a direction, then redraws the Canvas        
     def MoveDirection(self, direction):
         global RECORDING
@@ -506,36 +580,42 @@ class tumblegui:
         if RECORDING:
             SCRIPTSEQUENCE = SCRIPTSEQUENCE + direction
 
-        try:            
-            #board.GridDraw()
-            #normal
-            if direction != "" and self.tkSTEPVAR.get() == False and self.tkGLUESTEP.get()==False:
-                self.board.Tumble(direction)
-                self.Log("T"+direction+", ")
-                
-            #normal with glues 
-            elif direction != "" and self.tkSTEPVAR.get() == False and self.tkGLUESTEP.get() == True:
-                self.board.TumbleGlue(direction)
-                self.Log("TG"+direction+", ")
-                
-            #single step
-            elif direction != "" and self.tkSTEPVAR.get() == True:
-                s = True
-                s = self.board.Step(direction)
-                if self.tkGLUESTEP.get()==True:
-                    self.board.ActivateGlues()
-                    self.Log("SG"+direction+", ")
-                else:
-                    self.Log("S"+direction+", ")
-                if s == False and self.tkGLUESTEP.get()==False:
-                    self.board.ActivateGlues()
-                    self.Log("G, ")
-                
-            self.callCanvasRedrawTumbleTiles()
-        except Exception as e:
-            print e
-            print sys.exc_info()[0]
-            #pass
+    #try:
+        
+        
+        
+        #board.GridDraw()
+        #normal
+        if direction != "" and self.tkSTEPVAR.get() == False and self.tkGLUESTEP.get()==False:
+            
+            self.board.Tumble(direction)
+            self.Log("T"+direction+", ")
+            
+        #normal with glues 
+        elif direction != "" and self.tkSTEPVAR.get() == False and self.tkGLUESTEP.get() == True:
+            
+            self.board.TumbleGlue(direction)
+            self.Log("TG"+direction+", ")
+            
+        #single step
+        elif direction != "" and self.tkSTEPVAR.get() == True:
+            
+            s = True
+            s = self.board.Step(direction)
+            if self.tkGLUESTEP.get()==True:
+                self.board.ActivateGlues()
+                self.Log("SG"+direction+", ")
+            else:
+                self.Log("S"+direction+", ")
+            if s == False and self.tkGLUESTEP.get()==False:
+                self.board.ActivateGlues()
+                self.Log("G, ")
+        self.SaveStates()
+        self.callCanvasRedrawTumbleTiles()
+    #except Exception as e:
+     #   print e
+      #  print sys.exc_info()[0]
+        #pass
 
 
     # Uses pyscreenshot to save an image of the canvas
@@ -659,7 +739,9 @@ class tumblegui:
         #Call the board editor
         self.board.relistPolyominoes()
         #self.openBoardEditDial(self.root, self.board, data[1], self.prevTileList)
-        
+        self.CurrentState = -1
+        self.stateTmpSaves = []
+        self.SaveStates()
         #self.board.SetGrid()
         self.callCanvasRedraw()
 
@@ -759,6 +841,9 @@ class tumblegui:
         self.prevTileList = prev_tiles
         self.board.relistPolyominoes()
         self.resizeBoardAndCanvas()
+        self.CurrentState = 0
+        self.stateTmpSaves = []
+        self.SaveStates()
         self.callCanvasRedraw()
 
     def newBoard(self):
@@ -769,6 +854,9 @@ class tumblegui:
         bh = TT.BOARDHEIGHT
         bw = TT.BOARDWIDTH
         TT.GLUEFUNC = {'N':1, 'E':1, 'S':1, 'W':1, 'A': 1, 'B': 1, 'C': 1, 'D': 1, 'X': 1, 'Y': 1, 'Z': 1}
+        self.CurrentState = -1
+        self.stateTmpSaves = []
+        self.SaveStates()
         self.callCanvasRedraw()
                 
     # Creates the initial configuration that shows then you open the gui
@@ -816,7 +904,9 @@ class tumblegui:
         self.board.AddConc(TT.Tile(None, -1, 8, 8, [] ,colorg, True))
         self.board.AddConc(TT.Tile(None, -1, 1, 10, [] ,colorg, True))
         self.board.AddConc(TT.Tile(None, -1, 13, 5, [] ,colorg, True))
-        
+        self.CurrentState = -1
+        self.stateTmpSaves = []
+        self.SaveStates()
         #self.board.SetGrid()
         self.callCanvasRedraw()
 

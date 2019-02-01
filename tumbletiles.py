@@ -183,6 +183,12 @@ class Board:
     def __init__(self,R,C):
         self.rectangles = []
         self.glueText = []
+        self.stateTmpSaves = []
+        self.polyTmpSaves = []
+        
+        self.maxStates = 10
+        self.CurrentState = -1
+        
         self.poly_id_c = 0  #the number of seperate polyominos?
         self.Rows = R
         self.Cols = C
@@ -202,7 +208,41 @@ class Board:
         self.coordToTile = [[None for x in range(self.Rows)] for y in range(self.Cols)]
 
 
+    def SaveStates(self):
+        if len(self.stateTmpSaves) == self.maxStates:
+            if(self.CurrentState == self.maxStates - 1):     
+                self.stateTmpSaves.pop(0)
+                self.stateTmpSaves.append(copy.copy(self))
+                self.CurrentState = self.maxStates - 1
+            else:
+                for x in range(self.CurrentState + 1, self.maxStates - 1):
+                    self.stateTmpSaves.pop(x)
+                
+                self.stateTmpSaves.append(copy.copy(self))
+                self.CurrentState = self.CurrentState + 1
+        else:
+            
+            self.stateTmpSaves.append(copy.copy(self))
+            self.CurrentState = self.CurrentState + 1
 
+    def Undo(self):
+        if self.CurrentState == -1:
+            pass
+        else:
+            print "Current is, ",self.CurrentState,", tried to undo", self.stateTmpSaves[self.CurrentState]
+            self.CurrentState = self.CurrentState - 1
+            print "Current is, ",self.CurrentState, "after"
+
+    def Redo(self):
+        if self.coordToTile == self.maxStates - 1 or self.CurrentState == len(self.stateTmpSaves)-1:
+            pass
+        
+        else:
+            self.CurrentState = self.CurrentState + 1
+            
+            
+            
+            
     #Adds a polyomino the the list
     def Add(self, p):
         #add tile two the two dimensional array
