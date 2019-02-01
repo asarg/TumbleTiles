@@ -480,7 +480,6 @@ class tumblegui:
         elif event.keysym == "Left":
             self.MoveDirection("W")
         elif event.keysym == "space":
-            
             clear = lambda: os.system('cls')
             clear()
             print "Current State: ",self.CurrentState
@@ -496,6 +495,10 @@ class tumblegui:
             self.Undo()
         elif event.keysym == "x":
             self.Redo()
+        elif event.keysym == "1":
+            self.Zoom(-1)
+        elif event.keysym == "2":
+            self.Zoom(1)
         elif event.keysym == "r" and MODS.get( event.state, None ) == 'Control':
             self.reloadFile()
         #print(event.keysym)
@@ -517,7 +520,21 @@ class tumblegui:
                 
         except:
             pass
+        
+    def Zoom(self, x):
+        global TILESIZE
 
+        if TILESIZE > 5 and x < 0:
+            TILESIZE = TILESIZE + x
+            self.w.config(width=self.board.Cols*TILESIZE, height=self.board.Rows*TILESIZE, scrollregion=(0, 0, TT.BOARDWIDTH*TILESIZE, TT.BOARDHEIGHT*TILESIZE))
+            self.w.pack()
+            self.callCanvasRedraw()
+        elif TILESIZE < 35 and x > 0:
+            TILESIZE = TILESIZE + x
+            self.w.config(width=self.board.Cols*TILESIZE, height=self.board.Rows*TILESIZE, scrollregion=(0, 0, TT.BOARDWIDTH*TILESIZE, TT.BOARDHEIGHT*TILESIZE))
+            self.w.pack()
+            self.callCanvasRedraw() 
+        
     def SaveStates(self):
         if len(self.stateTmpSaves) == self.maxStates:
             if(self.CurrentState == self.maxStates - 1):     
