@@ -379,6 +379,7 @@ class tumblegui:
         self.TilesFrame = Frame(self.rightFrame, width = 200, height = 200, relief=SUNKEN,borderwidth=1)
         self.tilePrevCanvas = Canvas(self.TilesFrame, width = 200, height = 300, scrollregion=(0, 0, 200, 2000))
 
+        
 
         self.scrollbarCanvasV = Scrollbar(self.TilesFrame )
         self.scrollbarCanvasV.pack(side=RIGHT, fill=Y)
@@ -612,8 +613,8 @@ class tumblegui:
             prevTile.pack()
             
         ##frame_size = (PREVTILESIZE)*len(self.prevTileList) + 20
-        self.TilesFrame.config(width = 100, height = 500)
-        self.tilePrevCanvas.config(width = 100, height = frame_size, scrollregion=(0, 0, 200, frame_size))
+        self.TilesFrame.config(width = 150, height = 500)
+        self.tilePrevCanvas.config(width = 100, height = frame_size, scrollregion=(0, 0, 500, frame_size+500))
         
         self.TilesFrame.pack(side = TOP)
         self.tilePrevCanvas.pack()

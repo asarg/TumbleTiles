@@ -168,10 +168,9 @@ def parseFile(filename):
         prevTileList.append(TT.Tile( None, 0, 0, 0, prevGlues, prevTile["color"], prevTile["concrete"]))
 
     commands = []
-
-    listOfCommands = treeroot[4]
-    print listOfCommands
     if CommandsExists:
+        listOfCommands = treeroot[4]
+        print listOfCommands
         for c in listOfCommands:
             print c
             print "NAME: ",c.attrib["name"],"  FILENAME: ",c.attrib["filename"]
