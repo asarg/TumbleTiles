@@ -5,13 +5,14 @@ from scrollableFrame import VerticalScrolledFrame
 import tkFileDialog, tkMessageBox, tkColorChooser
 import xml.etree.ElementTree as ET
 import tumbletiles as TT
-import tumblegui as TG
+import main as TG
 from boardgui import redrawCanvas, drawGrid
 import random
 import time
 import os,sys
 import math
-from tkColorChooser import askcolor  
+from tkColorChooser import askcolor
+import numpy as np
 
 #the x and y coordinate that the preview tiles will begin to be drawn on
 
@@ -262,7 +263,7 @@ Shift + Right-Click:
 
 		# Contains the data of a copied region
 		self.copiedSelection =  []
-                self.ShiftSelectionMatrix = [[None for x in range(self.board.Cols)] for y in range(self.board.Rows)]
+                self.ShiftSelectionMatrix = [[None for y in range(self.board.Rows)] for x in range(self.board.Cols)]
 
                 self.TilesFrame = Frame(self.tileEditorFrame, width = 200, height = 200, relief=SUNKEN,borderwidth=1)
 		self.tilePrevCanvas = Canvas(self.TilesFrame, width = 200, height = 300, scrollregion=(0, 0, 200, 2000))
@@ -655,61 +656,61 @@ Shift + Right-Click:
 	def onBoardClick(self, event):
                 global SHIFTSELECTIONSTARTED
                 global SELECTIONSTARTED
-		global SELECTIONMADE
-		self.BoardCanvas.delete(self.squareSelection)
+                global SELECTIONMADE
+                self.BoardCanvas.delete(self.squareSelection)
 
-		#sets right and left click depending on os
-		leftClick = 1
-		rightClick = 3
+                #sets right and left click depending on os
+                leftClick = 1
+                rightClick = 3
 
-		if sys.platform == 'darwin': #value for OSX
-			rightClick =  2
+                if sys.platform == 'darwin': #value for OSX
+                        rightClick =  2
 
-		print(event.num)
+                print(event.num)
                 print(" mods : ", MODS.get( event.state, None ))
-		#Determine the position on the board the player clicked
+                #Determine the position on the board the player clicked
 
 
 
-		x = (event.x/self.tile_size)
-		y = (event.y/self.tile_size)
-		
+                x = (event.x/self.tile_size)
+                y = (event.y/self.tile_size)
+                
                 x = int(self.BoardCanvas.canvasx(event.x))/self.tile_size
-		y = int(self.BoardCanvas.canvasy(event.y))/self.tile_size
+                y = int(self.BoardCanvas.canvasy(event.y))/self.tile_size
 
 
-		if MODS.get( event.state, None ) == 'Control':
-			self.CtrlSelect(x,y)
-			self.CURRENTSELECTIONX = x
-			self.CURRENTSELECTIONY = y
-			self.drawSquareSelectionGreen()
-			
-		elif MODS.get( event.state, None ) == 'Shift':
+                if MODS.get( event.state, None ) == 'Control':
+                        self.CtrlSelect(x,y)
+                        self.CURRENTSELECTIONX = x
+                        self.CURRENTSELECTIONY = y
+                        self.drawSquareSelectionGreen()
+                        
+                elif MODS.get( event.state, None ) == 'Shift':
                         if event.num == rightClick:
                                 self.ShftSelect(x,y,False, False)
                         else:
                                 self.ShftSelect(x,y,True, False)
-			self.CURRENTSELECTIONX = x
-			self.CURRENTSELECTIONY = y
-			
-		elif self.remove_state or event.num == rightClick:
-			self.removeTileAtPos(x, y, True)
-		elif event.num == leftClick:
+                        self.CURRENTSELECTIONX = x
+                        self.CURRENTSELECTIONY = y
                         
-			self.CURRENTSELECTIONX = x
-			self.CURRENTSELECTIONY = y
+                elif self.remove_state or event.num == rightClick:
+                        self.removeTileAtPos(x, y, True)
+                elif event.num == leftClick:
+                        
+                        self.CURRENTSELECTIONX = x
+                        self.CURRENTSELECTIONY = y
                         self.clearSelection()
                         self.clearShiftSelection()
-			self.drawSquareSelectionRed()
+                        self.drawSquareSelectionRed()
 
-			print(self.add_state)
-			if self.add_state:
-				self.addTileAtPos(x, y)
+                        print(self.add_state)
+                        if self.add_state:
+                                self.addTileAtPos(x, y)
 
 
 
-		elif event.keysym == "r" and MODS.get( event.state, None ) == 'Control':
-			self.reloadFile()
+                elif event.keysym == "r" and MODS.get( event.state, None ) == 'Control':
+                        self.reloadFile()
 
 
 
@@ -719,15 +720,17 @@ Shift + Right-Click:
 			global SELECTIONMADE
 			print(event.keysym)
                         print(MODS.get( event.state, None ))
-                        print("SELECTION STARTED : ", SELECTIONSTARTED)
-                        print("SELECTION MADE : ", SELECTIONMADE)
+                        #print("SELECTION STARTED : ", SELECTIONSTARTED) 
+                        #print("SELECTION MADE : ", SELECTIONMADE)
 			#TODO: Change this
 			if True:
                                 if event.keysym == "space":
                                         #self.tumbleGUI.setTilesFromEditor(self.board, self.glue_data, self.prevTileList, self.board.Cols, self.board.Rows)
-                                        
-                                        self.glue_data = {'N':1, 'E':1, 'S':1, 'W':1,  'A': 1, 'B': 1, 'C': 1, 'D': 1, 'X': 1, 'Y': 1, 'Z': 1}
-                                        print(self.glue_data)
+                                        #self.glue_data = {'N':1, 'E':1, 'S':1, 'W':1,  'A': 1, 'B': 1, 'C': 1, 'D': 1, 'X': 1, 'Y': 1, 'Z': 1}
+                                        #print(self.glue_data)
+                                        #print len(self.ShiftSelectionMatrix)," ", len(self.ShiftSelectionMatrix[0])
+                                        print self.ShiftSelectionMatrix
+                                        print self.board.Cols, ", ", self.board.Rows
 				if event.keysym == "Up":
 					print("Moving up")
 					self.stepAllTiles("N")
@@ -845,7 +848,7 @@ Shift + Right-Click:
                                 for y1 in range(0, self.board.Rows):
                                         if not self.ShiftSelectionMatrix[x1][y1]  == None:
                                                 self.BoardCanvas.delete(self.ShiftSelectionMatrix[x1][y1])
-                        self.ShiftSelectionMatrix = [[None for x2 in range(self.board.Cols)] for y2 in range(self.board.Rows)]
+                        self.ShiftSelectionMatrix = [[None for y2 in range(self.board.Rows)] for x2 in range(self.board.Cols)]
                         print(x,":  :", y)
 			self.ShiftSelectionMatrix[x][y] = self.BoardCanvas.create_rectangle(self.tile_size*x, self.tile_size*y, self.tile_size*x + self.tile_size, self.tile_size*y + self.tile_size, fill = "#FFFF00", stipple="gray50")
 
@@ -908,9 +911,10 @@ Shift + Right-Click:
                 SHIFTSELECTIONSTARTED = False
                 for x in range(0, self.board.Cols):
                                 for y in range(0, self.board.Rows):
+                                        print "clearShiftSelection: ", x,", ", y
                                         if not self.ShiftSelectionMatrix[x][y]  == None:
                                                 self.BoardCanvas.delete(self.ShiftSelectionMatrix[x][y])
-                self.ShiftSelectionMatrix = [[None for x in range(self.board.Cols)] for y in range(self.board.Rows)]
+                self.ShiftSelectionMatrix = [[None for y in range(self.board.Rows)] for x in range(self.board.Cols)]
                 
         def clearSelection(self):
                 global SELECTIONSTARTED
@@ -940,6 +944,7 @@ Shift + Right-Click:
         def deleteTilesInShiftSelection(self):
                 for x in range(0, self.board.Cols):
                                 for y in range(0, self.board.Rows):
+                                        print "deleteShiftSelection: ", x,", ", y
                                         if not self.ShiftSelectionMatrix[x][y]  == None:
                                                 self.removeTileAtPos(x,y, False)
                 self.clearShiftSelection()
@@ -959,7 +964,6 @@ Shift + Right-Click:
 	# When you control click in two locations this method will draw the resulting rectangle
 	def drawSelection(self, x1, y1, x2, y2):
 		print("x1: ", x1, "    y1: ", y1, "   x2: ", x2, "   y2: ", y2)
-
 		self.selection = self.BoardCanvas.create_rectangle(self.tile_size*x1, self.tile_size*y1, self.tile_size*x2 + self.tile_size, self.tile_size*y2 + self.tile_size, fill = "#0000FF", stipple="gray50")
 
 
@@ -1172,6 +1176,7 @@ Shift + Right-Click:
                 self.clearShiftSelection()
                 self.redrawPrev()
                 self.board.remapArray()
+                
         def fillIn(self):
 
                 self.CURRENTSELECTIONX = self.SELECTIONX1
@@ -1466,7 +1471,7 @@ Shift + Right-Click:
 		self.board_w = w
 		self.board_h = h
 
-		self.board.Cols = self.board_w
+		self.board.Cols = self.board_w 
 		self.board.Rows = self.board_h
 		self.board.resizeBoard(w,h)
 
@@ -1475,11 +1480,12 @@ Shift + Right-Click:
 		self.BoardCanvas.pack(side=TOP)
 		self.populateArray()
 		self.redrawPrev()
-		self.ShiftSelectionMatrix = [[None for x in range(self.board.Cols)] for y in range(self.board.Rows)]
+		self.ShiftSelectionMatrix = [[None for y in range(self.board.Rows)] for x in range(self.board.Cols)]
 
 		
 		
 	def boardResizeDial(self):
+                print"boardResizeDial: ", self.board_w,", ", self.board_h
 		wr = self.WindowResizeDialogue(self.newWindow, self, self.board_w, self.board_h)
 
 	def redrawPrev(self):
@@ -1546,41 +1552,41 @@ Shift + Right-Click:
 		p_tiles = ET.SubElement(tile_config, "PreviewTiles")
 		if len(self.prevTileList) != 0:
 			for td in self.prevTileList:
-				print(td.color)
-				if td.glues == [] or len(td.glues) == 0:
-					td.glues = [0,0,0,0]
+                                print(td.color)
+                                if td.glues == [] or len(td.glues) == 0:
+                                        td.glues = [0,0,0,0]
 
-				#Save the tile data exactly as is
-				prevTile = ET.SubElement(p_tiles, "PrevTile")
-	
-
-				c = ET.SubElement(prevTile, "Color")
-				c.text = str(td.color).replace("#", "")
+                                #Save the tile data exactly as is
+                                prevTile = ET.SubElement(p_tiles, "PrevTile")
 
 
-				ng = ET.SubElement(prevTile, "NorthGlue")
-				
+                                c = ET.SubElement(prevTile, "Color")
+                                c.text = str(td.color).replace("#", "")
 
-				sg = ET.SubElement(prevTile, "SouthGlue")
-				
 
-				eg = ET.SubElement(prevTile, "EastGlue")
-				
+                                ng = ET.SubElement(prevTile, "NorthGlue")
+                                
 
-				wg = ET.SubElement(prevTile, "WestGlue")
-				
+                                sg = ET.SubElement(prevTile, "SouthGlue")
+                                
 
-				if len(td.glues) > 0:
-					ng.text = str(td.glues[0])
-					sg.text = str(td.glues[2])
-					eg.text = str(td.glues[1])
-					wg.text = str(td.glues[3])
+                                eg = ET.SubElement(prevTile, "EastGlue")
+                                
 
-				co = ET.SubElement(prevTile, "Concrete")
-				co.text = str(td.isConcrete)
+                                wg = ET.SubElement(prevTile, "WestGlue")
+                                
 
-				la = ET.SubElement(prevTile, "Label")
-				la.text = str(td.id)
+                                if len(td.glues) > 0:
+                                        ng.text = str(td.glues[0])
+                                        sg.text = str(td.glues[2])
+                                        eg.text = str(td.glues[1])
+                                        wg.text = str(td.glues[3])
+
+                                co = ET.SubElement(prevTile, "Concrete")
+                                co.text = str(td.isConcrete)
+
+                                la = ET.SubElement(prevTile, "Label")
+                                la.text = str(td.id)
 
 		tiles = ET.SubElement(tile_config, "TileData")
 		# save all tiles on the board to the .xml file
@@ -1695,8 +1701,8 @@ Shift + Right-Click:
 
 			self.tumbleEdit = tumbleEdit
 
-			#self.bw = board_w
-			#self.bh = board_h
+			self.bw = board_w
+			self.bh = board_h
 
 			self.bw = StringVar()
 			self.bw.set(str(board_w))
