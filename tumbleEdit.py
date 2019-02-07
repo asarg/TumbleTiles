@@ -721,9 +721,9 @@ Shift + Right-Click:
 			print(event.keysym)
                         print(MODS.get( event.state, None ))
                         #print("SELECTION STARTED : ", SELECTIONSTARTED) 
-                        #print("SELECTION MADE : ", SELECTIONMADE)
+                        print("SELECTION MADE : ", SELECTIONMADE)
 			#TODO: Change this
-			if True:
+			if not SELECTIONMADE:
                                 if event.keysym == "space":
                                         #self.tumbleGUI.setTilesFromEditor(self.board, self.glue_data, self.prevTileList, self.board.Cols, self.board.Rows)
                                         #self.glue_data = {'N':1, 'E':1, 'S':1, 'W':1,  'A': 1, 'B': 1, 'C': 1, 'D': 1, 'X': 1, 'Y': 1, 'Z': 1}
@@ -787,9 +787,42 @@ Shift + Right-Click:
 	#TODO: Add stepping seleciton funcitonality
 
 	def stepSelection(self, dir):
-		return
+                direction = dir
+		print "STEPPING", direction	
+		dx = 0
+		dy = 0
 
-
+		if direction == "N":
+			dy = -1
+		elif direction == "S":
+			dy = 1
+		elif direction == "E":
+			dx = 1
+		elif direction == "W":
+			dx = -1
+                selection = []
+                for x in range(self.SELECTIONX1, self.SELECTIONX2 + 1):
+                        for y in range(self.SELECTIONY1, self.SELECTIONY2 + 1):
+                                print "Removing tile at ", x, ", ", y
+                                selection.append(self.board.coordToTile[x][y])
+				
+                for tile in selection:
+                        if tile == None:
+                                pass
+                        else:
+                                if tile.x + dx >= 0 and tile.x + dx < self.board.Cols:
+                                        tile.x = tile.x + dx
+                                if tile.y + dy >= 0 and tile.y + dy < self.board.Rows:			
+                                        tile.y = tile.y + dy
+                
+		self.redrawPrev()
+		self.board.remapArray()
+		
+		self.SELECTIONX1 = self.SELECTIONX1 + dx
+                self.SELECTIONX2 = self.SELECTIONX2 + dx
+                self.SELECTIONY1 = self.SELECTIONY1 + dy
+                self.SELECTIONY2 = self.SELECTIONY2 + dy
+                self.drawSelection(self.SELECTIONX1, self.SELECTIONY1, self.SELECTIONX2, self.SELECTIONY2)
 	# This function is called when Ctrl + left click are pressed at the same time. Handles 
 	# The creation and deletion of a selection
 	def CtrlSelect(self, x, y):
@@ -943,7 +976,7 @@ Shift + Right-Click:
 
         def deleteTilesInShiftSelection(self):
                 for x in range(0, self.board.Cols):
-                                for y in range(0, self.board.Rows):
+                        for y in range(0, self.board.Rows):
                                         print "deleteShiftSelection: ", x,", ", y
                                         if not self.ShiftSelectionMatrix[x][y]  == None:
                                                 self.removeTileAtPos(x,y, False)
