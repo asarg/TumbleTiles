@@ -1254,30 +1254,15 @@ class tumblegui:
                 la = ET.SubElement(t, "Label")
                 la.text = str(conc.id)
 
-        #Just port the glue function data over to the new file
-        print "glue data in tumbleedit.py ", self.glue_data
-        for gl in self.glueFunc:
-                gs = self.glue_data[gl]
-                f = ET.SubElement(glue_func, "Function")
-                l = ET.SubElement(f, "Labels")
-                l.set('L1', gl)
-                s = ET.SubElement(f, "Strength")
-                s.text = str(gs)
-
-        commands = ET.SubElement(tile_config, "Commands")
-        for c in self.listOfCommands:
-                command = ET.SubElement(commands, "Command")
-                command.set("name", str(c[0]))
-                command.set("filename", str(c[1]))
-                print "Name: ", c[0],", Filename: ", c[1]
+       
 
                 
         #print tile_config
         mydata = ET.tostring(tile_config)
-        file = open("/tt2svg/tmp.xml", "w")
+        file = open("tt2svg/tmp.xml", "w")
         file.write(mydata)
         file.close()
-        self.data2SVG(self.parseFile2("/tt2svg/tmp.xml"), filename+".svg", True)
+        self.data2SVG(self.parseFile2("tt2svg/tmp.xml"), filename+".svg")
 		
     def newBoard(self):
         del self.board.Polyominoes[:]
