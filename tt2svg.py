@@ -92,4 +92,4 @@ def data2SVG(data, filename, gridlines=False):
 
 
 
-data2SVG(parseFile("in.xml"), "out.svg", True)
+data2SVG(parseFile("tmp.xml"), "out.svg", True)

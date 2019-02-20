@@ -13,6 +13,9 @@ import random
 import time
 import tumbletiles as TT
 import tumbleEdit as TE
+
+import tt2svg as TT2SVG
+
 from getFile import getFile, parseFile
 from boardgui import redrawCanvas, drawGrid, redrawTumbleTiles, deleteTumbleTiles
 import os,sys
@@ -272,6 +275,7 @@ class tumblegui:
         self.menubar = Menu(self.root, relief=RAISED)
         self.filemenu = Menu(self.menubar, tearoff=0)
         self.filemenu.add_command(label="New Board", command=self.newBoard)
+        self.filemenu.add_command(label="Create SVG", command = lambda: self.createSvg())
         self.filemenu.add_command(label="Example", command=self.CreateInitial)
         #filemenu.add_command(label="Generate Tiles", command=self.openTileEditDial)
         self.filemenu.add_command(label="Load", command = lambda: self.loadFile())
@@ -412,7 +416,8 @@ class tumblegui:
         
         self.callGridDraw()
         self.CreateInitial()
-
+        self.glue_data = []
+    
     def TestThreadDisplay(self):
         print ("testing \n")
         
@@ -1043,7 +1048,237 @@ class tumblegui:
         self.stateTmpSaves = []
         self.SaveStates()
         self.callCanvasRedraw()
+        
+    def parseFile2(self, filename):
+        tree = ET.parse(filename)
+        treeroot = tree.getroot()
 
+        #default size of board, changes if new board size data is read from the file
+        rows = 15
+        columns = 15
+
+        boardSizeExits = False
+        previewTilesExist = False
+        tileDataExists = False
+
+        if tree.find("PreviewTiles") != None:
+            previewTilesExist = True
+
+        if tree.find("BoardSize") != None:
+            boardSizeExists = True
+
+        if tree.find("TileData") != None:
+            tileDataExists = True
+
+        #data = {"size": [],"tileData": []}
+        data = {"size": [],"tileData": []}
+
+        if boardSizeExists:
+            rows = treeroot[0].attrib["height"]
+            columns = treeroot[0].attrib["width"]
+
+        geomerty = [rows, columns]
+        #geomerty["rows"] = rows
+        #geomerty["columns"] = columns
+        data["size"].append(geomerty)
+        #if isinstance(geomerty, dict):
+        #    print "geomeryu"
+        #if isinstance(data["size"], dict):
+        #    print "data"
+
+        if tileDataExists:
+            tileDataTree = treeroot[3]
+            for tile in tileDataTree:
+                newTile = {}
+
+                newTile["location"] = {'x': 0, 'y': 0}
+                newTile["color"] = "#555555"
+
+                if tile.find('Location') != None:
+                    newTile["location"]["x"] = int(tile.find('Location').attrib['x'])
+                    newTile["location"]["y"] = int(tile.find('Location').attrib['y'])
+            
+                if tile.find('Color') != None:
+                    if tile.find('Concrete').text == "True":
+                        newTile["color"] = "#686868"
+                    else:
+                        newTile["color"] = "#" + tile.find('Color').text
+
+                data["tileData"].append(newTile)
+        return data
+
+    def data2SVG(self, data, filename, gridlines=False):
+        #the width of one square 
+        scale = 10
+
+        f = open(filename, 'w')
+        w = scale*int(data["size"][0][0])
+        h = scale*int(data["size"][0][1])
+        f.write('<svg xmlns="http://www.w3.org/2000/svg" version="1.1" baseProfile="full" width="'+str(w+2)+'" height="'+str(h+2)+'">\n')
+        
+        #tile the svg with transparant sqares for gridlines
+        if gridlines:
+            for x in range(w/scale):
+                for y in range(h/scale):
+                    c = "#ffffff"
+                    line = '<rect x="'+str(x*scale+1)+'" y="'+str(y*scale+1)+'" width="'+str(scale)+'" height="'+str(scale)+'" fill="'+str(c)+'" stroke="black" stroke-width="0.5" fill-opacity="0" />\n'
+                    f.write(line)
+        
+        #place tiles of file where appropriate
+        for tile in data["tileData"]:
+            x = scale*int(tile["location"]["x"])
+            y = scale*int(tile["location"]["y"])
+            c = tile["color"]
+            line = '<rect x="'+str(x+1)+'" y="'+str(y+1)+'" width="'+str(scale)+'" height="'+str(scale)+'" fill="'+str(c)+'" stroke="black" stroke-width="0.5" />\n'
+            f.write(line)
+
+        f.write("</svg>")
+        f.close()
+        
+    def createSvg(self):
+        filename = tkFileDialog.asksaveasfilename()
+        tile_config = ET.Element("TileConfiguration")
+        board_size = ET.SubElement(tile_config, "BoardSize")
+        glue_func = ET.SubElement(tile_config, "GlueFunction")
+        
+        board_size.set("width", str(self.board.Cols))		
+        board_size.set("height", str(self.board.Rows))
+
+        
+        
+        #Add all preview tiles to the .xml file if there are any
+        p_tiles = ET.SubElement(tile_config, "PreviewTiles")
+        if len(self.prevTileList) != 0:
+                for td in self.prevTileList:
+                        print(td.color)
+                        if td.glues == [] or len(td.glues) == 0:
+                                td.glues = [0,0,0,0]
+
+                        #Save the tile data exactly as is
+                        prevTile = ET.SubElement(p_tiles, "PrevTile")
+
+
+                        c = ET.SubElement(prevTile, "Color")
+                        c.text = str(td.color).replace("#", "")
+
+
+                        ng = ET.SubElement(prevTile, "NorthGlue")
+                        
+
+                        sg = ET.SubElement(prevTile, "SouthGlue")
+                        
+
+                        eg = ET.SubElement(prevTile, "EastGlue")
+                        
+
+                        wg = ET.SubElement(prevTile, "WestGlue")
+                        
+
+                        if len(td.glues) > 0:
+                                ng.text = str(td.glues[0])
+                                sg.text = str(td.glues[2])
+                                eg.text = str(td.glues[1])
+                                wg.text = str(td.glues[3])
+
+                        co = ET.SubElement(prevTile, "Concrete")
+                        co.text = str(td.isConcrete)
+
+                        la = ET.SubElement(prevTile, "Label")
+                        la.text = str(td.id)
+
+        tiles = ET.SubElement(tile_config, "TileData")
+        # save all tiles on the board to the .xml file
+        for p in self.board.Polyominoes:
+                for tile in p.Tiles:
+                        print(tile)
+                        if tile.glues == None or len(tile.glues) == 0:
+                                tile.glues = [0,0,0,0]
+
+                        t = ET.SubElement(tiles, "Tile")
+
+                        loc = ET.SubElement(t, "Location")
+                        loc.set("x", str(tile.x))
+                        loc.set("y", str(tile.y))
+
+                        c = ET.SubElement(t, "Color")
+                        c.text = str(str(tile.color).replace("#", ""))
+
+                        ng = ET.SubElement(t, "NorthGlue")
+                        ng.text = str(tile.glues[0])
+
+                        sg = ET.SubElement(t, "SouthGlue")
+                        sg.text = str(tile.glues[2])
+
+                        eg = ET.SubElement(t, "EastGlue")
+                        eg.text = str(tile.glues[1])
+
+                        wg = ET.SubElement(t, "WestGlue")
+                        wg.text = str(tile.glues[3])
+
+                        co = ET.SubElement(t, "Concrete")
+                        co.text = str(tile.isConcrete)
+
+                        la = ET.SubElement(t, "Label")
+                        la.text = str(tile.id)
+
+        for conc in self.board.ConcreteTiles:
+        
+                print(conc)
+                if conc.glues == None or len(conc.glues) == 0:
+                        conc.glues = [0,0,0,0]
+
+                t = ET.SubElement(tiles, "Tile")
+
+                loc = ET.SubElement(t, "Location")
+                loc.set("x", str(conc.x))
+                loc.set("y", str(conc.y))
+
+                c = ET.SubElement(t, "Color")
+                c.text = str(str(conc.color).replace("#", ""))
+
+                ng = ET.SubElement(t, "NorthGlue")
+                ng.text = str(conc.glues[0])
+
+                sg = ET.SubElement(t, "SouthGlue")
+                sg.text = str(conc.glues[2])
+
+                eg = ET.SubElement(t, "EastGlue")
+                eg.text = str(conc.glues[1])
+
+                wg = ET.SubElement(t, "WestGlue")
+                wg.text = str(conc.glues[3])
+
+                co = ET.SubElement(t, "Concrete")
+                co.text = str(conc.isConcrete)
+
+                la = ET.SubElement(t, "Label")
+                la.text = str(conc.id)
+
+        #Just port the glue function data over to the new file
+        print "glue data in tumbleedit.py ", self.glue_data
+        for gl in self.glueFunc:
+                gs = self.glue_data[gl]
+                f = ET.SubElement(glue_func, "Function")
+                l = ET.SubElement(f, "Labels")
+                l.set('L1', gl)
+                s = ET.SubElement(f, "Strength")
+                s.text = str(gs)
+
+        commands = ET.SubElement(tile_config, "Commands")
+        for c in self.listOfCommands:
+                command = ET.SubElement(commands, "Command")
+                command.set("name", str(c[0]))
+                command.set("filename", str(c[1]))
+                print "Name: ", c[0],", Filename: ", c[1]
+
+                
+        #print tile_config
+        mydata = ET.tostring(tile_config)
+        file = open("/tt2svg/tmp.xml", "w")
+        file.write(mydata)
+        file.close()
+        self.data2SVG(self.parseFile2("/tt2svg/tmp.xml"), filename+".svg", True)
+		
     def newBoard(self):
         del self.board.Polyominoes[:]
         self.board.LookUp = {}
