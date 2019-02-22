@@ -60,6 +60,8 @@ def parseFile(filename):
             data["tileData"].append(newTile)
     return data
 
+#  usage
+#  data2SVG(parseFile("in.xml"), "out.svg", True)
 def data2SVG(data, filename, gridlines=False):
     #the width of one square 
     scale = 10
@@ -69,13 +71,14 @@ def data2SVG(data, filename, gridlines=False):
     h = scale*int(data["size"][0][1])
     f.write('<svg xmlns="http://www.w3.org/2000/svg" version="1.1" baseProfile="full" width="'+str(w+2)+'" height="'+str(h+2)+'">\n')
     
-    #tile the svg with transparant sqares for gridlines
+    # add gridlines
     if gridlines:
-        for x in range(w/scale):
-            for y in range(h/scale):
-                c = "#ffffff"
-                line = '<rect x="'+str(x*scale+1)+'" y="'+str(y*scale+1)+'" width="'+str(scale)+'" height="'+str(scale)+'" fill="'+str(c)+'" stroke="black" stroke-width="0.5" fill-opacity="0" />\n'
-                f.write(line)
+        for x in range(0,w+1,scale):
+            line = '<path d="M'+str(x+1)+' 1 V '+str(h+1)+'" stroke="#000000" fill="transparent" stroke-width="0.5" fill-opacity="1"/>'
+            f.write(line)
+        for y in range(0,h+1,scale):
+            line = '<path d="M1 '+str(y+1)+' H '+str(w+1)+'" stroke="#000000" fill="transparent" stroke-width="0.5" fill-opacity="1"/>'
+            f.write(line)
     
     #place tiles of file where appropriate
     for tile in data["tileData"]:
@@ -92,4 +95,4 @@ def data2SVG(data, filename, gridlines=False):
 
 
 
-data2SVG(parseFile("tmp.xml"), "out.svg", True)
+#data2SVG(parseFile("in.xml"), "out.svg", True)
