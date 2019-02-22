@@ -23,7 +23,6 @@ def parseFile(filename):
     if tree.find("TileData") != None:
         tileDataExists = True
 
-    #data = {"size": [],"tileData": []}
     data = {"size": [],"tileData": []}
 
     if boardSizeExists:
@@ -34,10 +33,6 @@ def parseFile(filename):
     #geomerty["rows"] = rows
     #geomerty["columns"] = columns
     data["size"].append(geomerty)
-    #if isinstance(geomerty, dict):
-    #    print "geomeryu"
-    #if isinstance(data["size"], dict):
-    #    print "data"
 
     if tileDataExists:
         tileDataTree = treeroot[3]
@@ -71,13 +66,13 @@ def data2SVG(data, filename, gridlines=False):
     h = scale*int(data["size"][0][1])
     f.write('<svg xmlns="http://www.w3.org/2000/svg" version="1.1" baseProfile="full" width="'+str(w+2)+'" height="'+str(h+2)+'">\n')
     
-    # add gridlines
+    #tile the svg with transparant sqares for gridlines
     if gridlines:
         for x in range(0,w+1,scale):
-            line = '<path d="M'+str(x+1)+' 1 V '+str(h+1)+'" stroke="#000000" fill="transparent" stroke-width="0.5" fill-opacity="1"/>'
+            line = '<path d="M'+str(x+1)+' 1 V '+str(h+1)+'" stroke="black" stroke-width="0.5"/>'
             f.write(line)
         for y in range(0,h+1,scale):
-            line = '<path d="M1 '+str(y+1)+' H '+str(w+1)+'" stroke="#000000" fill="transparent" stroke-width="0.5" fill-opacity="1"/>'
+            line = '<path d="M1 '+str(y+1)+' H '+str(w+1)+'" stroke="black" stroke-width="0.5"/>'
             f.write(line)
     
     #place tiles of file where appropriate
