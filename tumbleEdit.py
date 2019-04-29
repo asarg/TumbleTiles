@@ -1886,7 +1886,11 @@ Shift + Right-Click:
                         
         # print tile_config
         mydata = ET.tostring(tile_config)
-        file = open(filename+".xml", "w")
+
+        if ".xml" not in filename:
+            filename = filename + ".xml"
+
+        file = open(filename, "w")
         file.write(mydata)
 
 
