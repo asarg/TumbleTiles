@@ -750,17 +750,21 @@ class tumblegui:
             clear()
             for x in self.listOfCommands:
                 print x[0], " ", x[1]
-# if RECORDING:
-##                print SCRIPTSEQUENCE
-##            print "Current State: ",self.CurrentState
-##            print "Length of states: ", len(self.stateTmpSaves)
-# for z in self.stateTmpSaves:
-# i=0
-# for x in z:
-##                    print "polyomino",i, ", \n"
-##                    i = i+1
-# for y in x.Tiles:
-##                        print "     tile:",y.x,", ",y.y
+
+
+        # if RECORDING:
+        ##                print SCRIPTSEQUENCE
+        ##            print "Current State: ",self.CurrentState
+        ##            print "Length of states: ", len(self.stateTmpSaves)
+        # for z in self.stateTmpSaves:
+        # i=0
+        # for x in z:
+        ##                    print "polyomino",i, ", \n"
+        ##                    i = i+1
+        # for y in x.Tiles:
+        ##                        print "     tile:",y.x,", ",y.y
+
+        
         elif event.keysym == "z":
             self.Undo()
         elif event.keysym == "a":

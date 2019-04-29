@@ -834,7 +834,7 @@ Shift + Right-Click:
                 rightClick = 2
 
         print(event.num)
-        print(" mods : ", MODS.get(event.state, None))
+        print " mods : ", MODS.get(event.state, None)
         # Determine the position on the board the player clicked
 
         x = (event.x / self.tile_size)
@@ -843,13 +843,21 @@ Shift + Right-Click:
         x = int(self.BoardCanvas.canvasx(event.x)) / self.tile_size
         y = int(self.BoardCanvas.canvasy(event.y)) / self.tile_size
 
-        if MODS.get(event.state, None) == 'Control':
+        print( "EVENT: ",  event.state )
+
+        #event.state == 4 means control is held
+        #event.state == 6 means control is held and caps lock is on
+        if event.state == 4 or event.state == 6:
             self.CtrlSelect(x, y)
             self.CURRENTSELECTIONX = x
             self.CURRENTSELECTIONY = y
             self.drawSquareSelectionGreen()
 
-        elif MODS.get(event.state, None) == 'Shift':
+
+
+        #event.state == 1 when shift is held
+        #event.state == 3 when shift is held and caps lock is on
+        elif event.state == 1 or event.state == 3:
             if event.num == rightClick:
                     self.ShftSelect(x, y, False, False)
             else:
@@ -1078,23 +1086,23 @@ Shift + Right-Click:
                 self.SELECTIONY1 = temp
 
             
-                for x3 in range(self.SELECTIONX1, self.SELECTIONX2+1):
-                    for y3 in range(self.SELECTIONY1, self.SELECTIONY2+1):
-                        if option == True:
-                            self.BoardCanvas.delete(self.ShiftSelectionMatrix[x3][y3])
-                            self.ShiftSelectionMatrix[x3][y3] = self.BoardCanvas.create_rectangle(self.tile_size*x3, self.tile_size*y3, self.tile_size*x3 + self.tile_size, self.tile_size*y3 + self.tile_size, fill = "#FFFF00", stipple="gray50")
-                        else:
-                            self.BoardCanvas.delete(self.ShiftSelectionMatrix[x3][y3])
-                self.SELECTIONX1 = x
-                self.SELECTIONY1 = y
+            for x3 in range(self.SELECTIONX1, self.SELECTIONX2+1):
+                for y3 in range(self.SELECTIONY1, self.SELECTIONY2+1):
+                    if option == True:
+                        self.BoardCanvas.delete(self.ShiftSelectionMatrix[x3][y3])
+                        self.ShiftSelectionMatrix[x3][y3] = self.BoardCanvas.create_rectangle(self.tile_size*x3, self.tile_size*y3, self.tile_size*x3 + self.tile_size, self.tile_size*y3 + self.tile_size, fill = "#FFFF00", stipple="gray50")
+                    else:
+                        self.BoardCanvas.delete(self.ShiftSelectionMatrix[x3][y3])
+            self.SELECTIONX1 = x
+            self.SELECTIONY1 = y
                 
-                if option == True:
-                    self.BoardCanvas.delete(self.ShiftSelectionMatrix[x][y])
-                    self.ShiftSelectionMatrix[x][y] = self.BoardCanvas.create_rectangle(self.tile_size*x, self.tile_size*y, self.tile_size*x + self.tile_size, self.tile_size*y + self.tile_size, fill = "#FFFF00", outline = "#FFFF00", stipple="gray50")
+        if option == True:
+            self.BoardCanvas.delete(self.ShiftSelectionMatrix[x][y])
+            self.ShiftSelectionMatrix[x][y] = self.BoardCanvas.create_rectangle(self.tile_size*x, self.tile_size*y, self.tile_size*x + self.tile_size, self.tile_size*y + self.tile_size, fill = "#FFFF00", outline = "#FFFF00", stipple="gray50")
 
-                else:
-                    self.BoardCanvas.delete(self.ShiftSelectionMatrix[x][y])
-                    self.ShiftSelectionMatrix[x][y] = self.BoardCanvas.create_rectangle(self.tile_size*x, self.tile_size*y, self.tile_size*x + self.tile_size, self.tile_size*y + self.tile_size, outline = "#FFFF00", stipple="gray50")
+        else:
+            self.BoardCanvas.delete(self.ShiftSelectionMatrix[x][y])
+            self.ShiftSelectionMatrix[x][y] = self.BoardCanvas.create_rectangle(self.tile_size*x, self.tile_size*y, self.tile_size*x + self.tile_size, self.tile_size*y + self.tile_size, outline = "#FFFF00", stipple="gray50")
 
 
     # ***********************************************************************************************
