@@ -13,6 +13,7 @@ DEBUGGING = False
 
 TEMP = 1
 GLUEFUNC = {'N':1, 'E':1, 'S':1, 'W':1,  'A': 1, 'B': 1, 'C': 1, 'D': 1, 'X': 1, 'Y': 1, 'Z': 1}
+
 BOARDHEIGHT = 15
 BOARDWIDTH = 15
 FACTORYMODE = False
@@ -243,8 +244,7 @@ class Board:
             self.CurrentState = self.CurrentState + 1
             
             
-            
-            
+        
     #Adds a polyomino the the list
     def Add(self, p):
         #add tile two the two dimensional array
@@ -263,12 +263,17 @@ class Board:
 
         #print "trying to add conc at", t.x, ", ", t.y, "\n"
 
-        if self.coordToTile[t.x][t.y] == None:
-                self.coordToTile[t.x][t.y] = t
-                self.ConcreteTiles.append(t)
-        elif DEBUGGING:
-            print "tumbletiles.py - Board.AddConc(): Can not add tile. A tile already exists at this location - Line ", lineno(), "\n",
+        try:
+            if self.coordToTile[t.x][t.y] == None:
+                    self.coordToTile[t.x][t.y] = t
+                    self.ConcreteTiles.append(t)
+            elif DEBUGGING:
+                print "tumbletiles.py - Board.AddConc(): Can not add tile. A tile already exists at this location - Line ", lineno(), "\n",
 
+        except IndexError:
+            print "Can't add concrete there"
+
+       
     
     #Joins two polyominos, deletes the 2nd redundant polyomino, calls setGrid() to make the character grid
     #accurately represent the new polyominos.

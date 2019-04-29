@@ -8,7 +8,6 @@ def redrawCanvas(board, boardwidth, boardheight, canvas, tilesize, textcolor = "
 		for tile in p.Tiles:
 			color = tile.color
 			board.rectangles.append(canvas.create_rectangle(tilesize*tile.x, tilesize*tile.y, tilesize*tile.x + tilesize, tilesize*tile.y + tilesize, fill = color))
-
 			# DRAW THE GLUES
 			if tile.glues == [] or tile.glues == None:
 				continue
@@ -72,6 +71,7 @@ def redrawTumbleTiles(board, boardwidth, boardheight, canvas, tilesize, textcolo
 				#west
 				board.glueText.append(canvas.create_text(tilesize*tile.x + tilesize/5, tilesize*tile.y + tilesize/2, text = tile.glues[3], fill=textcolor, font=('',tilesize/5) ))
 				
+
 def drawGrid(board, boardwidth, boardheight, canvas, tilesize, gridcolor = "#000000", b_drawGrid = False, b_drawLoc = False):
 
 
