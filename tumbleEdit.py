@@ -963,26 +963,38 @@ Shift + Right-Click:
 
         if direction == "N":
             dy = -1
+            if self.SELECTIONY1 == 0:
+                return
         elif direction == "S":
             dy = 1
+            if self.SELECTIONY2 == self.board.Rows - 1:
+                return
         elif direction == "E":
             dx = 1
+            if self.SELECTIONX2 == self.board.Cols - 1:
+                return
         elif direction == "W":
             dx = -1
-            selection = []
-            for x in range(self.SELECTIONX1, self.SELECTIONX2 + 1):
-                for y in range(self.SELECTIONY1, self.SELECTIONY2 + 1):
-                    print "Removing tile at ", x, ", ", y
-                    selection.append(self.board.coordToTile[x][y])
+            if self.SELECTIONX1 == 0:
+                return
+
+
         
-            for tile in selection:
-                if tile == None:
-                    pass
-                else:
-                    if tile.x + dx >= 0 and tile.x + dx < self.board.Cols:
-                        tile.x = tile.x + dx
-                    if tile.y + dy >= 0 and tile.y + dy < self.board.Rows:          
-                        tile.y = tile.y + dy
+        selection = []
+
+        for x in range(self.SELECTIONX1, self.SELECTIONX2 + 1):
+            for y in range(self.SELECTIONY1, self.SELECTIONY2 + 1):
+                print "Removing tile at ", x, ", ", y
+                selection.append(self.board.coordToTile[x][y])
+    
+        for tile in selection:
+            if tile == None:
+                pass
+            else:
+                if tile.x + dx >= 0 and tile.x + dx < self.board.Cols:
+                    tile.x = tile.x + dx
+                if tile.y + dy >= 0 and tile.y + dy < self.board.Rows:          
+                    tile.y = tile.y + dy
         
         self.redrawPrev()
         self.board.remapArray()
