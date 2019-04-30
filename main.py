@@ -620,7 +620,8 @@ class tumblegui:
             TILESIZE,
             height=self.board.Rows *
             TILESIZE)
-        self.root.geometry(str(self.board.Cols * TILESIZE) + 'x' +
+
+        self.root.geometry(str(self.board.Cols * TILESIZE + 300) + 'x' +
                            str(self.board.Rows * TILESIZE + toolbarframeheight))
 
         # other class variables
@@ -707,7 +708,7 @@ class tumblegui:
         self.board.Rows = TT.BOARDHEIGHT
         self.board.remapArray()
         toolbarframeheight = 24
-        self.root.geometry(str(self.board.Cols * TILESIZE) + 'x' +
+        self.root.geometry(str(self.board.Cols * TILESIZE + 300) + 'x' +
                            str(self.board.Rows * TILESIZE + toolbarframeheight))
         self.w.config(
             width=self.board.Cols *
@@ -764,7 +765,7 @@ class tumblegui:
         # for y in x.Tiles:
         ##                        print "     tile:",y.x,", ",y.y
 
-        
+
         elif event.keysym == "z":
             self.Undo()
         elif event.keysym == "a":
@@ -952,6 +953,8 @@ class tumblegui:
         self.cancelButton.pack(side=RIGHT)
 
         # Makes the new window open over the current editor window
+        
+
         self.addSequenceWindow.geometry(
             '%dx%d+%d+%d' %
             (NEWTILEWINDOW_W,
