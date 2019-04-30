@@ -53,12 +53,14 @@ MODS = {
 }
 
 
+
 class TileEditorGUI:
     def __init__(self, parent, tumbleGUI, board, glue_data, previewTileList):
 
         # open two windows
         # `w1` will be the tile editor
         # `w2` will be a tile config previewer
+
 
         self.parent = parent
         self.board = board
@@ -1510,6 +1512,7 @@ Shift + Right-Click:
                 
                     newConcTile = TT.Tile(None, 0, newX, newY, glues , color , True)
 
+
                     # self.copiedSelection[x][y].x = newX
                     # self.copiedSelection[x][y].y = newY
 
@@ -1518,6 +1521,7 @@ Shift + Right-Click:
                         self.board.AddConc(newConcTile)
                     elif not self.copiedSelection[x][y].isConcrete:
                         self.board.Add(p)
+
 
 
 
@@ -1599,6 +1603,7 @@ Shift + Right-Click:
         else:
             color = self.prevTileList[i].color
 
+
         if not self.prevTileList[i].isConcrete:
             newPoly = TT.Polyomino(0, x, y, self.prevTileList[i].glues, color)
             self.board.Add(newPoly)
@@ -1609,10 +1614,9 @@ Shift + Right-Click:
             self.board.coordToTile[x][y]= newConcTile
 
 
+
         # self.verifyTileLocations()
         self.redrawPrev()
-
-
 
 
     
@@ -1659,6 +1663,7 @@ Shift + Right-Click:
                 if tile.x + dx >= 0 and tile.x < self.board.Cols:   
                         tile.y = tile.y + dy
 
+
             
         for tile in self.board.ConcreteTiles:
             if tile.x + dx >= 0 and tile.x + dx < self.board.Cols:
@@ -1675,6 +1680,7 @@ Shift + Right-Click:
 
         self.board_w = w
         self.board_h = h
+
 
         self.board.Cols = self.board_w
         self.board.Rows = self.board_h
@@ -1704,6 +1710,7 @@ Shift + Right-Click:
         self.redrawPrev()
         self.ShiftSelectionMatrix = [[None for y in range(self.board.Rows)] for x in range(self.board.Cols)]
 
+
         
         
     def boardResizeDial(self):
@@ -1712,7 +1719,6 @@ Shift + Right-Click:
 
     def redrawPrev(self):
         redrawCanvas(self.board, self.board.Cols, self.board.Rows, self.BoardCanvas, self.tile_size, b_drawGrid = True, b_drawLoc = self.tkSHOWLOC.get())
-
 
 
     def onApply(self):
@@ -1738,11 +1744,13 @@ Shift + Right-Click:
 
 
 
+
     # ***********************************************************************************************
 
             # File I/O Code
 
     # ***********************************************************************************************
+
 
 
     def newBoard(self):
@@ -1790,7 +1798,7 @@ Shift + Right-Click:
                 
 
                 sg = ET.SubElement(prevTile, "SouthGlue")
-                
+
 
                 eg = ET.SubElement(prevTile, "EastGlue")
                 
@@ -1809,6 +1817,7 @@ Shift + Right-Click:
 
                 la = ET.SubElement(prevTile, "Label")
                 la.text = str(td.id)
+
 
 
         tiles = ET.SubElement(tile_config, "TileData")
@@ -1842,6 +1851,8 @@ Shift + Right-Click:
 
                 co = ET.SubElement(t, "Concrete")
                 co.text = str(tile.isConcrete)
+
+
 
                 la = ET.SubElement(t, "Label")
                 la.text = str(tile.id)
@@ -1950,6 +1961,7 @@ Shift + Right-Click:
             self.bh_sbx = Spinbox(self.w, from_=10, to=100,width=5, increment=5, textvariable = self.bh)
             # self.e2.insert(0, str(board_h))
             self.bh_sbx.pack()
+
 
             Button(self.w, text="Apply:", command = lambda: self.onApply()).pack()
 
