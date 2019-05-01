@@ -12,7 +12,8 @@ import random
 DEBUGGING = False
 
 TEMP = 1
-GLUEFUNC = {'N':1, 'E':1, 'S':1, 'W':1,}
+GLUEFUNC = {'N':1, 'E':1, 'S':1, 'W':1,  'A': 1, 'B': 1, 'C': 1, 'D': 1, 'X': 1, 'Y': 1, 'Z': 1}
+
 BOARDHEIGHT = 15
 BOARDWIDTH = 15
 FACTORYMODE = False
@@ -35,6 +36,7 @@ class Tile:
         self.y = 0
         self.color = COLOR[0]
         self.glues = ['N','E','S','W']
+        self.isConcrete = False
 
     def __init__(self,s,r,c,g):
         self.symbol = s
@@ -43,6 +45,7 @@ class Tile:
         self.x = r
         self.y = c
         self.glues = g
+        self.isConcrete = False
         
     def __init__(self, parent, s,r,c,g,color, isConcrete):
         self.parent = parent #polyomino that this tile is a part of
@@ -181,6 +184,14 @@ class Polyomino:
 class Board:
     #constructor for polyomino, assigns the size of Rows and Colums and creates an empty board
     def __init__(self,R,C):
+        self.rectangles = []
+        self.glueText = []
+        self.stateTmpSaves = []
+        self.polyTmpSaves = []
+        
+        self.maxStates = 10
+        self.CurrentState = -1
+        
         self.poly_id_c = 0  #the number of seperate polyominos?
         self.Rows = R
         self.Cols = C
@@ -200,7 +211,40 @@ class Board:
         self.coordToTile = [[None for x in range(self.Rows)] for y in range(self.Cols)]
 
 
+    def SaveStates(self):
+        if len(self.stateTmpSaves) == self.maxStates:
+            if(self.CurrentState == self.maxStates - 1):     
+                self.stateTmpSaves.pop(0)
+                self.stateTmpSaves.append(copy.copy(self))
+                self.CurrentState = self.maxStates - 1
+            else:
+                for x in range(self.CurrentState + 1, self.maxStates - 1):
+                    self.stateTmpSaves.pop(x)
+                
+                self.stateTmpSaves.append(copy.copy(self))
+                self.CurrentState = self.CurrentState + 1
+        else:
+            
+            self.stateTmpSaves.append(copy.copy(self))
+            self.CurrentState = self.CurrentState + 1
 
+    def Undo(self):
+        if self.CurrentState == -1:
+            pass
+        else:
+            print "Current is, ",self.CurrentState,", tried to undo", self.stateTmpSaves[self.CurrentState]
+            self.CurrentState = self.CurrentState - 1
+            print "Current is, ",self.CurrentState, "after"
+
+    def Redo(self):
+        if self.coordToTile == self.maxStates - 1 or self.CurrentState == len(self.stateTmpSaves)-1:
+            pass
+        
+        else:
+            self.CurrentState = self.CurrentState + 1
+            
+            
+        
     #Adds a polyomino the the list
     def Add(self, p):
         #add tile two the two dimensional array
@@ -219,12 +263,17 @@ class Board:
 
         #print "trying to add conc at", t.x, ", ", t.y, "\n"
 
-        if self.coordToTile[t.x][t.y] == None:
-                self.coordToTile[t.x][t.y] = t
-                self.ConcreteTiles.append(t)
-        elif DEBUGGING:
-            print "tumbletiles.py - Board.AddConc(): Can not add tile. A tile already exists at this location - Line ", lineno(), "\n",
+        try:
+            if self.coordToTile[t.x][t.y] == None:
+                    self.coordToTile[t.x][t.y] = t
+                    self.ConcreteTiles.append(t)
+            elif DEBUGGING:
+                print "tumbletiles.py - Board.AddConc(): Can not add tile. A tile already exists at this location - Line ", lineno(), "\n",
 
+        except IndexError:
+            print "Can't add concrete there"
+
+       
     
     #Joins two polyominos, deletes the 2nd redundant polyomino, calls setGrid() to make the character grid
     #accurately represent the new polyominos.
