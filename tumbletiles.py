@@ -18,6 +18,7 @@ BOARDHEIGHT = 15
 BOARDWIDTH = 15
 FACTORYMODE = False
 COLORCHANGE = False
+SINGLESTEP = False
 
 
 
@@ -340,6 +341,8 @@ class Board:
 
     # Repeatedly calls Step() in a direction until Step() returns false, then Activates the glues and sets the grid again
     def Tumble(self, direction):
+
+        global SINGLESTEP
         
         if direction == "N" or direction == "S" or direction == "E" or direction == "W":
             StepTaken = self.Step(direction)
@@ -350,15 +353,38 @@ class Board:
         self.ActivateGlues()
 
 
-        # If in factory mode tiles will be removed if they hit the bottom wall
-        if False:
-            for p in self.Polyominoes:
-                for tile in p.Tiles:
-                    if tile.y >= self.Rows - 1:
-                        p.Tiles.remove(tile)
+        # If in factory mode tiles will be removed if they hit the borders of the board
+        if FACTORYMODE:
 
-                        if len(p.Tiles) == 0:
-                            self.Polyominoes.remove(p)
+            deletedFlag = True
+
+            while deletedFlag:
+
+                #Flag to keep loop running
+                deletedFlag = False
+
+                # step in the same direction to see if anymore tiles are now hitting the border
+                # not necessary in single step
+                if not SINGLESTEP:
+                    self.Step(direction)
+
+                for p in self.Polyominoes:
+                    for tile in p.Tiles:
+                        if tile.y >= self.Rows - 1 or tile.x <= 0 or tile.x >= self.Cols - 1 or tile.y <= 0:
+
+                            print "X: ", tile.x, " Y: ", tile.y
+                            print("X: ", len(self.coordToTile), " Y: ", len(self.coordToTile[0]))
+
+                            # remove the tile pointer from the mapping
+                            self.coordToTile[tile.x][tile.y] = None
+                            deletedFlag = True
+
+                            # remove the tile from the polyominoes list of tiles
+                            p.Tiles.remove(tile)
+                
+                            # IF the polyomino is now size 0 its remove from the polyomino list
+                            if len(p.Tiles) == 0:
+                                self.Polyominoes.remove(p)
 
     # Functions the same as Tumble() but it activates glues after every step
     def TumbleGlue(self, direction):
@@ -458,6 +484,32 @@ class Board:
 
         
         self.remapArray()
+
+        global FACTORYMODE
+        global SINGLESTEP
+
+         # If in factory mode tiles will be removed if they hit the bottom wall
+        if FACTORYMODE and SINGLESTEP:
+
+            deletedFlag = True
+
+            while deletedFlag:
+
+                deletedFlag = False
+               
+                for p in self.Polyominoes:
+                    for tile in p.Tiles:
+                        if tile.y >= self.Rows - 1 or tile.x <= 0 or tile.x >= self.Cols - 1 or tile.y <= 0:
+
+                            print "X: ", tile.x, " Y: ", tile.y
+                            print("X: ", len(self.coordToTile), " Y: ", len(self.coordToTile[0]))
+                            self.coordToTile[tile.x][tile.y] = None
+                            deletedFlag = True
+                            p.Tiles.remove(tile)
+                
+                            
+                            if len(p.Tiles) == 0:
+                                self.Polyominoes.remove(p)
 
         return StepTaken
 

@@ -45,7 +45,8 @@ NEWTILEWINDOW_H = 180
 
 LOGFILE = None
 LOGFILENAME = ""
-TILESIZE = 25
+#TODO: Change back to 25
+TILESIZE = 12
 VERSION = "2.0"
 LASTLOADEDFILE = ""
 LASTLOADEDSCRIPT = ""
@@ -444,7 +445,8 @@ class tumblegui:
             label="Single Step",
             onvalue=True,
             offvalue=False,
-            variable=self.tkSTEPVAR)  # ,command=stepmodel)
+            variable=self.tkSTEPVAR,
+            command=self.setSingleStep)  # ,command=stepmodel)
         self.settingsmenu.add_checkbutton(
             label="Glue on Step",
             onvalue=True,
@@ -641,6 +643,10 @@ class tumblegui:
     # Sets the factory mode variable
     def setFactoryMode(self):
         TT.FACTORYMODE = self.tkFACTORYMODE.get()
+
+    # sets the single step variable declared in the tumbletiles.py file
+    def setSingleStep(self):
+        TT.SINGLESTEP = self.tkSTEPVAR.get()
 
     def recordScript(self):
         global RECORDING
