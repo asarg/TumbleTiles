@@ -1186,6 +1186,8 @@ class tumblegui:
             if x == 0 or x == len(sequence) - 1:
                 images.append(image)
                 images.append(image)
+                images.append(image)
+                images.append(image)
 
             self.w.update_idletasks()
         io.mimsave(gifPath, images, fps=2)
