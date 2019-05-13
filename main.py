@@ -19,10 +19,12 @@ import tumbleEdit as TE
 import tt2svg as TT2SVG
 
 from getFile import getFile, parseFile
-from boardgui import redrawCanvas, drawGrid, redrawTumbleTiles, deleteTumbleTiles
+from boardgui import redrawCanvas, drawGrid, redrawTumbleTiles, deleteTumbleTiles, drawPILImage
 import os
 import sys
 
+
+from PIL import Image, ImageDraw
 # https://pypi.python.org/pypi/pyscreenshot
 
 try:
@@ -1081,7 +1083,7 @@ class tumblegui:
             self.callCanvasRedrawTumbleTiles()
 
     # Tumbles the board in a direction, then redraws the Canvas
-    def MoveDirection(self, direction):
+    def MoveDirection(self, direction, redraw=True):
         global RECORDING
         global SCRIPTSEQUENCE
 
@@ -1117,7 +1119,9 @@ class tumblegui:
         self.SaveStates()
         if RECORDING:
             SCRIPTSEQUENCE = SCRIPTSEQUENCE + direction
-        self.callCanvasRedrawTumbleTiles()
+
+        if redraw:    
+            self.callCanvasRedrawTumbleTiles()
     # except Exception as e:
      #   print e
       #  print sys.exc_info()[0]
@@ -1126,25 +1130,41 @@ class tumblegui:
     # Uses pyscreenshot to save an image of the canvas
 
     def picture(self):
-        # https://stackoverflow.com/questions/41940945/saving-canvas-from-tkinter-to-file
-        try:
-            # filename = self.tkFileDialog.asksaveasfilename(initialdir = "./",title = "Select file",filetypes = (("jpeg files","*.jpg"),("all files","*.*")))
-            i = 0
-            while os.path.exists("Screenshots/%s.png" % i):
-                i += 1
 
-            filename = ("Screenshots/%s.png" % i)
-            if filename != '':
-                time.sleep(1)
-                px = self.w.winfo_rootx() + self.w.winfo_x()
-                py = self.w.winfo_rooty() + self.w.winfo_y()
-                boardx = px + self.w.winfo_width()
-                boardy = py + self.w.winfo_height()
-                grabcanvas = ImageGrab.grab(
-                    bbox=(px, py, boardx, boardy)).save(filename)
-        except Exception as e:
-            print "Could not print for some reason"
-            print e
+
+        drawPILImage(
+            self.board,
+            self.board.Cols,
+            self.board.Rows,
+            self.w,
+            TILESIZE,
+            self.textcolor,
+            self.gridcolor,
+            self.tkDRAWGRID.get(),
+            self.tkSHOWLOC.get())
+
+
+        # https://stackoverflow.com/questions/41940945/saving-canvas-from-tkinter-to-file
+        # try:
+        #     # filename = self.tkFileDialog.asksaveasfilename(initialdir = "./",title = "Select file",filetypes = (("jpeg files","*.jpg"),("all files","*.*")))
+        #     i = 0
+        #     while os.path.exists("Screenshots/%s.png" % i):
+        #         i += 1
+
+        #     filename = ("Screenshots/%s.png" % i)
+        #     if filename != '':
+        #         time.sleep(1)
+        #         px = self.w.winfo_rootx() + self.w.winfo_x()
+        #         py = self.w.winfo_rooty() + self.w.winfo_y()
+        #         boardx = px + self.w.winfo_width()
+        #         boardy = py + self.w.winfo_height()
+        #         grabcanvas = ImageGrab.grab(
+        #             bbox=(px, py, boardx, boardy)).save(filename)
+        # except Exception as e:
+        #     print "Could not print for some reason"
+        #     print e
+
+
 
     # This function will load a script (sequence of directions to tumble) and
     # step through it, it will save a temp image in ./Gifs/ and compile these
@@ -1177,29 +1197,48 @@ class tumblegui:
         gifPath = ("Gifs/%s%s%s.gif" % (x, y, z))
 
         for x in range(0, len(sequence)):
-            imagePath = "Gifs/temp.png"
-            time.sleep(.3)
-            self.MoveDirection(sequence[x])
-            px = self.w.winfo_rootx() + self.w.winfo_x()
-            py = self.w.winfo_rooty() + self.w.winfo_y()
-            boardx = px + self.w.winfo_width()
-            boardy = py + self.w.winfo_height()
-            grabcanvas = ImageGrab.grab(
-                bbox=(px, py, boardx, boardy)).save(imagePath)
-            image = io.imread(imagePath)
+            # imagePath = "Gifs/temp.png"
+            # time.sleep(.3)
+            self.MoveDirection(sequence[x], redraw= False)
+
+            print("FRAME: ", x)
+
+            image = drawPILImage(
+            self.board,
+            self.board.Cols,
+            self.board.Rows,
+            self.w,
+            TILESIZE,
+            self.textcolor,
+            self.gridcolor,
+            self.tkDRAWGRID.get(),
+            self.tkSHOWLOC.get())
 
             images.append(image)
-            if x == 0 or x == len(sequence) - 1:
-                images.append(image)
-                images.append(image)
-                images.append(image)
-                images.append(image)
+            # px = self.w.winfo_rootx() + self.w.winfo_x()
+            # py = self.w.winfo_rooty() + self.w.winfo_y()
+            # boardx = px + self.w.winfo_width()
+            # boardy = py + self.w.winfo_height()
+            # grabcanvas = ImageGrab.grab(
+            #     bbox=(px, py, boardx, boardy)).save(imagePath)
+            # image = io.imread(imagePath)
 
-            self.w.update_idletasks()
-        io.mimsave(gifPath, images, fps=2)
+            # images.append(image)
+            # if x == 0 or x == len(sequence) - 1:
+            #     images.append(image)
+            #     images.append(image)
+            #     images.append(image)
+            #     images.append(image)
 
-        if os.path.exists("Gifs/temp.png"):
-            os.remove("Gifs/temp.png")
+            # self.w.update_idletasks()
+        images[0].save("out.gif", save_all=True, append_images=images[1:], duration=100, loop=1)
+
+        # if os.path.exists("Gifs/temp.png"):
+        #     os.remove("Gifs/temp.png")
+
+        print("GIF EXPORTED")
+
+        self.callCanvasRedraw()
 
     # Opens the GUI file browser
     def loadFile(self):

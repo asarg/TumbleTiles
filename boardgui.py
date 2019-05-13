@@ -1,4 +1,6 @@
 from Tkinter import *
+from PIL import Image, ImageDraw
+
 
 def redrawCanvas(board, boardwidth, boardheight, canvas, tilesize, textcolor = "#000000", gridcolor = "#000000", b_drawGrid = False, b_drawLoc = False):
     canvas.delete(ALL)
@@ -28,6 +30,43 @@ def redrawCanvas(board, boardwidth, boardheight, canvas, tilesize, textcolor = "
 
     for c in board.ConcreteTiles:
         canvas.create_rectangle(tilesize*c.x, tilesize*c.y, tilesize*c.x + tilesize, tilesize*c.y + tilesize, fill = "#686868")
+
+
+def drawPILImage(board, boardwidth, boardheight, canvas, tilesize, textcolor = "#000000", gridcolor = "#000000", b_drawGrid = False, b_drawLoc = False):
+    print("A")
+
+    tileSize = 10
+    
+    im = Image.new("RGB", (boardwidth * tileSize, boardheight * tileSize), color="#FFFFFF")
+    draw = ImageDraw.Draw(im)
+
+    lineWidth = tileSize / 10
+
+    for p in board.Polyominoes:
+        for tile in p.Tiles:
+            color = tile.color
+
+            PILDrawTile(draw, tile.x, tile.y, tileSize, color, lineWidth)
+
+    color="#686868"
+
+    for c in board.ConcreteTiles:
+        PILDrawTile(draw, c.x, c.y, tileSize, color, lineWidth)
+
+
+
+    # im.save("test.png", "PNG")
+    return im
+
+
+def PILDrawTile(imageDraw, x, y, tileSize, color, lineWidth):
+    imageDraw.rectangle((x * tileSize - lineWidth / 2, y * tileSize - lineWidth / 2, x * tileSize + tileSize + lineWidth / 2, y * tileSize  + tileSize + lineWidth /2), fill =0, outline=0)
+    imageDraw.rectangle((x * tileSize + lineWidth / 2, y * tileSize + lineWidth / 2, x * tileSize + tileSize - lineWidth / 2, y * tileSize + tileSize- lineWidth / 2 ), fill =color, outline=0)
+
+
+
+
+
 
 def deleteTumbleTiles(board, boardwidth, boardheight, canvas, tilesize, textcolor = "#000000", gridcolor = "#000000", b_drawGrid = False, b_drawLoc = False):
         i = 0
