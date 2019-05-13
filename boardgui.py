@@ -35,12 +35,12 @@ def redrawCanvas(board, boardwidth, boardheight, canvas, tilesize, textcolor = "
 def drawPILImage(board, boardwidth, boardheight, canvas, tilesize, textcolor = "#000000", gridcolor = "#000000", b_drawGrid = False, b_drawLoc = False):
     print("A")
 
-    tileSize = 10
+    tileSize = 100
     
     im = Image.new("RGB", (boardwidth * tileSize, boardheight * tileSize), color="#FFFFFF")
     draw = ImageDraw.Draw(im)
 
-    lineWidth = tileSize / 10
+    lineWidth = tileSize / 7
 
     for p in board.Polyominoes:
         for tile in p.Tiles:

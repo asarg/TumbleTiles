@@ -305,6 +305,52 @@ class Settings:
             LOGFILE.write(stlog)
             LOGFILE.close()
 
+class VideoExport:
+    def __init__(self, parent, tumblegui):  # , fun):
+        global TILESIZE
+
+        self.tumbleGUI = tumblegui
+        #self.function = fun
+        self.parent = parent
+
+        self.parent = parent
+        self.t = Toplevel(self.parent)
+        self.t.resizable(False, False)
+        #self.wm_attributes("-disabled", True)
+        self.t.wm_title("Video Export")
+        # self.toplevel_dialog.transient(self)
+        self.t.geometry('360x180') 
+
+        self.tileRes="10"
+        self.fileName="Video"
+
+
+        self.tileResLabel = Label(self.t, text="Tile Resolution: ")
+        self.fileNameLabel = Label(self.t, text="File Name: ")
+        
+
+        self.tileResField = Entry(self.t, textvariable=self.tileRes, width=5)
+        self.fileNameField = Entry(self.t, textvariable=self.fileName, width=20)
+
+        self.tileResLabel.place(x=50, y=20)
+        self.tileResField.place(x=180, y=20)
+
+        self.fileNameLabel.place(x=50, y=40)
+        self.fileNameField.place(x=180,y=40)
+
+
+        
+
+        exportButton = Button(self.t, text="Export")
+        exportButton.place(x=150, y=140)
+
+
+        
+
+        
+
+    def Export(self):
+        print("EXPORTING")
 
 ################################################################
 class tumblegui:
@@ -503,11 +549,11 @@ class tumblegui:
             variable=self.tkLoopScript)
         if IMAGEIO:
             self.scriptmenu.add_command(
-                label="Export as Gif", command=self.createGif)
+                label="Export Video..", command=self.openVideoExportWindow)
         else:
             self.scriptmenu.add_command(
-                label="Export as Gif",
-                command=self.createGif,
+                label="Export Video..",
+                command=self.openVideoExportWindow,
                 state=DISABLED)
 
         self.menubar.add_cascade(label="File", menu=self.filemenu)
@@ -1163,6 +1209,10 @@ class tumblegui:
         # except Exception as e:
         #     print "Could not print for some reason"
         #     print e
+
+
+    def openVideoExportWindow(self):
+        videoExport = VideoExport(self.root, self)
 
 
 

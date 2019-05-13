@@ -849,7 +849,7 @@ Shift + Right-Click:
 
         #event.state == 4 means control is held
         #event.state == 6 means control is held and caps lock is on
-        if event.state == 4 or event.state == 6:
+        if event.state / 4 % 2 == 1:
             self.CtrlSelect(x, y)
             self.CURRENTSELECTIONX = x
             self.CURRENTSELECTIONY = y
@@ -859,7 +859,7 @@ Shift + Right-Click:
 
         #event.state == 1 when shift is held
         #event.state == 3 when shift is held and caps lock is on
-        elif event.state == 1 or event.state == 3:
+        elif event.state % 2 == 1:
             if event.num == rightClick:
                     self.ShftSelect(x, y, False, False)
             else:
@@ -869,6 +869,7 @@ Shift + Right-Click:
 
         elif self.remove_state or event.num == rightClick:
             self.removeTileAtPos(x, y, True)
+
         elif event.num == leftClick:
 
             self.CURRENTSELECTIONX = x
@@ -1010,6 +1011,7 @@ Shift + Right-Click:
     # This function is called when Ctrl + left click are pressed at the same time. Handles 
     # The creation and deletion of a selection
     def CtrlSelect(self, x, y):
+        
         global SELECTIONSTARTED
         global SELECTIONMADE
 
