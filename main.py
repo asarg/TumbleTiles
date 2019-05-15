@@ -322,7 +322,7 @@ class VideoExport:
         self.t.geometry('360x180') 
 
         self.tileRes="10"
-        self.fileName="Video"
+        self.fileName= StringVar()
 
 
         self.tileResLabel = Label(self.t, text="Tile Resolution: ")
@@ -338,19 +338,96 @@ class VideoExport:
         self.fileNameLabel.place(x=50, y=40)
         self.fileNameField.place(x=180,y=40)
 
+        browseButton = Button(self.t, text="Browse", command=self.openFileWindow)
+        browseButton.place(x=180, y=60)
+
+
 
         
 
-        exportButton = Button(self.t, text="Export")
+        exportButton = Button(self.t, text="Export", command=self.export)
         exportButton.place(x=150, y=140)
 
 
         
+    def openFileWindow(self):
+        fileName = getFile()
 
+        self.fileName.set(fileName)
+        # self.fileNameField.delete(0,END)
+        # self.fileNameField.insert(0, fileName)
         
 
-    def Export(self):
-        print("EXPORTING")
+    def export(self):
+        self.tileResInt = int(self.tileRes)
+        self.createGif()
+
+
+    # This function will load a script (sequence of directions to tumble) and
+    # step through it, it will save a temp image in ./Gifs/ and compile these
+    # into a gif
+    def createGif(self):
+
+        filename = self.fileName.get()
+        file = open(filename, "r")
+
+        images = []
+
+        sequence = file.readlines()[0].rstrip('\n')
+
+        # If path does not exist, create it
+        if not os.path.exists("Gifs"):
+            os.makedirs("Gifs")
+
+        x = 0
+        y = 0
+        z = 0
+        while os.path.exists("Gifs/%s%s%s.gif" % (x, y, z)):
+            z = z + 1
+            if z == 10:
+                z = 0
+                y = y + 1
+            if y == 10:
+                y = 0
+                x = x + 1
+
+        gifPath = ("Gifs/%s%s%s.gif" % (x, y, z))
+
+        for x in range(0, len(sequence)):
+            # imagePath = "Gifs/temp.png"
+            # time.sleep(.3)
+            self.tumbleGUI.MoveDirection(sequence[x], redraw= False)
+
+            print("FRAME: ", x)
+
+            image = self.tumbleGUI.getImageOfBoard(self.tileResInt)
+
+            images.append(image)
+            # px = self.w.winfo_rootx() + self.w.winfo_x()
+            # py = self.w.winfo_rooty() + self.w.winfo_y()
+            # boardx = px + self.w.winfo_width()
+            # boardy = py + self.w.winfo_height()
+            # grabcanvas = ImageGrab.grab(
+            #     bbox=(px, py, boardx, boardy)).save(imagePath)
+            # image = io.imread(imagePath)
+
+            # images.append(image)
+            # if x == 0 or x == len(sequence) - 1:
+            #     images.append(image)
+            #     images.append(image)
+            #     images.append(image)
+            #     images.append(image)
+
+            # self.w.update_idletasks()
+        images[0].save("out.gif", save_all=True, append_images=images[1:], duration=100, loop=1)
+
+        # if os.path.exists("Gifs/temp.png"):
+        #     os.remove("Gifs/temp.png")
+
+        print("GIF EXPORTED")
+
+        self.tumbleGUI.callCanvasRedraw()
+
 
 ################################################################
 class tumblegui:
@@ -727,6 +804,21 @@ class tumblegui:
             self.runScript(file)
         else:
             self.reinitialzeRunScript()
+
+    # Returns a PIL image object of the board by calling the function in boardgui.py
+    def getImageOfBoard(self, tileResInt):
+
+        return drawPILImage(
+            self.board,
+            self.board.Cols,
+            self.board.Rows,
+            self.w,
+            TILESIZE,
+            self.textcolor,
+            self.gridcolor,
+            self.tkDRAWGRID.get(),
+            self.tkSHOWLOC.get(),
+            tileRes=tileResInt)
 
     # Call the sequence runner
     def runScript(self, file):
@@ -1215,80 +1307,6 @@ class tumblegui:
         videoExport = VideoExport(self.root, self)
 
 
-
-    # This function will load a script (sequence of directions to tumble) and
-    # step through it, it will save a temp image in ./Gifs/ and compile these
-    # into a gif
-    def createGif(self):
-
-        filename = getFile()
-        file = open(filename, "r")
-
-        images = []
-
-        sequence = file.readlines()[0].rstrip('\n')
-
-        # If path does not exist, create it
-        if not os.path.exists("Gifs"):
-            os.makedirs("Gifs")
-
-        x = 0
-        y = 0
-        z = 0
-        while os.path.exists("Gifs/%s%s%s.gif" % (x, y, z)):
-            z = z + 1
-            if z == 10:
-                z = 0
-                y = y + 1
-            if y == 10:
-                y = 0
-                x = x + 1
-
-        gifPath = ("Gifs/%s%s%s.gif" % (x, y, z))
-
-        for x in range(0, len(sequence)):
-            # imagePath = "Gifs/temp.png"
-            # time.sleep(.3)
-            self.MoveDirection(sequence[x], redraw= False)
-
-            print("FRAME: ", x)
-
-            image = drawPILImage(
-            self.board,
-            self.board.Cols,
-            self.board.Rows,
-            self.w,
-            TILESIZE,
-            self.textcolor,
-            self.gridcolor,
-            self.tkDRAWGRID.get(),
-            self.tkSHOWLOC.get())
-
-            images.append(image)
-            # px = self.w.winfo_rootx() + self.w.winfo_x()
-            # py = self.w.winfo_rooty() + self.w.winfo_y()
-            # boardx = px + self.w.winfo_width()
-            # boardy = py + self.w.winfo_height()
-            # grabcanvas = ImageGrab.grab(
-            #     bbox=(px, py, boardx, boardy)).save(imagePath)
-            # image = io.imread(imagePath)
-
-            # images.append(image)
-            # if x == 0 or x == len(sequence) - 1:
-            #     images.append(image)
-            #     images.append(image)
-            #     images.append(image)
-            #     images.append(image)
-
-            # self.w.update_idletasks()
-        images[0].save("out.gif", save_all=True, append_images=images[1:], duration=100, loop=1)
-
-        # if os.path.exists("Gifs/temp.png"):
-        #     os.remove("Gifs/temp.png")
-
-        print("GIF EXPORTED")
-
-        self.callCanvasRedraw()
 
     # Opens the GUI file browser
     def loadFile(self):
