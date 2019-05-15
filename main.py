@@ -386,8 +386,13 @@ class VideoExport:
         
 
     def export(self):
+
+        boardCopy = copy.deepcopy(self.tumbleGUI.board)
         self.tileResInt = int(self.tileRes.get())
         self.createGif()
+        del(self.tumbleGUI.board)
+        self.tumbleGUI.board = boardCopy
+        self.tumbleGUI.callCanvasRedraw()
 
 
     # This function will load a script (sequence of directions to tumble) and
@@ -465,7 +470,7 @@ class VideoExport:
         self.progress_var.set(100)
         self.t.update()
 
-        self.tumbleGUI.callCanvasRedraw()
+        
 
 
 ################################################################
