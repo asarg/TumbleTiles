@@ -321,25 +321,44 @@ class VideoExport:
         # self.toplevel_dialog.transient(self)
         self.t.geometry('360x180') 
 
-        self.tileRes="10"
+        self.tileRes=StringVar()
         self.fileName= StringVar()
+        self.videoSpeed = StringVar()
+        self.lineWidth = StringVar()
 
+        self.tileRes.set("100")
+        self.videoSpeed.set("3")
+        self.lineWidth.set("10")
 
         self.tileResLabel = Label(self.t, text="Tile Resolution: ")
         self.fileNameLabel = Label(self.t, text="File Name: ")
+        self.videoSpeedLabel = Label(self.t, text="Frames/Sec: ")
+        self.lineWidthLabel = Label(self.t, text="Line Width: ")
         
 
         self.tileResField = Entry(self.t, textvariable=self.tileRes, width=5)
         self.fileNameField = Entry(self.t, textvariable=self.fileName, width=20)
+        self.videoSpeedField = Entry(self.t, textvariable=self.videoSpeed, width=5)
+        self.lineWidthField = Entry(self.t, textvariable=self.lineWidth, width=5)
+        
+
+
+       
 
         self.tileResLabel.place(x=50, y=20)
         self.tileResField.place(x=180, y=20)
 
-        self.fileNameLabel.place(x=50, y=40)
-        self.fileNameField.place(x=180,y=40)
+        self.lineWidthLabel.place(x=50, y=40)
+        self.lineWidthField.place(x=180,y=40)
+
+        self.fileNameLabel.place(x=50, y=80)
+        self.fileNameField.place(x=180,y=80)
+
+        self.videoSpeedLabel.place(x=50, y=60)
+        self.videoSpeedField.place(x=180, y=60)
 
         browseButton = Button(self.t, text="Browse", command=self.openFileWindow)
-        browseButton.place(x=180, y=60)
+        browseButton.place(x=180, y=100)
 
 
 
@@ -359,7 +378,7 @@ class VideoExport:
         
 
     def export(self):
-        self.tileResInt = int(self.tileRes)
+        self.tileResInt = int(self.tileRes.get())
         self.createGif()
 
 
@@ -370,6 +389,8 @@ class VideoExport:
 
         filename = self.fileName.get()
         file = open(filename, "r")
+
+        framesPerSec = 1000 / int(self.videoSpeed.get())
 
         images = []
 
@@ -397,10 +418,11 @@ class VideoExport:
             # imagePath = "Gifs/temp.png"
             # time.sleep(.3)
             self.tumbleGUI.MoveDirection(sequence[x], redraw= False)
+            lineWidthInt = int(self.lineWidth.get())
 
             print("FRAME: ", x)
 
-            image = self.tumbleGUI.getImageOfBoard(self.tileResInt)
+            image = self.tumbleGUI.getImageOfBoard(self.tileResInt, lineWidthInt)
 
             images.append(image)
             # px = self.w.winfo_rootx() + self.w.winfo_x()
@@ -419,7 +441,7 @@ class VideoExport:
             #     images.append(image)
 
             # self.w.update_idletasks()
-        images[0].save("out.gif", save_all=True, append_images=images[1:], duration=100, loop=1)
+        images[0].save("out.gif", save_all=True, append_images=images[1:], duration=framesPerSec, loop=1)
 
         # if os.path.exists("Gifs/temp.png"):
         #     os.remove("Gifs/temp.png")
@@ -806,7 +828,7 @@ class tumblegui:
             self.reinitialzeRunScript()
 
     # Returns a PIL image object of the board by calling the function in boardgui.py
-    def getImageOfBoard(self, tileResInt):
+    def getImageOfBoard(self, tileResInt, lineWidthInt):
 
         return drawPILImage(
             self.board,
@@ -818,7 +840,8 @@ class tumblegui:
             self.gridcolor,
             self.tkDRAWGRID.get(),
             self.tkSHOWLOC.get(),
-            tileRes=tileResInt)
+            tileRes=tileResInt,
+            lineWidth=lineWidthInt)
 
     # Call the sequence runner
     def runScript(self, file):

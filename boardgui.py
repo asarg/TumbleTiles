@@ -32,7 +32,7 @@ def redrawCanvas(board, boardwidth, boardheight, canvas, tilesize, textcolor = "
         canvas.create_rectangle(tilesize*c.x, tilesize*c.y, tilesize*c.x + tilesize, tilesize*c.y + tilesize, fill = "#686868")
 
 
-def drawPILImage(board, boardwidth, boardheight, canvas, tilesize, textcolor = "#000000", gridcolor = "#000000", b_drawGrid = False, b_drawLoc = False, tileRes = 10):
+def drawPILImage(board, boardwidth, boardheight, canvas, tilesize, textcolor = "#000000", gridcolor = "#000000", b_drawGrid = False, b_drawLoc = False, tileRes = 100, lineWidth=10):
     print("A")
 
     tileSize = tileRes
@@ -40,7 +40,6 @@ def drawPILImage(board, boardwidth, boardheight, canvas, tilesize, textcolor = "
     im = Image.new("RGB", (boardwidth * tileSize, boardheight * tileSize), color="#FFFFFF")
     draw = ImageDraw.Draw(im)
 
-    lineWidth = tileSize / 7
 
     for p in board.Polyominoes:
         for tile in p.Tiles:
