@@ -7,6 +7,7 @@ import copy
 import threading
 
 from Tkinter import *
+import ttk
 import tkFileDialog
 import tkMessageBox
 import tkColorChooser
@@ -319,7 +320,7 @@ class VideoExport:
         #self.wm_attributes("-disabled", True)
         self.t.wm_title("Video Export")
         # self.toplevel_dialog.transient(self)
-        self.t.geometry('360x180') 
+        self.t.geometry('360x220') 
 
         self.tileRes=StringVar()
         self.fileName= StringVar()
@@ -337,35 +338,42 @@ class VideoExport:
         
 
         self.tileResField = Entry(self.t, textvariable=self.tileRes, width=5)
-        self.fileNameField = Entry(self.t, textvariable=self.fileName, width=20)
+        self.fileNameField = Entry(self.t, textvariable=self.fileName)
         self.videoSpeedField = Entry(self.t, textvariable=self.videoSpeed, width=5)
         self.lineWidthField = Entry(self.t, textvariable=self.lineWidth, width=5)
         
 
 
-       
+        labelStartX=60
+        fieldStartX=180
 
-        self.tileResLabel.place(x=50, y=20)
-        self.tileResField.place(x=180, y=20)
+        self.tileResLabel.place(x=labelStartX, y=20)
+        self.tileResField.place(x=fieldStartX, y=20)
 
-        self.lineWidthLabel.place(x=50, y=40)
-        self.lineWidthField.place(x=180,y=40)
+        self.lineWidthLabel.place(x=labelStartX, y=40)
+        self.lineWidthField.place(x=fieldStartX,y=40)
 
-        self.fileNameLabel.place(x=50, y=80)
-        self.fileNameField.place(x=180,y=80)
+        self.fileNameLabel.place(x=labelStartX, y=80)
+        self.fileNameField.place(x=fieldStartX,y=80, width=130)
 
-        self.videoSpeedLabel.place(x=50, y=60)
-        self.videoSpeedField.place(x=180, y=60)
+        self.videoSpeedLabel.place(x=labelStartX, y=60)
+        self.videoSpeedField.place(x=fieldStartX, y=60)
 
         browseButton = Button(self.t, text="Browse", command=self.openFileWindow)
-        browseButton.place(x=180, y=100)
+        browseButton.place(x=fieldStartX, y=100)
+
+
+        self.progress_var = DoubleVar() 
+        self.progress=ttk.Progressbar(self.t,orient=HORIZONTAL,variable=self.progress_var,length=260,mode='determinate')
+        self.progress.place(x=50, y=140)
+
 
 
 
         
 
         exportButton = Button(self.t, text="Export", command=self.export)
-        exportButton.place(x=150, y=140)
+        exportButton.place(x=150, y=180)
 
 
         
@@ -387,6 +395,8 @@ class VideoExport:
     # into a gif
     def createGif(self):
 
+        self.progress_var.set(0)
+
         filename = self.fileName.get()
         file = open(filename, "r")
 
@@ -395,6 +405,8 @@ class VideoExport:
         images = []
 
         sequence = file.readlines()[0].rstrip('\n')
+
+        seqLen = len(sequence)
 
         # If path does not exist, create it
         if not os.path.exists("Gifs"):
@@ -415,6 +427,10 @@ class VideoExport:
         gifPath = ("Gifs/%s%s%s.gif" % (x, y, z))
 
         for x in range(0, len(sequence)):
+
+
+            self.progress_var.set(float(x)/seqLen * 100)
+            self.t.update()
             # imagePath = "Gifs/temp.png"
             # time.sleep(.3)
             self.tumbleGUI.MoveDirection(sequence[x], redraw= False)
@@ -446,7 +462,8 @@ class VideoExport:
         # if os.path.exists("Gifs/temp.png"):
         #     os.remove("Gifs/temp.png")
 
-        print("GIF EXPORTED")
+        self.progress_var.set(100)
+        self.t.update()
 
         self.tumbleGUI.callCanvasRedraw()
 
