@@ -676,7 +676,7 @@ Shift + Right-Click:
         r = lambda: random.randint(100, 255)
 
         newPrevTile = {}
-        print(newPrevTile)
+        # print(newPrevTile)
 
         color = CURRENTNEWTILECOLOR
         northGlue = self.newTileN.get()
@@ -685,7 +685,7 @@ Shift + Right-Click:
         westGlue = self.newTileW.get()
         label = "x"
         if self.concreteChecked.get() == 1:
-            print("adding concrete")
+            # print("adding concrete")
             isConcrete = "True"
             color = "#686868"
         else:
@@ -723,13 +723,13 @@ Shift + Right-Click:
     # also changes the relief of the button to show whether or not it is
     # currently selected
     def randomColorToggle(self):
-        print(self.randomizeColor)
+        # print(self.randomizeColor)
         if self.randomizeColor == True:
-            print("raising")
+            # print("raising")
             self.randomColorButton.config(relief=RAISED)
             self.randomizeColor = False
         else:
-            print("sinking")
+            # print("sinking")
             self.randomColorButton.config(relief=SUNKEN)
             self.randomizeColor = True
 
@@ -835,8 +835,8 @@ Shift + Right-Click:
         if sys.platform == 'darwin':  # value for OSX
                 rightClick = 2
 
-        print(event.num)
-        print " mods : ", MODS.get(event.state, None)
+        # print(event.num)
+        # print " mods : ", MODS.get(event.state, None)
         # Determine the position on the board the player clicked
 
         x = (event.x / self.tile_size)
@@ -845,11 +845,11 @@ Shift + Right-Click:
         x = int(self.BoardCanvas.canvasx(event.x)) / self.tile_size
         y = int(self.BoardCanvas.canvasy(event.y)) / self.tile_size
 
-        print( "EVENT: ",  event.state )
+        # print( "EVENT: ",  event.state )
 
         #event.state == 4 means control is held
         #event.state == 6 means control is held and caps lock is on
-        if event.state == 4 or event.state == 6:
+        if event.state / 4 % 2 == 1:
             self.CtrlSelect(x, y)
             self.CURRENTSELECTIONX = x
             self.CURRENTSELECTIONY = y
@@ -859,7 +859,7 @@ Shift + Right-Click:
 
         #event.state == 1 when shift is held
         #event.state == 3 when shift is held and caps lock is on
-        elif event.state == 1 or event.state == 3:
+        elif event.state % 2 == 1:
             if event.num == rightClick:
                     self.ShftSelect(x, y, False, False)
             else:
@@ -869,6 +869,7 @@ Shift + Right-Click:
 
         elif self.remove_state or event.num == rightClick:
             self.removeTileAtPos(x, y, True)
+
         elif event.num == leftClick:
 
             self.CURRENTSELECTIONX = x
@@ -877,7 +878,7 @@ Shift + Right-Click:
             self.clearShiftSelection()
             self.drawSquareSelectionRed()
 
-            print(self.add_state)
+            # print(self.add_state)
             if self.add_state:
                     self.addTileAtPos(x, y)
 
@@ -888,19 +889,14 @@ Shift + Right-Click:
 
     def keyPressed(self, event):
         global SELECTIONMADE
-        print(event.keysym)
-        print(MODS.get(event.state, None))
-        # print("SELECTION STARTED : ", SELECTIONSTARTED)
-        print("SELECTION MADE : ", SELECTIONMADE)
+        
+
         # TODO: Change this
         if not SELECTIONMADE:
             # if event.keysym == "space":
             # self.tumbleGUI.setTilesFromEditor(self.board, self.glue_data, self.prevTileList, self.board.Cols, self.board.Rows)
             # self.glue_data = {'N':1, 'E':1, 'S':1, 'W':1,  'A': 1, 'B': 1, 'C': 1, 'D': 1, 'X': 1, 'Y': 1, 'Z': 1}
-            # print(self.glue_data)
-            # print len(self.ShiftSelectionMatrix)," ", len(self.ShiftSelectionMatrix[0])
-            # print self.ShiftSelectionMatrix
-            # print self.board.Cols, ", ", self.board.Rows
+            
 
             if event.keysym == "Up":
                 print("Moving up")
@@ -959,7 +955,7 @@ Shift + Right-Click:
 
     def stepSelection(self, dir):
         direction = dir
-        print "STEPPING", direction 
+        # print "STEPPING", direction 
         dx = 0
         dy = 0
 
@@ -986,7 +982,7 @@ Shift + Right-Click:
 
         for x in range(self.SELECTIONX1, self.SELECTIONX2 + 1):
             for y in range(self.SELECTIONY1, self.SELECTIONY2 + 1):
-                print "Removing tile at ", x, ", ", y
+                # print "Removing tile at ", x, ", ", y
                 selection.append(self.board.coordToTile[x][y])
     
         for tile in selection:
@@ -1010,6 +1006,7 @@ Shift + Right-Click:
     # This function is called when Ctrl + left click are pressed at the same time. Handles 
     # The creation and deletion of a selection
     def CtrlSelect(self, x, y):
+        
         global SELECTIONSTARTED
         global SELECTIONMADE
 
@@ -1024,15 +1021,15 @@ Shift + Right-Click:
             self.SELECTIONY1 = y
 
         elif SELECTIONSTARTED:
-            print ("selection made")
+            # print ("selection made")
             
             SELECTIONMADE = True
             SELECTIONSTARTED = False
             self.SELECTIONX2 = x
             self.SELECTIONY2 = y
 
-            print "x1: ", self.SELECTIONX1, "y1: ", self.SELECTIONY1
-            print "x2: ", self.SELECTIONX2, "y2: ", self.SELECTIONY2
+            # print "x1: ", self.SELECTIONX1, "y1: ", self.SELECTIONY1
+            # print "x2: ", self.SELECTIONX2, "y2: ", self.SELECTIONY2
 
 
             if self.SELECTIONX2 < self.SELECTIONX1:
@@ -1058,7 +1055,7 @@ Shift + Right-Click:
         # global SELECTIONMADE
                 
                 
-        print("SHIFTSELECTIONMADE :", SHIFTSELECTIONSTARTED)
+        # print("SHIFTSELECTIONMADE :", SHIFTSELECTIONSTARTED)
                 
         if not SHIFTSELECTIONSTARTED:
             self.clearSelection()
@@ -1067,7 +1064,7 @@ Shift + Right-Click:
                     if not self.ShiftSelectionMatrix[x1][y1]  == None:
                         self.BoardCanvas.delete(self.ShiftSelectionMatrix[x1][y1])
             self.ShiftSelectionMatrix = [[None for y2 in range(self.board.Rows)] for x2 in range(self.board.Cols)]
-            print(x,":  :", y)
+            # print(x,":  :", y)
             self.ShiftSelectionMatrix[x][y] = self.BoardCanvas.create_rectangle(self.tile_size*x, self.tile_size*y, self.tile_size*x + self.tile_size, self.tile_size*y + self.tile_size, fill = "#FFFF00", stipple="gray50")
 
             SHIFTSELECTIONSTARTED = True
@@ -1080,13 +1077,13 @@ Shift + Right-Click:
             self.SELECTIONY1 = y
                 
         elif SHIFTSELECTIONSTARTED:
-            print ("selection made")
+            # print ("selection made")
             
             self.SELECTIONX2 = x
             self.SELECTIONY2 = y
 
-            print "x1: ", self.SELECTIONX1, "y1: ", self.SELECTIONY1
-            print "x2: ", self.SELECTIONX2, "y2: ", self.SELECTIONY2
+            # print "x1: ", self.SELECTIONX1, "y1: ", self.SELECTIONY1
+            # print "x2: ", self.SELECTIONX2, "y2: ", self.SELECTIONY2
 
 
             if self.SELECTIONX2 < self.SELECTIONX1:
@@ -1127,19 +1124,23 @@ Shift + Right-Click:
     def clearShiftSelection(self):
 
         global SHIFTSELECTIONSTARTED
-        
 
-        SHIFTSELECTIONSTARTED = False
-        for x in range(0, self.board.Cols):
-            for y in range(0, self.board.Rows):
-                print "clearShiftSelection: ", x,", ", y
-                if not self.ShiftSelectionMatrix[x][y]  == None:
-                    self.BoardCanvas.delete(self.ShiftSelectionMatrix[x][y])
 
         if SHIFTSELECTIONSTARTED:
-        	self.ShiftSelectionMatrix = [[None for y in range(self.board.Rows)] for x in range(self.board.Cols)]
 
-               
+
+            for x in range(0, self.board.Cols):
+                for y in range(0, self.board.Rows):
+                    # print "clearShiftSelection: ", x,", ", y
+
+                    if not self.ShiftSelectionMatrix[x][y]  == None:
+                        self.BoardCanvas.delete(self.ShiftSelectionMatrix[x][y])
+
+            self.ShiftSelectionMatrix = [[None for y in range(self.board.Rows)] for x in range(self.board.Cols)]
+
+        SHIFTSELECTIONSTARTED = False
+
+        
     def clearSelection(self):
         global SELECTIONSTARTED
         global SELECTIONMADE
@@ -1168,7 +1169,7 @@ Shift + Right-Click:
     def deleteTilesInShiftSelection(self):
         for x in range(0, self.board.Cols):
             for y in range(0, self.board.Rows):
-                print "deleteShiftSelection: ", x,", ", y
+                # print "deleteShiftSelection: ", x,", ", y
                 if not self.ShiftSelectionMatrix[x][y]  == None:
                     self.removeTileAtPos(x,y, False)
         self.clearShiftSelection()
@@ -1180,7 +1181,7 @@ Shift + Right-Click:
     def deleteTilesInSelection(self):
         for x in range(self.SELECTIONX1, self.SELECTIONX2 + 1):
             for y in range(self.SELECTIONY1, self.SELECTIONY2 + 1):
-                print "Removing tile at ", x, ", ", y
+                # print "Removing tile at ", x, ", ", y
                 self.removeTileAtPos(x,y, False)
         self.redrawPrev()
         self.board.remapArray()
@@ -1188,7 +1189,7 @@ Shift + Right-Click:
 
     # When you control click in two locations this method will draw the resulting rectangle
     def drawSelection(self, x1, y1, x2, y2):
-        print("x1: ", x1, "    y1: ", y1, "   x2: ", x2, "   y2: ", y2)
+        # print("x1: ", x1, "    y1: ", y1, "   x2: ", x2, "   y2: ", y2)
 
         self.selection = self.BoardCanvas.create_rectangle(self.tile_size*x1, self.tile_size*y1, self.tile_size*x2 + self.tile_size, self.tile_size*y2 + self.tile_size, fill = "#0000FF", stipple="gray50")
 
@@ -1202,21 +1203,16 @@ Shift + Right-Click:
     def copySelection(self):
         global COPYMADE
 
-        print self.SELECTIONX1
-        print self.SELECTIONX2
-        print self.SELECTIONY1
-        print self.SELECTIONY2
-
-        print("COPIED")
+      
         COPYMADE = True
 
         self.copiedSelection = [[None for x in range(abs(self.SELECTIONY2 - self.SELECTIONY1) + 1)] for y in range(abs(self.SELECTIONX2 - self.SELECTIONX1) + 1)]
 
         for x in range(self.SELECTIONX1, self.SELECTIONX2 + 1):
-            print "X index: ", x
+            # print "X index: ", x
             for y in range(self.SELECTIONY1, self.SELECTIONY2 + 1):
-                print "y index: ", y
-                print "Copying tile at ", x, ", ", y, " to ", x - self.SELECTIONX1, ", ", y - self.SELECTIONY1
+                # print "y index: ", y
+                # print "Copying tile at ", x, ", ", y, " to ", x - self.SELECTIONX1, ", ", y - self.SELECTIONY1
 
                 try:
                     self.copiedSelection[x - self.SELECTIONX1][y - self.SELECTIONY1] = copy.deepcopy(self.board.coordToTile[x][y])
@@ -1236,28 +1232,28 @@ Shift + Right-Click:
 
         self.CURRENTSELECTIONX = self.SELECTIONX1
         self.CURRENTSELECTIONY = self.SELECTIONY1
-        print("CURRENT SELECTION X : ", self.CURRENTSELECTIONX)
-        print("CURRENT SELECTION Y : ", self.CURRENTSELECTIONY)
-        print("SELECTION X1 : ", self.SELECTIONX1)
-        print("SELECTION X2 : ", self.SELECTIONX2)
-        print("SELECTION Y1 : ", self.SELECTIONY1)
-        print("SELECTION Y2 : ", self.SELECTIONY2)
+        # print("CURRENT SELECTION X : ", self.CURRENTSELECTIONX)
+        # print("CURRENT SELECTION Y : ", self.CURRENTSELECTIONY)
+        # print("SELECTION X1 : ", self.SELECTIONX1)
+        # print("SELECTION X2 : ", self.SELECTIONX2)
+        # print("SELECTION Y1 : ", self.SELECTIONY1)
+        # print("SELECTION Y2 : ", self.SELECTIONY2)
 
         selectionWidth = self.SELECTIONX2 - self.SELECTIONX1 + 1
         selectionHeight = self.SELECTIONY2 - self.SELECTIONY1  + 1
         for x in range(0, selectionWidth):
                 for y in range(0, selectionHeight):
-                        print "Removing tile at ", x + self.CURRENTSELECTIONX, ", ", y + self.CURRENTSELECTIONY
+                        # print "Removing tile at ", x + self.CURRENTSELECTIONX, ", ", y + self.CURRENTSELECTIONY
                         self.removeTileAtPos(self.CURRENTSELECTIONX + x,self.CURRENTSELECTIONY + y, False)
                         
 
-        print("pasting")
+        # print("pasting")
 
         selectionWidth = self.SELECTIONX2 - self.SELECTIONX1 + 1
         selectionHeight = self.SELECTIONY2 - self.SELECTIONY1  + 1
 
-        print "Width: ", selectionWidth
-        print "Height: ", selectionHeight
+        # print "Width: ", selectionWidth
+        # print "Height: ", selectionHeight
 
         for x in range(0, selectionWidth):
             for y in range(0, selectionHeight):
@@ -1272,8 +1268,8 @@ Shift + Right-Click:
                     print "Error: tried to access self.copiedSelection[", x, "][", y, "]"
                     print "Its size is ", len(self.copiedSelection), ", ", len(self.copiedSelection[0])
 
-                print "x: ",x
-                print "y: ", y
+                # print "x: ",x
+                # print "y: ", y
 
                 
 
@@ -1281,9 +1277,9 @@ Shift + Right-Click:
                     continue
 
                 newX = self.CURRENTSELECTIONX + x
-                print "NEWX: ", newX
+                # print "NEWX: ", newX
                 newY = self.CURRENTSELECTIONY + (selectionHeight - y) - 1
-                print "NEWY: ", newY
+                # print "NEWY: ", newY
 
                 if newX > self.board.Rows or newY > self.board.Cols:
                     continue
@@ -1306,7 +1302,7 @@ Shift + Right-Click:
                 # self.copiedSelection[x][y].y = newY
 
                 if self.copiedSelection[x][y].isConcrete:
-                    print "is concrete"
+                    # print "is concrete"
                     self.board.AddConc(newConcTile)
                 elif not self.copiedSelection[x][y].isConcrete:
                     self.board.Add(p)
@@ -1320,28 +1316,28 @@ Shift + Right-Click:
 
             self.CURRENTSELECTIONX = self.SELECTIONX1
             self.CURRENTSELECTIONY = self.SELECTIONY1
-            print("CURRENT SELECTION X : ", self.CURRENTSELECTIONX)
-            print("CURRENT SELECTION Y : ", self.CURRENTSELECTIONY)
-            print("SELECTION X1 : ", self.SELECTIONX1)
-            print("SELECTION X2 : ", self.SELECTIONX2)
-            print("SELECTION Y1 : ", self.SELECTIONY1)
-            print("SELECTION Y2 : ", self.SELECTIONY2)
+            # print("CURRENT SELECTION X : ", self.CURRENTSELECTIONX)
+            # print("CURRENT SELECTION Y : ", self.CURRENTSELECTIONY)
+            # print("SELECTION X1 : ", self.SELECTIONX1)
+            # print("SELECTION X2 : ", self.SELECTIONX2)
+            # print("SELECTION Y1 : ", self.SELECTIONY1)
+            # print("SELECTION Y2 : ", self.SELECTIONY2)
 
             selectionWidth = self.SELECTIONX2 - self.SELECTIONX1 + 1
             selectionHeight = self.SELECTIONY2 - self.SELECTIONY1  + 1
             for x in range(0, selectionWidth):
                     for y in range(0, selectionHeight):
-                            print "Removing tile at ", x + self.CURRENTSELECTIONX, ", ", y + self.CURRENTSELECTIONY
+                            # print "Removing tile at ", x + self.CURRENTSELECTIONX, ", ", y + self.CURRENTSELECTIONY
                             self.removeTileAtPos(self.CURRENTSELECTIONX + x,self.CURRENTSELECTIONY + y, False)
                             
 
-            print("pasting")
+            # print("pasting")
 
             selectionWidth = self.SELECTIONX2 - self.SELECTIONX1 + 1
             selectionHeight = self.SELECTIONY2 - self.SELECTIONY1  + 1
 
-            print "Width: ", selectionWidth
-            print "Height: ", selectionHeight
+            # print "Width: ", selectionWidth
+            # print "Height: ", selectionHeight
 
             for x in range(0, selectionWidth):
                 for y in range(0, selectionHeight):
@@ -1356,8 +1352,8 @@ Shift + Right-Click:
                         print "Error: tried to access self.copiedSelection[", x, "][", y, "]"
                         print "Its size is ", len(self.copiedSelection), ", ", len(self.copiedSelection[0])
 
-                    print "x: ",x
-                    print "y: ", y
+                    # print "x: ",x
+                    # print "y: ", y
 
                     
 
@@ -1365,9 +1361,9 @@ Shift + Right-Click:
                             continue
 
                     newX = self.CURRENTSELECTIONX + (selectionWidth - x) - 1
-                    print "NEWX: ", newX
+                    # print "NEWX: ", newX
                     newY = self.CURRENTSELECTIONY + y
-                    print "NEWY: ", newY
+                    # print "NEWY: ", newY
 
                     if newX > self.board.Rows or newY > self.board.Cols:
                             continue
@@ -1388,7 +1384,7 @@ Shift + Right-Click:
                     # self.copiedSelection[x][y].y = newY
 
                     if self.copiedSelection[x][y].isConcrete:
-                        print "is concrete"
+                        # print "is concrete"
                         self.board.AddConc(newConcTile)
                     elif not self.copiedSelection[x][y].isConcrete:
                         self.board.Add(p)
@@ -1410,35 +1406,35 @@ Shift + Right-Click:
 
         self.CURRENTSELECTIONX = self.SELECTIONX1
         self.CURRENTSELECTIONY = self.SELECTIONY1
-        print("CURRENT SELECTION X : ", self.CURRENTSELECTIONX)
-        print("CURRENT SELECTION Y : ", self.CURRENTSELECTIONY)
-        print("SELECTION X1 : ", self.SELECTIONX1)
-        print("SELECTION X2 : ", self.SELECTIONX2)
-        print("SELECTION Y1 : ", self.SELECTIONY1)
-        print("SELECTION Y2 : ", self.SELECTIONY2)
+        # print("CURRENT SELECTION X : ", self.CURRENTSELECTIONX)
+        # print("CURRENT SELECTION Y : ", self.CURRENTSELECTIONY)
+        # print("SELECTION X1 : ", self.SELECTIONX1)
+        # print("SELECTION X2 : ", self.SELECTIONX2)
+        # print("SELECTION Y1 : ", self.SELECTIONY1)
+        # print("SELECTION Y2 : ", self.SELECTIONY2)
 
         selectionWidth = self.SELECTIONX2 - self.SELECTIONX1 + 1
         selectionHeight = self.SELECTIONY2 - self.SELECTIONY1  + 1
         for x in range(0, selectionWidth):
             for y in range(0, selectionHeight):
-                print "Removing tile at ", x + self.CURRENTSELECTIONX, ", ", y + self.CURRENTSELECTIONY
+                # print "Removing tile at ", x + self.CURRENTSELECTIONX, ", ", y + self.CURRENTSELECTIONY
                 self.removeTileAtPos(self.CURRENTSELECTIONX + x,self.CURRENTSELECTIONY + y, False)
                         
 
-        print("fill in")
+        # print("fill in")
 
         selectionWidth = self.SELECTIONX2 - self.SELECTIONX1 + 1
         selectionHeight = self.SELECTIONY2 - self.SELECTIONY1  + 1
 
-        print "Width: ", selectionWidth
-        print "Height: ", selectionHeight
+        # print "Width: ", selectionWidth
+        # print "Height: ", selectionHeight
 
         for x in range(0, selectionWidth):
             for y in range(0, selectionHeight):
                 newX = self.CURRENTSELECTIONX + (selectionWidth - x) - 1
-                print "NEWX: ", newX
+                # print "NEWX: ", newX
                 newY = self.CURRENTSELECTIONY + y
-                print "NEWY: ", newY
+                # print "NEWY: ", newY
 
                 if newX > self.board.Rows or newY > self.board.Cols:
                         continue
@@ -1468,13 +1464,13 @@ Shift + Right-Click:
                     self.removeTileAtPos(self.CURRENTSELECTIONX + x,self.CURRENTSELECTIONY + y, False)
                     
 
-            print("pasting")
+            # print("pasting")
 
             selectionWidth = self.SELECTIONX2 - self.SELECTIONX1 + 1
             selectionHeight = self.SELECTIONY2 - self.SELECTIONY1  + 1
 
-            print "Width: ", selectionWidth
-            print "Height: ", selectionHeight
+            # print "Width: ", selectionWidth
+            # print "Height: ", selectionHeight
 
             for x in range(0, selectionWidth):
                 for y in range(0, selectionHeight):
@@ -1489,8 +1485,8 @@ Shift + Right-Click:
                         print "Error: tried to access self.copiedSelection[", x, "][", y, "]"
                         print "Its size is ", len(self.copiedSelection), ", ", len(self.copiedSelection[0])
 
-                    print "x: ",x
-                    print "y: ", y
+                    # print "x: ",x
+                    # print "y: ", y
 
                     
 
@@ -1498,9 +1494,9 @@ Shift + Right-Click:
                         continue
 
                     newX = self.CURRENTSELECTIONX + x
-                    print "NEWX: ", newX
+                    # print "NEWX: ", newX
                     newY = self.CURRENTSELECTIONY + y
-                    print "NEWY: ", newY
+                    # print "NEWY: ", newY
 
                     if newX > self.board.Rows or newY > self.board.Cols:
                         continue
@@ -1523,7 +1519,7 @@ Shift + Right-Click:
                     # self.copiedSelection[x][y].y = newY
 
                     if self.copiedSelection[x][y].isConcrete:
-                        print "is concrete"
+                        # print "is concrete"
                         self.board.AddConc(newConcTile)
                     elif not self.copiedSelection[x][y].isConcrete:
                         self.board.Add(p)
@@ -1567,7 +1563,7 @@ Shift + Right-Click:
     
     # Removes tile at (x,y), redraw is a flag whether or not to redraw after removal
     def removeTileAtPos(self, x, y, redraw):
-        print "trying to remove tile at ", x, ", ", y
+        # print "trying to remove tile at ", x, ", ", y
 
         try:
             tile = self.board.coordToTile[x][y]
@@ -1639,10 +1635,10 @@ Shift + Right-Click:
                 print "ERROR: Tile at ", tile.x, ", ", tile.y, " is not in array properly \n",
                 verified = False
 
-        if verified:
-            print("Tile Locations Verified")
-        if not verified:
-            print("Tile Locations Incorrect")
+        # if verified:
+        #     print("Tile Locations Verified")
+        # if not verified:
+        #     print("Tile Locations Incorrect")
 
 
 
@@ -1720,7 +1716,7 @@ Shift + Right-Click:
         
         
     def boardResizeDial(self):
-        print"boardResizeDial: ", self.board_w,", ", self.board_h
+        # print"boardResizeDial: ", self.board_w,", ", self.board_h
         wr = self.WindowResizeDialogue(self.newWindow, self, self.board_w, self.board_h)
 
     def redrawPrev(self):
@@ -1770,7 +1766,7 @@ Shift + Right-Click:
         self.redrawPrev()
 
     def exportTiles(self):
-        print("new cols : ", self.board.Cols, "new rows : ", self.board.Rows)
+        # print("new cols : ", self.board.Cols, "new rows : ", self.board.Rows)
 
         self.tumbleGUI.setTilesFromEditor(self.board, self.glue_data, self.prevTileList, self.board.Cols, self.board.Rows)
 
@@ -1788,7 +1784,7 @@ Shift + Right-Click:
         p_tiles = ET.SubElement(tile_config, "PreviewTiles")
         if len(self.prevTileList) != 0:
             for td in self.prevTileList:
-                print(td.color)
+                # print(td.color)
                 if td.glues == [] or len(td.glues) == 0:
                         td.glues = [0,0,0,0]
 
@@ -1830,7 +1826,7 @@ Shift + Right-Click:
         # save all tiles on the board to the .xml file
         for p in self.board.Polyominoes:
             for tile in p.Tiles:
-                print(tile)
+                # print(tile)
                 if tile.glues == None or len(tile.glues) == 0:
                     tile.glues = [0,0,0,0]
 
@@ -1865,7 +1861,7 @@ Shift + Right-Click:
 
         for conc in self.board.ConcreteTiles:
         
-            print(conc)
+            # print(conc)
             if conc.glues == None or len(conc.glues) == 0:
                 conc.glues = [0,0,0,0]
 
@@ -1897,7 +1893,7 @@ Shift + Right-Click:
             la.text = str(conc.id)
 
         # Just port the glue function data over to the new file
-        print "glue data in tumbleedit.py ", self.glue_data
+        # print "glue data in tumbleedit.py ", self.glue_data
         for gl in self.glue_data:
             gs = self.glue_data[gl]
             f = ET.SubElement(glue_func, "Function")
