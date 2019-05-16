@@ -1133,16 +1133,19 @@ Shift + Right-Click:
 
         print("in clearShift")
 
-      
-        SHIFTSELECTIONSTARTED = False
-        for x in range(0, self.board.Cols):
-            for y in range(0, self.board.Rows):
-                print "clearShiftSelection: ", x,", ", y
-                if not self.ShiftSelectionMatrix[x][y]  == None:
-                    self.BoardCanvas.delete(self.ShiftSelectionMatrix[x][y])
 
-     	if True:
-        	self.ShiftSelectionMatrix = [[None for y in range(self.board.Rows)] for x in range(self.board.Cols)]
+        if SHIFTSELECTIONSTARTED:
+
+            for x in range(0, self.board.Cols):
+                for y in range(0, self.board.Rows):
+                    print "clearShiftSelection: ", x,", ", y
+
+                    if not self.ShiftSelectionMatrix[x][y]  == None:
+                        self.BoardCanvas.delete(self.ShiftSelectionMatrix[x][y])
+
+            self.ShiftSelectionMatrix = [[None for y in range(self.board.Rows)] for x in range(self.board.Cols)]
+
+        SHIFTSELECTIONSTARTED = False
 
         
 

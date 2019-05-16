@@ -320,32 +320,49 @@ class VideoExport:
         #self.wm_attributes("-disabled", True)
         self.t.wm_title("Video Export")
         # self.toplevel_dialog.transient(self)
-        self.t.geometry('360x220') 
+        self.t.geometry('360x250') 
 
-        self.tileRes=StringVar()
-        self.fileName= StringVar()
-        self.videoSpeed = StringVar()
-        self.lineWidth = StringVar()
+
+        self.tileRes=StringVar()                # Variable for Tile Resolution
+        self.fileName= StringVar()              # Variable for the script file name
+        self.videoSpeed = StringVar()           # Variale for the frame rate
+        self.lineWidth = StringVar()            # Variable for the width of tile border
+        self.exportFileNameText = StringVar()   # Variabe for name of the output file
+        self.exportText = StringVar()           # Variable for the text that logs the video output
+
+
+        # Set default amounts
 
         self.tileRes.set("100")
         self.videoSpeed.set("3")
         self.lineWidth.set("10")
 
+
+        # Initiate all Label objects
+
         self.tileResLabel = Label(self.t, text="Tile Resolution: ")
-        self.fileNameLabel = Label(self.t, text="File Name: ")
+        self.fileNameLabel = Label(self.t, text="Script File Name: ")
         self.videoSpeedLabel = Label(self.t, text="Frames/Sec: ")
         self.lineWidthLabel = Label(self.t, text="Line Width: ")
+        self.exportLabel = Label(self.t, text="", textvariable=self.exportText)
+        self.exportFileNameLabel = Label(self.t, text="Output File Name:")
         
+        # Initiate all text field objects
 
         self.tileResField = Entry(self.t, textvariable=self.tileRes, width=5)
         self.fileNameField = Entry(self.t, textvariable=self.fileName)
         self.videoSpeedField = Entry(self.t, textvariable=self.videoSpeed, width=5)
         self.lineWidthField = Entry(self.t, textvariable=self.lineWidth, width=5)
+        self.exportFileNameField = Entry(self.t, textvariable=self.exportFileNameText, width=5)
+        
         
 
+        # Horizontal starting points for the labels and the fields
 
         labelStartX=60
         fieldStartX=180
+
+        # Place all the components using x and y coordinates
 
         self.tileResLabel.place(x=labelStartX, y=20)
         self.tileResField.place(x=fieldStartX, y=20)
@@ -356,24 +373,27 @@ class VideoExport:
         self.fileNameLabel.place(x=labelStartX, y=80)
         self.fileNameField.place(x=fieldStartX,y=80, width=130)
 
+        self.exportFileNameLabel.place(x=labelStartX, y=130)
+        self.exportFileNameField.place(x=fieldStartX,y=130, width=130)
+
         self.videoSpeedLabel.place(x=labelStartX, y=60)
         self.videoSpeedField.place(x=fieldStartX, y=60)
 
         browseButton = Button(self.t, text="Browse", command=self.openFileWindow)
-        browseButton.place(x=fieldStartX, y=100)
+        browseButton.place(x=fieldStartX, y=100, height=20)
 
+
+        self.exportLabel.place(x=labelStartX, y=155)
+        # Create a progres bar to show status of video export
 
         self.progress_var = DoubleVar() 
         self.progress=ttk.Progressbar(self.t,orient=HORIZONTAL,variable=self.progress_var,length=260,mode='determinate')
-        self.progress.place(x=50, y=140)
-
-
-
-
+        self.progress.place(x=50, y=175)
         
+        # Place export button    
 
         exportButton = Button(self.t, text="Export", command=self.export)
-        exportButton.place(x=150, y=180)
+        exportButton.place(x=150, y=210)
 
 
         
@@ -385,14 +405,21 @@ class VideoExport:
         # self.fileNameField.insert(0, fileName)
         
 
-    def export(self):
+    def export(self):   
 
+        #Create a copy of the board to reset to once the recording is done
         boardCopy = copy.deepcopy(self.tumbleGUI.board)
+
+        # Convert the tile resolution to an INT
+
         self.tileResInt = int(self.tileRes.get())
+
         self.createGif()
+
+        # Delete the current board and restore the old board
         del(self.tumbleGUI.board)
         self.tumbleGUI.board = boardCopy
-        self.tumbleGUI.callCanvasRedraw()
+       
 
 
     # This function will load a script (sequence of directions to tumble) and
@@ -400,72 +427,71 @@ class VideoExport:
     # into a gif
     def createGif(self):
 
-        self.progress_var.set(0)
 
-        filename = self.fileName.get()
+        self.progress_var.set(0)        # Set progress bar to 0
+        self.exportText.set("")         # Set the export text to blank
+
+        filename = self.fileName.get()  # Get the filename from the text field
         file = open(filename, "r")
+
+
+        # Calculate duration of each frame from the Framerate text field
 
         framesPerSec = 1000 / int(self.videoSpeed.get())
 
-        images = []
+        lineWidthInt = int(self.lineWidth.get())
 
-        sequence = file.readlines()[0].rstrip('\n')
+        images = [] 
 
-        seqLen = len(sequence)
+        sequence = file.readlines()[0].rstrip('\n') # Read in the script file
 
-        # If path does not exist, create it
-        if not os.path.exists("Gifs"):
-            os.makedirs("Gifs")
-
-        x = 0
-        y = 0
-        z = 0
-        while os.path.exists("Gifs/%s%s%s.gif" % (x, y, z)):
-            z = z + 1
-            if z == 10:
-                z = 0
-                y = y + 1
-            if y == 10:
-                y = 0
-                x = x + 1
-
-        gifPath = ("Gifs/%s%s%s.gif" % (x, y, z))
-
-        for x in range(0, len(sequence)):
+        seqLen = len(sequence)  # total length used for progress bar
 
 
-            self.progress_var.set(float(x)/seqLen * 100)
-            self.t.update()
-            # imagePath = "Gifs/temp.png"
-            # time.sleep(.3)
-            self.tumbleGUI.MoveDirection(sequence[x], redraw= False)
-            lineWidthInt = int(self.lineWidth.get())
+        # If Videos folder does not exist, create it
+        if not os.path.exists("Videos"):
+            os.makedirs("Videos")
 
-            print("FRAME: ", x)
+        if self.exportFileNameText.get() == "": # If no file name was given create one
+        
+            x = 0
+            y = 0
+            z = 0
+            while os.path.exists("Videos/%s%s%s.gif" % (x, y, z)):
+                z = z + 1
+                if z == 10:
+                    z = 0
+                    y = y + 1
+                if y == 10:
+                    y = 0
+                    x = x + 1
 
+            exportFile = ("Videos/%s%s%s.gif" % (x, y, z))
+        else:
+            exportFile = "Videos/" + self.exportFileNameText.get() + ".gif"
+
+        for x in range(0, len(sequence)):   
+
+
+            self.progress_var.set(float(x)/seqLen * 100)    # Update progress bar
+            self.t.update()                                 # update toplevel window
+           
+            self.tumbleGUI.MoveDirection(sequence[x], redraw= False) # Move the board in the specified direction
+
+            # Call function to get and image in memory of the current state of the board, passing it the tile resolution and the line width to use
             image = self.tumbleGUI.getImageOfBoard(self.tileResInt, lineWidthInt)
 
+            # Append the returned image to the image array
             images.append(image)
-            # px = self.w.winfo_rootx() + self.w.winfo_x()
-            # py = self.w.winfo_rooty() + self.w.winfo_y()
-            # boardx = px + self.w.winfo_width()
-            # boardy = py + self.w.winfo_height()
-            # grabcanvas = ImageGrab.grab(
-            #     bbox=(px, py, boardx, boardy)).save(imagePath)
-            # image = io.imread(imagePath)
+        
+        # Save the image
 
-            # images.append(image)
-            # if x == 0 or x == len(sequence) - 1:
-            #     images.append(image)
-            #     images.append(image)
-            #     images.append(image)
-            #     images.append(image)
+        images[0].save(exportFile, save_all=True, append_images=images[1:], duration=framesPerSec, loop=1)
 
-            # self.w.update_idletasks()
-        images[0].save("out.gif", save_all=True, append_images=images[1:], duration=framesPerSec, loop=1)
+        # Set the export Text
+        self.exportText.set("Video saved at ./Videos/"+exportFile)
 
-        # if os.path.exists("Gifs/temp.png"):
-        #     os.remove("Gifs/temp.png")
+        # Update the progress bar and update the toplevel to redraw the progress bar
 
         self.progress_var.set(100)
         self.t.update()
