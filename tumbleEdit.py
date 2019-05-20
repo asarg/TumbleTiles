@@ -832,6 +832,7 @@ Shift + Right-Click:
         leftClick = 1
         rightClick = 3
 
+
         if sys.platform == 'darwin':  # value for OSX
                 rightClick = 2
 
@@ -890,7 +891,6 @@ Shift + Right-Click:
     def keyPressed(self, event):
         global SELECTIONMADE
         
-
         # TODO: Change this
         if not SELECTIONMADE:
             # if event.keysym == "space":
@@ -923,31 +923,32 @@ Shift + Right-Click:
             elif event.keysym == "Left":
                 print("Mving Left")
                 self.stepSelection("W")
-        if MODS.get( event.state, None ) == 'Control':
-            if event.keysym == "f" and SHIFTSELECTIONSTARTED:
+        if event.state / 4 % 2 == 1:
+            print(event.keysym)
+            if event.keysym.lower() == "f" and SHIFTSELECTIONSTARTED:
                 self.fillInShiftSelection()
                 self.clearShiftSelection()
-            if event.keysym == "d" and SHIFTSELECTIONSTARTED:
+            if event.keysym.lower() == "d" and SHIFTSELECTIONSTARTED:
                 self.deleteTilesInShiftSelection()
                 self.clearShiftSelection()
-            if event.keysym == "d" and SELECTIONMADE:
+            if event.keysym.lower() == "d" and SELECTIONMADE:
                 self.deleteTilesInSelection()
                 self.clearSelection()
-            if event.keysym == "c" and SELECTIONMADE:
+            if event.keysym.lower() == "c" and SELECTIONMADE:
                 self.copySelection()
                 self.clearSelection()
-            if event.keysym == "v":
+            if event.keysym.lower() == "v":
                 self.pasteSelection()
-            if event.keysym == "t" and SELECTIONMADE:
+            if event.keysym.lower() == "t" and SELECTIONMADE:
                 self.selectionVerticallyFlipped()
                 self.clearSelection()
-            if event.keysym == "y" and SELECTIONMADE:
+            if event.keysym.lower() == "y" and SELECTIONMADE:
                 self.selectionHorizontallyFlipped()
                 self.clearSelection()
-            if event.keysym == "f" and SELECTIONMADE:
+            if event.keysym.lower() == "f" and SELECTIONMADE:
                 self.fillIn()
                 self.clearSelection()
-            if event.keysym == "q" and SELECTIONMADE:
+            if event.keysym.lower() == "q" and SELECTIONMADE:
                 self.DisplaySelection()
         # if MODS.get( event.state, None ) == 'Shift':
                             

@@ -42,6 +42,13 @@ try:
 except ImportError:
     IMAGEIO = False
 
+try:
+    PILLOW = False
+    import imageio as io
+    PILLOW = True
+except ImportError:
+    PILLOW = False
+
 NEWTILEWINDOW_W = 400
 
 NEWTILEWINDOW_H = 180
@@ -694,7 +701,7 @@ class tumblegui:
             onvalue=True,
             offvalue=False,
             variable=self.tkLoopScript)
-        if IMAGEIO:
+        if PILLOW:
             self.scriptmenu.add_command(
                 label="Export Video..", command=self.openVideoExportWindow)
         else:
