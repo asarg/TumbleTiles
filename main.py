@@ -489,7 +489,7 @@ class VideoExport:
         images[0].save(exportFile, save_all=True, append_images=images[1:], duration=framesPerSec, loop=1)
 
         # Set the export Text
-        self.exportText.set("Video saved at ./Videos/"+exportFile)
+        self.exportText.set("Video saved at "+exportFile)
 
         # Update the progress bar and update the toplevel to redraw the progress bar
 

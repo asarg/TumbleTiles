@@ -33,7 +33,6 @@ def redrawCanvas(board, boardwidth, boardheight, canvas, tilesize, textcolor = "
 
 
 def drawPILImage(board, boardwidth, boardheight, canvas, tilesize, textcolor = "#000000", gridcolor = "#000000", b_drawGrid = False, b_drawLoc = False, tileRes = 100, lineWidth=10):
-    print("A")
 
     tileSize = tileRes
     
