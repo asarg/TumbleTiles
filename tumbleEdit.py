@@ -924,7 +924,6 @@ Shift + Right-Click:
                 print("Mving Left")
                 self.stepSelection("W")
         if event.state / 4 % 2 == 1:
-            print(event.keysym)
             if event.keysym.lower() == "f" and SHIFTSELECTIONSTARTED:
                 self.fillInShiftSelection()
                 self.clearShiftSelection()
