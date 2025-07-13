@@ -1,6 +1,7 @@
+from __future__ import absolute_import
 import copy
-from Tkinter import *
-import tkFileDialog, tkMessageBox, tkColorChooser
+from six.moves.tkinter import *
+import six.moves.tkinter_filedialog, six.moves.tkinter_messagebox, six.moves.tkinter_colorchooser
 import xml.etree.ElementTree as ET
 import random
 import time
@@ -8,7 +9,7 @@ import os,sys
 import tumbletiles as TT
 
 def getFile():
-    return tkFileDialog.askopenfilename()
+    return six.moves.tkinter_filedialog.askopenfilename()
 
 #parse file will get the data from a file and now return both a board object and a preview tile object
 def parseFile(filename):

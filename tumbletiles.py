@@ -2,6 +2,8 @@
 #Tim Wylie
 #2018
 
+from __future__ import absolute_import
+from __future__ import print_function
 from time import sleep
 import copy
 import sys
@@ -31,6 +33,7 @@ def lineno():
 #tile class for individual tiles
 class Tile:
     def __init__(self):
+        global COLOR
         self.symbol = ' '
         self.id = 0 #id of the polyomino that it is in
         self.x = 0
@@ -144,8 +147,9 @@ class Polyomino:
             else:
                 return False
         except Exception as e:
-            print "Glue Error"
-            print sys.exc_info()[0]  
+            ...
+            # print("Glue Error")
+            # print(sys.exc_info()[0])  
     
     #moves every tile in the polyomino by one in the indicated direction
     def Move(self, direction):
@@ -233,9 +237,9 @@ class Board:
         if self.CurrentState == -1:
             pass
         else:
-            print "Current is, ",self.CurrentState,", tried to undo", self.stateTmpSaves[self.CurrentState]
+            print("Current is, ",self.CurrentState,", tried to undo", self.stateTmpSaves[self.CurrentState])
             self.CurrentState = self.CurrentState - 1
-            print "Current is, ",self.CurrentState, "after"
+            print("Current is, ",self.CurrentState, "after")
 
     def Redo(self):
         if self.coordToTile == self.maxStates - 1 or self.CurrentState == len(self.stateTmpSaves)-1:
@@ -256,9 +260,10 @@ class Board:
             self.coordToTile[tile.x][tile.y] = tile
 
             self.Polyominoes.append(p)
+            print(len(self.Polyominoes))
 
         elif DEBUGGING:
-            print "tumbletiles.py - Board.Add(): Can not add tile. A tile already exists at this location - Line ", lineno(), "\n",
+            print("tumbletiles.py - Board.Add(): Can not add tile. A tile already exists at this location - Line ", lineno(), "\n", end=' ')
 
     def AddConc(self,t):
 
@@ -269,10 +274,10 @@ class Board:
                     self.coordToTile[t.x][t.y] = t
                     self.ConcreteTiles.append(t)
             elif DEBUGGING:
-                print "tumbletiles.py - Board.AddConc(): Can not add tile. A tile already exists at this location - Line ", lineno(), "\n",
+                print("tumbletiles.py - Board.AddConc(): Can not add tile. A tile already exists at this location - Line ", lineno(), "\n", end=' ')
 
         except IndexError:
-            print "Can't add concrete there"
+            print("Can't add concrete there")
 
        
     
@@ -349,7 +354,7 @@ class Board:
             while StepTaken == True:
                 StepTaken = self.Step(direction)
         else:
-            print "Someone doesn't know what they're doing"
+            print("Someone doesn't know what they're doing (You can only use ['N', 'E', 'S', 'W'] for glues)")
         self.ActivateGlues()
 
 
@@ -372,8 +377,8 @@ class Board:
                     for tile in p.Tiles:
                         if tile.y >= self.Rows - 1 or tile.x <= 0 or tile.x >= self.Cols - 1 or tile.y <= 0:
 
-                            print "X: ", tile.x, " Y: ", tile.y
-                            print("X: ", len(self.coordToTile), " Y: ", len(self.coordToTile[0]))
+                            print("X: ", tile.x, " Y: ", tile.y)
+                            print(("X: ", len(self.coordToTile), " Y: ", len(self.coordToTile[0])))
 
                             # remove the tile pointer from the mapping
                             self.coordToTile[tile.x][tile.y] = None
@@ -395,7 +400,7 @@ class Board:
                 StepTaken = self.Step(direction)
                 self.ActivateGlues()
         else:
-            print "Someone doesn't know what they're doing"
+            print("Someone doesn't know what they're doing")
     
     # Steps all tiles in one direction
     def Step(self, direction):
@@ -454,7 +459,7 @@ class Board:
                         neighbor = self.coordToTile[tile.x + dx][tile.y + dy]
                     except IndexError:
                         if DEBUGGING:
-                            print "tumbletiles.py - Board.Step() - Index Error - Line ", lineno(), "\n",
+                            print("tumbletiles.py - Board.Step() - Index Error - Line ", lineno(), "\n", end=' ')
                     
                     if neighbor != None:
                         if neighbor.isConcrete or neighbor.parent.HasMoved:
@@ -475,15 +480,17 @@ class Board:
                         self.coordToTile[tile.x][tile.y] = None
                     except IndexError:
                         if DEBUGGING:
-                            print "tumbletiles.py - Board.Step() - Index Error - Line ", lineno(), "\n",
+                            print("tumbletiles.py - Board.Step() - Index Error - Line ", lineno(), "\n", end=' ')
 
                     tile.x += dx
                     tile.y += dy
                     self.coordToTile[tile.x][tile.y] = tile
 
 
-        
-        self.remapArray()
+        for p in self.Polyominoes: 
+            for tile in p.Tiles:
+                self.coordToTile[tile.x][tile.y] = tile
+        # self.remapArray()
 
         global FACTORYMODE
         global SINGLESTEP
@@ -501,8 +508,8 @@ class Board:
                     for tile in p.Tiles:
                         if tile.y >= self.Rows - 1 or tile.x <= 0 or tile.x >= self.Cols - 1 or tile.y <= 0:
 
-                            print "X: ", tile.x, " Y: ", tile.y
-                            print("X: ", len(self.coordToTile), " Y: ", len(self.coordToTile[0]))
+                            print("X: ", tile.x, " Y: ", tile.y)
+                            print(("X: ", len(self.coordToTile), " Y: ", len(self.coordToTile[0])))
                             self.coordToTile[tile.x][tile.y] = None
                             deletedFlag = True
                             p.Tiles.remove(tile)
@@ -536,7 +543,7 @@ class Board:
     # Assignes every tile to its new correct position in coordToTile
     def remapArray(self):
         self.coordToTile = [[None for x in range(self.Rows)] for y in range(self.Cols)]
-        for p in self.Polyominoes:
+        for p in self.Polyominoes: 
             for tile in p.Tiles:
                 self.coordToTile[tile.x][tile.y] = tile
         for conc in self.ConcreteTiles:
@@ -546,14 +553,14 @@ class Board:
     def printAllTileLocations(self):
         for p in self.Polyominoes:
             for tile in p.Tiles:
-                print "Tile id: ", tile.id, " at (", tile.x, ",", tile.y, ")\n"
+                print("Tile id: ", tile.id, " at (", tile.x, ",", tile.y, ")\n")
         
     def verifyTileLocations(self):
         verified = True
         for p in self.Polyominoes:
             for tile in p.Tiles:
                 if self.coordToTile[tile.x][tile.y] != tile:
-                    print "ERROR: Tile at ", tile.x, ", ", tile.y, " is not in array properly \n",
+                    print("ERROR: Tile at ", tile.x, ", ", tile.y, " is not in array properly \n", end=' ')
                     verified = False
         if verified:
             print("Tile Locations Verified")

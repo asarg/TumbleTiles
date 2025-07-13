@@ -1,0 +1,3 @@
+Pillow==11.2.1
+numpy==2.2.6
+pyscreenshot==3.1

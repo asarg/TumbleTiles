@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+from __future__ import print_function
 import tumbletiles as TT
 from sets import Set
 from getFile import getFile, parseFile
@@ -90,7 +92,7 @@ def recurseStartingCoordinates(startingPosition, tile, path):
 
 	if not startingPosition in redStartPositions:
 		redStartPositions.add(startingPosition)
-		print "New Red Location: ", startingPosition
+		print("New Red Location: ", startingPosition)
 	else:
 		return
 
@@ -152,7 +154,7 @@ def logStartingCoordinates():
 	checkInvalid = False
 	checkAll = False
 
-	print "Calculating ", checkFor, "starting positions..."
+	print("Calculating ", checkFor, "starting positions...")
 
 	if checkFor == 'valid':
 		checkValid = True
@@ -194,7 +196,7 @@ def logStartingCoordinates():
 	tileMoved = False
 
 
-	print "Number of red starting positions: ", len(redStartPositions)
+	print("Number of red starting positions: ", len(redStartPositions))
 
 	
 	board.Polyominoes.remove(redPoly)
@@ -205,7 +207,7 @@ def getCoordinateString():
 	if len(board.Polyominoes[1].Tiles) == 4:
 		bluePoly = board.Polyominoes[1]
 	else:
-		print "error"
+		print("error")
 
 	blueX = bluePoly.Tiles[0].x  
 	blueY = bluePoly.Tiles[0].y
@@ -228,7 +230,7 @@ def getCoordinateString():
 	if len(board.Polyominoes[0].Tiles) == 1:
 		redPoly = board.Polyominoes[0]
 	else:
-		print "error"
+		print("error")
 
 	redX = str(redPoly.Tiles[0].x)
 	redY = str(redPoly.Tiles[0].y)
@@ -251,11 +253,11 @@ def getCoordinateString():
 def printTileCoords():
 	bluePoly = board.Polyominoes[1]
 
-	print "Blue: ", bluePoly.Tiles[0].x, ", ", bluePoly.Tiles[0].y,"   ", bluePoly.Tiles[1].x, ", ", bluePoly.Tiles[1].y, "   ", bluePoly.Tiles[2].x, ", ", bluePoly.Tiles[2].y, "   ", bluePoly.Tiles[3].x, ", ", bluePoly.Tiles[3].y 
+	print("Blue: ", bluePoly.Tiles[0].x, ", ", bluePoly.Tiles[0].y,"   ", bluePoly.Tiles[1].x, ", ", bluePoly.Tiles[1].y, "   ", bluePoly.Tiles[2].x, ", ", bluePoly.Tiles[2].y, "   ", bluePoly.Tiles[3].x, ", ", bluePoly.Tiles[3].y) 
 
 	redPoly = board.Polyominoes[0]
 
-	print "Red: ", redPoly.Tiles[0].x, ", ", redPoly.Tiles[0].y
+	print("Red: ", redPoly.Tiles[0].x, ", ", redPoly.Tiles[0].y)
 
 def revertBoardToStart(startingPosition):
 	blueX = int(startingPosition[:2])
@@ -400,7 +402,7 @@ def initialize():
 	for l in redEscFile.readlines():
 		redEscapedPositions.add(l[:4])
 
-	print "Number of starting positions: ", len(startingPositions)
+	print("Number of starting positions: ", len(startingPositions))
 
 	blueGlues = ["N","N","N","N"]
 	redGlues = ["S","S","S","S"]
@@ -422,12 +424,12 @@ def initialize():
 
 def printSequence(node):
 	if node.directionFromParent == "START":
-		print "START", " - ", node.coordinates
+		print("START", " - ", node.coordinates)
 		return
 
 	printSequence(node.parent)
 
-	print node.directionFromParent, " - ", node.coordinates
+	print(node.directionFromParent, " - ", node.coordinates)
 
 
 def logSequence(node, file):
@@ -499,7 +501,7 @@ def createTree(startingPosition):
 
 	recurseTree(root, startingPosition, "START")
 
-	print "Tree Creation Complete for: ", startingPosition, "\nTotal Nodes: ", nodeCount, "\nSolution Nodes: ", len(solvedNodes)
+	print("Tree Creation Complete for: ", startingPosition, "\nTotal Nodes: ", nodeCount, "\nSolution Nodes: ", len(solvedNodes))
 	# print "\nRed Esc Nodes:", len(redEscapedNodes)
 
 	logData()
@@ -511,7 +513,7 @@ def createTree(startingPosition):
 def loadBoard():
 	global board
 
-	print "Loading empty board file from: ", emptyBoardFile, "..."
+	print("Loading empty board file from: ", emptyBoardFile, "...")
 
 	boardData = parseFile(emptyBoardFile)
 	board = boardData[0]
@@ -534,7 +536,7 @@ if __name__ =="__main__":
 	# print "\n\n******************************\n--Tree Creation Complete\n"
 	#createTree("51254024")
 
-	print "Number of paths with a solution: ", solutions
+	print("Number of paths with a solution: ", solutions)
 	# createTree("26504330")
 
 

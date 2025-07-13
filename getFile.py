@@ -1,14 +1,34 @@
+from __future__ import absolute_import
+from __future__ import print_function
 import copy
-from Tkinter import *
-import tkFileDialog, tkMessageBox, tkColorChooser
+from tkinter import *
+import tkinter.filedialog, tkinter.messagebox, tkinter.colorchooser
 import xml.etree.ElementTree as ET
 import random
 import time
 import os,sys
 import tumbletiles as TT
+from enum import Enum 
 
-def getFile():
-    return tkFileDialog.askopenfilename()
+
+class FileType(Enum):
+    ANY = ("All Files", '*')
+    TXT = ("Plain Text", ".txt")
+    XML = ("eXtensible Markup Language", '.xml')
+    GIF = ("Graphics Interchange Format", '.gif')
+
+
+def getFile(type: FileType=FileType.ANY):
+    filetypes = [FileType.ANY.value, FileType.TXT.value, FileType.XML.value, FileType.GIF.value]
+    defaultextension = FileType.ANY.value[1]
+    if type != FileType.ANY:
+        filetypes = [type.value]
+        defaultextension = type.value[1]
+
+    print(filetypes)
+    print(defaultextension)
+    return tkinter.filedialog.askopenfilename(filetypes=filetypes, defaultextension=defaultextension)    
+
 
 #parse file will get the data from a file and now return both a board object and a preview tile object
 def parseFile(filename):
@@ -169,10 +189,10 @@ def parseFile(filename):
     commands = []
     if CommandsExists:
         listOfCommands = treeroot[4]
-        print listOfCommands
+        print(listOfCommands)
         for c in listOfCommands:
-            print c
-            print "NAME: ",c.attrib["name"],"  FILENAME: ",c.attrib["filename"]
+            print(c)
+            print("NAME: ",c.attrib["name"],"  FILENAME: ",c.attrib["filename"])
             commands.append((c.attrib["name"], c.attrib["filename"]))
 
     data = [board, glueFunc, prevTileList, commands]

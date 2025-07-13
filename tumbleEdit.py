@@ -1,10 +1,12 @@
+from __future__ import absolute_import
+from __future__ import print_function
 import copy
-from Tkinter import *
-import tkFont
+from tkinter import *
+import tkinter.font
 from scrollableFrame import VerticalScrolledFrame
-import tkFileDialog
-import tkMessageBox
-import tkColorChooser
+import tkinter.filedialog
+import tkinter.messagebox
+import tkinter.colorchooser
 import xml.etree.ElementTree as ET
 import tumbletiles as TT
 import main as TG
@@ -14,10 +16,16 @@ import time
 import os
 import sys
 import math
-from tkColorChooser import askcolor
+from tkinter.colorchooser import askcolor
 import numpy as np
+from dataclasses import dataclass
 
 # the x and y coordinate that the preview tiles will begin to be drawn on
+
+def debug_print(*print_args):
+    if TT.DEBUGGING:
+        for arg in print_args:
+            print(f"[DEBUG]: {arg}\n") 
 
 TILESIZE = 15
 
@@ -33,12 +41,21 @@ CURRENTNEWTILECOLOR = '#ffff00'
 # Used to know where to paste a selection that was made
 CURRENTSELECTION = 0
 
-
 # Defines the current state of selecting an area
 SELECTIONSTARTED = False
 SELECTIONMADE = False
 COPYMADE = False
 SHIFTSELECTIONSTARTED = False
+
+@dataclass
+class ICoordPair2D:
+    x1: int = 0
+    y1: int = 0
+    x2: int = 0
+    y2: int = 0
+
+COPIED_SELECTION = []
+COPIED_SELECTION_COORDS = ICoordPair2D(0, 0, 0, 0)
 
 MODS = {
     0x0001: 'Shift',
@@ -51,7 +68,6 @@ MODS = {
     0x0200: 'Mouse button 2',
     0x0400: 'Mouse button 3'
 }
-
 
 
 class TileEditorGUI:
@@ -123,10 +139,11 @@ class TileEditorGUI:
         #   Window Config
         # /////////////////
         self.newWindow = Toplevel(self.parent)
-        self.newWindow.wm_title("Editor")
+        self.newWindow.wm_title(f"Editor - {self.parent.title()}")
         self.newWindow.resizable(True, True)
         self.newWindow.protocol("WM_DELETE_WINDOW", lambda: self.closeGUI())
 
+        # TODO: Refactor binds to modular callbacks instead of a central "double-event-handler". This is a weird pattern.
         self.newWindow.bind("<Key>", self.keyPressed)
         self.newWindow.bind("<Up>", self.keyPressed)
         self.newWindow.bind("<Right>", self.keyPressed)
@@ -156,6 +173,8 @@ class TileEditorGUI:
         # add the options menu to the menu bar
         self.menuBar.add_cascade(label="Option", menu=optionsMenu)
         self.newWindow.config(menu=self.menuBar)
+
+        
 
         # Create two frames, one to hold the board and the buttons, and one to
         # hold the tiles to be placed
@@ -191,6 +210,8 @@ class TileEditorGUI:
         width=10,
         command=self.addNewPrevTile)
         self.addNewPrevTileButton.pack(side=TOP)
+
+        self.addTileWindow = None # null default init for instance check 
 
         self.controlsInstructionFrame = Frame(
         self.tileEditorFrame,
@@ -240,7 +261,7 @@ Shift + Right-Click:
 
                 """
         self.T.insert(END, quote)
-        myFont = tkFont.Font(
+        myFont = tkinter.font.Font(
         family='Helvetica', size=12, weight='bold')
         self.T.config(state=DISABLED, font=myFont)
 
@@ -279,6 +300,8 @@ Shift + Right-Click:
         self.BoardCanvas.config(xscrollcommand=self.scrollbarH.set)
         self.scrollbarH.config(command=self.BoardCanvas.xview)
         self.BoardCanvas.pack(side=TOP)
+        
+        
 
         # Used to tell when a tile is trying to be placed, will send the event to
         # onBoardClick to determine the location
@@ -306,19 +329,18 @@ Shift + Right-Click:
         self.squareSelection = self.BoardCanvas.create_rectangle(
             0, 0, 0, 0, fill="#0000FF", stipple="gray50")
 
-        # Contains the data of a copied region
-        self.copiedSelection = []
         self.ShiftSelectionMatrix = [[None for y in range(
         self.board.Rows)] for x in range(self.board.Cols)]
 
-        self.TilesFrame = Frame(
+        # TODO: Deselect
+        self.tilesFrame = Frame(
         self.tileEditorFrame,
         width=200,
         height=200,
         relief=SUNKEN,
         borderwidth=1)
         self.tilePrevCanvas = Canvas(
-        self.TilesFrame,
+        self.tilesFrame,
         width=200,
         height=300,
         scrollregion=(
@@ -326,27 +348,36 @@ Shift + Right-Click:
             0,
             200,
              2000))
+        
+        
+        self.location_text = Label(
+            self.tileEditorFrame,
+            text="(0, 0)",
+        )
+        self.location_text.pack()
 
-        self.scrollbarCanvasV = Scrollbar(self.TilesFrame)
+        self.scrollbarCanvasV = Scrollbar(self.tilesFrame)
         self.scrollbarCanvasV.pack(side=RIGHT, fill=Y)
         self.tilePrevCanvas.config(
         yscrollcommand=self.scrollbarCanvasV.set)
         self.scrollbarCanvasV.config(command=self.tilePrevCanvas.yview)
 
         self.scrollbarCanvasH = Scrollbar(
-            self.TilesFrame, orient=HORIZONTAL)
+            self.tilesFrame, orient=HORIZONTAL)
         self.scrollbarCanvasH.pack(side=BOTTOM, fill=X)
         self.tilePrevCanvas.config(
         xscrollcommand=self.scrollbarCanvasH.set)
         self.scrollbarCanvasH.config(command=self.tilePrevCanvas.xview)
 
         self.tilePrevCanvas.pack()
-        self.TilesFrame.pack(side=TOP)
+        self.tilesFrame.pack(side=TOP)
         self.tilePrevCanvas.pack()
 
         # draw the board on the canvas os
         self.popWinTiles()
         self.redrawPrev()
+
+        self.highlighted_cross = (None, None)
 
     # populates the array of tiles
 
@@ -371,6 +402,7 @@ Shift + Right-Click:
     def addNewPrevTile(self):
         global CURRENTNEWTILECOLOR
 
+        if self.addTileWindow: return 
         self.addTileWindow = Toplevel(self.newWindow)
         self.addTileWindow.lift(aboveThis=self.newWindow)
 
@@ -510,6 +542,9 @@ Shift + Right-Click:
         global CURRENTNEWTILECOLOR
         i = self.selectedTileIndex
         tile = self.prevTileList[i]
+
+        if self.addTileWindow is not None:
+            return 
 
         self.addTileWindow = Toplevel(self.newWindow)
         self.addTileWindow.lift(aboveThis=self.newWindow)
@@ -676,7 +711,7 @@ Shift + Right-Click:
         r = lambda: random.randint(100, 255)
 
         newPrevTile = {}
-        # print(newPrevTile)
+        # debug_print(newPrevTile)
 
         color = CURRENTNEWTILECOLOR
         northGlue = self.newTileN.get()
@@ -685,7 +720,7 @@ Shift + Right-Click:
         westGlue = self.newTileW.get()
         label = "x"
         if self.concreteChecked.get() == 1:
-            # print("adding concrete")
+            # debug_print("adding concrete")
             isConcrete = "True"
             color = "#686868"
         else:
@@ -723,13 +758,13 @@ Shift + Right-Click:
     # also changes the relief of the button to show whether or not it is
     # currently selected
     def randomColorToggle(self):
-        # print(self.randomizeColor)
+        # debug_print(self.randomizeColor)
         if self.randomizeColor == True:
-            # print("raising")
+            # debug_print("raising")
             self.randomColorButton.config(relief=RAISED)
             self.randomizeColor = False
         else:
-            # print("sinking")
+            # debug_print("sinking")
             self.randomColorButton.config(relief=SUNKEN)
             self.randomizeColor = True
 
@@ -761,59 +796,61 @@ Shift + Right-Click:
              a=i: self.selected(a))
             # buttonArray.append(prevTileButton)
 
+            self.tilePrevCanvas.bind('<Button-1>', lambda event: self.deselect_if_empty(event))
+
             if prevTile.isConcrete == False:
                 # Print Glues
                 if prevTile.glues[0] != "None":
                     # north
                     self.tilePrevCanvas.create_text(
-                    x + size / 2,
-                    y + size / 5,
+                    x + size // 2,
+                    y + size // 5,
                     text=prevTile.glues[0],
                     fill="#000",
                     font=(
                         '',
-                         size / 5))
+                         size // 5))
                 if prevTile.glues[1] != "None":
                     # east
                     self.tilePrevCanvas.create_text(
-                    x + size - size / 5,
-                    y + size / 2,
+                    x + size - size // 5,
+                    y + size // 2,
                     text=prevTile.glues[1],
                     fill="#000",
                     font=(
                         '',
-                         size / 5))
+                         size // 5))
                 if prevTile.glues[2] != "None":
                     # south
                     self.tilePrevCanvas.create_text(
-                    x + size / 2,
-                    y + size - size / 5,
+                    x + size // 2,
+                    y + size - size // 5,
                     text=prevTile.glues[2],
                     fill="#000",
                     font=(
                         '',
-                         size / 5))
+                         size // 5))
                 if prevTile.glues[3] != "None":
                     # west
                     self.tilePrevCanvas.create_text(
-                    x + size / 5,
-                    y + size / 2,
+                    x + size // 5,
+                    y + size // 2,
                     text=prevTile.glues[3],
                     fill="#000",
                     font=(
                         '',
-                         size / 5))
+                         size // 5))
 
             i += 1
             frame_size = y + size + 10
 
                 # frame_size = (PREVTILESIZE)*len(self.prevTileList) + 20
-        self.TilesFrame.config(width=100, height=500)
+        self.tilesFrame.config(width=100, height=500)
         self.tilePrevCanvas.config(
         width=100, height=frame_size, scrollregion=(
         0, 0, 200, frame_size))
 
-        self.TilesFrame.pack(side=TOP)
+        self.tilesFrame.pack(side=TOP)
         self.tilePrevCanvas.pack()
 
     # ***********************************************************************************************
@@ -834,57 +871,64 @@ Shift + Right-Click:
 
 
         if sys.platform == 'darwin':  # value for OSX
-                rightClick = 2
+            rightClick = 2
 
         # print(event.num)
         # print " mods : ", MODS.get(event.state, None)
         # Determine the position on the board the player clicked
 
-        x = (event.x / self.tile_size)
-        y = (event.y / self.tile_size)
+        # x = (event.x / self.tile_size)
+        # y = (event.y / self.tile_size)
 
-        x = int(self.BoardCanvas.canvasx(event.x)) / self.tile_size
-        y = int(self.BoardCanvas.canvasy(event.y)) / self.tile_size
+        x = int(self.BoardCanvas.canvasx(event.x)) // self.tile_size
+        y = int(self.BoardCanvas.canvasy(event.y)) // self.tile_size
 
         # print( "EVENT: ",  event.state )
 
         #event.state == 4 means control is held
         #event.state == 6 means control is held and caps lock is on
         if event.state / 4 % 2 == 1:
-            self.CtrlSelect(x, y)
-            self.CURRENTSELECTIONX = x
-            self.CURRENTSELECTIONY = y
+            # TODO: DRY the below line 
+            if self.highlighted_cross[0]: self.BoardCanvas.delete(*self.highlighted_cross)
+            self.CtrlSelect(int(x), int(y))
+            self.CURRENTSELECTIONX = int(x)
+            self.CURRENTSELECTIONY = int(y)
             self.drawSquareSelectionGreen()
+            
 
-
+        # TODO: Draw axes from corners of selection ?
 
         #event.state == 1 when shift is held
         #event.state == 3 when shift is held and caps lock is on
         elif event.state % 2 == 1:
+            if self.highlighted_cross[0]: self.BoardCanvas.delete(*self.highlighted_cross)
             if event.num == rightClick:
                     self.ShftSelect(x, y, False, False)
             else:
                     self.ShftSelect(x, y, True, False)
-            self.CURRENTSELECTIONX = x
-            self.CURRENTSELECTIONY = y
+            self.CURRENTSELECTIONX = int(x)
+            self.CURRENTSELECTIONY = int(y)
 
         elif self.remove_state or event.num == rightClick:
             self.removeTileAtPos(x, y, True)
 
         elif event.num == leftClick:
 
-            self.CURRENTSELECTIONX = x
-            self.CURRENTSELECTIONY = y
+            self.CURRENTSELECTIONX = int(x)
+            self.CURRENTSELECTIONY = int(y)
             self.clearSelection()
             self.clearShiftSelection()
+
+            if self.highlighted_cross[0]: self.BoardCanvas.delete(self.highlighted_cross[0], self.highlighted_cross[1])
             self.drawSquareSelectionRed()
+            self.HighlightCross(self.CURRENTSELECTIONX, self.CURRENTSELECTIONY)
 
             # print(self.add_state)
             if self.add_state:
-                    self.addTileAtPos(x, y)
+                self.addTileAtPos(x, y)
 
         elif event.keysym == "r" and MODS.get(event.state, None) == 'Control':
-            self.reloadFile()
+            self.reloadFile() # TODO: No definition for self.reloadFile
 
     # Handles most key press events
 
@@ -899,29 +943,29 @@ Shift + Right-Click:
             
 
             if event.keysym == "Up":
-                print("Moving up")
+                debug_print("Moving up")
                 self.stepAllTiles("N")
             elif event.keysym == "Right":
-                print("Moving Right")
+                debug_print("Moving Right")
                 self.stepAllTiles("E")
             elif event.keysym == "Down":
-                print("Moving Down")
+                debug_print("Moving Down")
                 self.stepAllTiles("S")
             elif event.keysym == "Left":
-                print("Mving Left")
+                debug_print("Moving Left")
                 self.stepAllTiles("W")
         elif SELECTIONMADE:
             if event.keysym == "Up":
-                print("Moving up")
+                debug_print("Moving up")
                 self.stepSelection("N")
             elif event.keysym == "Right":
-                print("Moving Right")
+                debug_print("Moving Right")
                 self.stepSelection("E")
             elif event.keysym == "Down":
-                print("Moving Down")
+                debug_print("Moving Down")
                 self.stepSelection("S")
             elif event.keysym == "Left":
-                print("Mving Left")
+                debug_print("Mving Left")
                 self.stepSelection("W")
         if event.state / 4 % 2 == 1:
             if event.keysym.lower() == "f" and SHIFTSELECTIONSTARTED:
@@ -1043,7 +1087,7 @@ Shift + Right-Click:
                 self.SELECTIONY1 = temp
 
             self.drawSelection(self.SELECTIONX1, self.SELECTIONY1, self.SELECTIONX2, self.SELECTIONY2)
-
+            self.location_text.config(text=f"Selection: ({self.SELECTIONX1}, {self.SELECTIONY1}), ({self.SELECTIONX2}, {self.SELECTIONY2})")
 
 
 
@@ -1154,7 +1198,7 @@ Shift + Right-Click:
         if self.selectedTileIndex == i:
             if not self.prevTileList[self.selectedTileIndex].isConcrete:
                self.editTilePrevTile()
-        else:
+        else: # TODO: activate edit window via double-click instead of single click 
             self.add_state = True
             self.selectedTileIndex = i
     
@@ -1164,7 +1208,16 @@ Shift + Right-Click:
             self.outline = self.tilePrevCanvas.create_rectangle(PREVTILESTARTX, PREVTILESTARTY + 80 * i, 
                 PREVTILESTARTX + PREVTILESIZE, PREVTILESTARTY + 80 * i + PREVTILESIZE, outline="#FF0000", width = 2)
 
-        
+    def deselect_if_empty(self, event: Event):
+        if self.selectedTileIndex == -1: return 
+
+        if not event.widget.find_overlapping(event.x, event.y, event.x, event.y):
+            self.tilePrevCanvas.delete(self.outline)
+            self.outline = None 
+
+            self.selectedTileIndex = -1 
+            self.add_state = False 
+            
 
     def deleteTilesInShiftSelection(self):
         for x in range(0, self.board.Cols):
@@ -1187,6 +1240,18 @@ Shift + Right-Click:
         self.board.remapArray()
 
 
+    def HighlightCross(self, x1, y1):
+        x_axis = ((0, self.tile_size * y1), (self.tile_size * self.width, self.tile_size * (y1 + 1)))
+        y_axis = ((self.tile_size * x1, 0), (self.tile_size * (x1 + 1), self.tile_size * self.height))
+        
+        # pls blend 
+        self.highlighted_cross = (
+            self.BoardCanvas.create_rectangle(x_axis[0][0], x_axis[0][1], x_axis[1][0], x_axis[1][1], fill="#2EB8B8", stipple="gray25"),
+            self.BoardCanvas.create_rectangle(y_axis[0][0], y_axis[0][1], y_axis[1][0], y_axis[1][1], fill="#2EB8B8", stipple="gray25"),
+        )
+        self.location_text.config(text=f"({x1}, {y1})")
+
+
     # When you control click in two locations this method will draw the resulting rectangle
     def drawSelection(self, x1, y1, x2, y2):
         # print("x1: ", x1, "    y1: ", y1, "   x2: ", x2, "   y2: ", y2)
@@ -1200,13 +1265,16 @@ Shift + Right-Click:
 
         # WIll store a copy of all the tiles in a seleciton so that it can be pasted
 
+    # TODO: Cross-Editor Clipboard
     def copySelection(self):
         global COPYMADE
-
-      
+        global COPIED_SELECTION
+        global COPIED_SELECTION_COORDS
+        COPIED_SELECTION_COORDS = ICoordPair2D(self.SELECTIONX1, self.SELECTIONY1, self.SELECTIONX2, self.SELECTIONY2)
+        # TODO: Clean up clipboarding code. It is messy because a hotfix was requested. 
         COPYMADE = True
 
-        self.copiedSelection = [[None for x in range(abs(self.SELECTIONY2 - self.SELECTIONY1) + 1)] for y in range(abs(self.SELECTIONX2 - self.SELECTIONX1) + 1)]
+        COPIED_SELECTION = [[None for x in range(abs(self.SELECTIONY2 - self.SELECTIONY1) + 1)] for y in range(abs(self.SELECTIONX2 - self.SELECTIONX1) + 1)]
 
         for x in range(self.SELECTIONX1, self.SELECTIONX2 + 1):
             # print "X index: ", x
@@ -1215,17 +1283,19 @@ Shift + Right-Click:
                 # print "Copying tile at ", x, ", ", y, " to ", x - self.SELECTIONX1, ", ", y - self.SELECTIONY1
 
                 try:
-                    self.copiedSelection[x - self.SELECTIONX1][y - self.SELECTIONY1] = copy.deepcopy(self.board.coordToTile[x][y])
+                    COPIED_SELECTION[x - self.SELECTIONX1][y - self.SELECTIONY1] = copy.deepcopy(self.board.coordToTile[x][y])
                 except IndexError:
-                    print "Error: tried to access self.copiedSelection[", x - self.SELECTIONX1, "][", y - self.SELECTIONY1, "]"
-                    print "Its size is ", len(self.copiedSelection), ", ", len(self.copiedSelection[0])
+                    # TODO: Replace this and others with error logging. 
+                    print("Error: tried to access COPIED_SELECTION[", x - self.SELECTIONX1, "][", y - self.SELECTIONY1, "]")
+                    print("Its size is ", len(COPIED_SELECTION), ", ", len(COPIED_SELECTION[0]))
 
-                    print "Error: tried to access self.board.coordToTile[", x, "][", y, "]"
-                    print "Its size is ", len(self.board.coordToTile[x]), ", ", len(self.board.coordToTile[x])
+                    print("Error: tried to access self.board.coordToTile[", x, "][", y, "]")
+                    print("Its size is ", len(self.board.coordToTile[x]), ", ", len(self.board.coordToTile[x]))
 
 
     def selectionVerticallyFlipped(self):
         global CURRENTNEWTILECOLOR
+        global COPIED_SELECTION
         color = CURRENTNEWTILECOLOR
         
         self.copySelection()
@@ -1259,14 +1329,14 @@ Shift + Right-Click:
             for y in range(0, selectionHeight):
 
                 try:    
-                    if(self.copiedSelection[x][y] == None):
+                    if(COPIED_SELECTION[x][y] == None):
                         continue
                     else:
-                        tile = self.copiedSelection[x][y]
+                        tile = COPIED_SELECTION[x][y]
 
                 except IndexError:
-                    print "Error: tried to access self.copiedSelection[", x, "][", y, "]"
-                    print "Its size is ", len(self.copiedSelection), ", ", len(self.copiedSelection[0])
+                    print("Error: tried to access COPIED_SELECTION[", x, "][", y, "]")
+                    print("Its size is ", len(COPIED_SELECTION), ", ", len(COPIED_SELECTION[0]))
 
                 # print "x: ",x
                 # print "y: ", y
@@ -1298,19 +1368,20 @@ Shift + Right-Click:
             
                 newConcTile = TT.Tile(None, 0, newX, newY, glues , color , True)
 
-                # self.copiedSelection[x][y].x = newX
-                # self.copiedSelection[x][y].y = newY
+                # COPIED_SELECTION[x][y].x = newX
+                # COPIED_SELECTION[x][y].y = newY
 
-                if self.copiedSelection[x][y].isConcrete:
+                if COPIED_SELECTION[x][y].isConcrete:
                     # print "is concrete"
                     self.board.AddConc(newConcTile)
-                elif not self.copiedSelection[x][y].isConcrete:
+                elif not COPIED_SELECTION[x][y].isConcrete:
                     self.board.Add(p)
         self.redrawPrev()
         self.board.remapArray()
             
     def selectionHorizontallyFlipped(self):
             global CURRENTNEWTILECOLOR
+            global COPIED_SELECTION
             color = CURRENTNEWTILECOLOR
             self.copySelection()
 
@@ -1343,14 +1414,14 @@ Shift + Right-Click:
                 for y in range(0, selectionHeight):
 
                     try:    
-                        if(self.copiedSelection[x][y] == None):
+                        if(COPIED_SELECTION[x][y] == None):
                             continue
                         else:
-                            tile = self.copiedSelection[x][y]
+                            tile = COPIED_SELECTION[x][y]
 
                     except IndexError:
-                        print "Error: tried to access self.copiedSelection[", x, "][", y, "]"
-                        print "Its size is ", len(self.copiedSelection), ", ", len(self.copiedSelection[0])
+                        print("Error: tried to access COPIED_SELECTION[", x, "][", y, "]")
+                        print("Its size is ", len(COPIED_SELECTION), ", ", len(COPIED_SELECTION[0]))
 
                     # print "x: ",x
                     # print "y: ", y
@@ -1380,13 +1451,13 @@ Shift + Right-Click:
                 
                     newConcTile = TT.Tile(None, 0, newX, newY, glues , color , True)
 
-                    # self.copiedSelection[x][y].x = newX
-                    # self.copiedSelection[x][y].y = newY
+                    # COPIED_SELECTION[x][y].x = newX
+                    # COPIED_SELECTION[x][y].y = newY
 
-                    if self.copiedSelection[x][y].isConcrete:
+                    if COPIED_SELECTION[x][y].isConcrete:
                         # print "is concrete"
                         self.board.AddConc(newConcTile)
-                    elif not self.copiedSelection[x][y].isConcrete:
+                    elif not COPIED_SELECTION[x][y].isConcrete:
                         self.board.Add(p)
 
             self.redrawPrev()
@@ -1452,15 +1523,21 @@ Shift + Right-Click:
         
 
         global COPYMADE
+        global COPIED_SELECTION
+        global COPIED_SELECTION_COORDS
+        self.SELECTIONX1 = COPIED_SELECTION_COORDS.x1 
+        self.SELECTIONX2 = COPIED_SELECTION_COORDS.x2 
+        self.SELECTIONY1 = COPIED_SELECTION_COORDS.y1 
+        self.SELECTIONY2 = COPIED_SELECTION_COORDS.y2 
 
         if not COPYMADE:
-            print "Nothing to paste"
+            debug_print("Nothing to paste")
 
         else:
 
             for x in range(0, self.SELECTIONX2 - self.SELECTIONX1):
                 for y in range(0, self.SELECTIONY2 - self.SELECTIONY1):
-                    print "Removing tile at ", x + self.CURRENTSELECTIONX, ", ", y + self.CURRENTSELECTIONY
+                    debug_print("Removing tile at ", x + self.CURRENTSELECTIONX, ", ", y + self.CURRENTSELECTIONY)
                     self.removeTileAtPos(self.CURRENTSELECTIONX + x,self.CURRENTSELECTIONY + y, False)
                     
 
@@ -1476,14 +1553,14 @@ Shift + Right-Click:
                 for y in range(0, selectionHeight):
 
                     try:    
-                        if(self.copiedSelection[x][y] == None):
+                        if(COPIED_SELECTION[x][y] == None):
                             continue
                         else:
-                            tile = self.copiedSelection[x][y]
+                            tile = COPIED_SELECTION[x][y]
 
                     except IndexError:
-                        print "Error: tried to access self.copiedSelection[", x, "][", y, "]"
-                        print "Its size is ", len(self.copiedSelection), ", ", len(self.copiedSelection[0])
+                        print("Error: tried to access COPIED_SELECTION[", x, "][", y, "]")
+                        print("Its size is ", len(COPIED_SELECTION), ", ", len(COPIED_SELECTION[0]))
 
                     # print "x: ",x
                     # print "y: ", y
@@ -1515,13 +1592,13 @@ Shift + Right-Click:
                     newConcTile = TT.Tile(None, 0, newX, newY, glues , color , True)
 
 
-                    # self.copiedSelection[x][y].x = newX
-                    # self.copiedSelection[x][y].y = newY
+                    # COPIED_SELECTION[x][y].x = newX
+                    # COPIED_SELECTION[x][y].y = newY
 
-                    if self.copiedSelection[x][y].isConcrete:
+                    if COPIED_SELECTION[x][y].isConcrete:
                         # print "is concrete"
                         self.board.AddConc(newConcTile)
-                    elif not self.copiedSelection[x][y].isConcrete:
+                    elif not COPIED_SELECTION[x][y].isConcrete:
                         self.board.Add(p)
 
 
@@ -1533,7 +1610,8 @@ Shift + Right-Click:
 
 
     def DisplaySelection(self):
-        print(self.copiedSelection)
+        global COPIED_SELECTION
+        debug_print(COPIED_SELECTION)
 
     def drawSquareSelectionYellow(self):
         self.BoardCanvas.delete(self.squareSelection)
@@ -1546,7 +1624,7 @@ Shift + Right-Click:
     def drawSquareSelectionGreen(self):
         self.BoardCanvas.delete(self.squareSelection)
         self.squareSelection = self.BoardCanvas.create_rectangle(self.tile_size*self.CURRENTSELECTIONX, self.tile_size*self.CURRENTSELECTIONY, self.tile_size*self.CURRENTSELECTIONX + self.tile_size, self.tile_size*self.CURRENTSELECTIONY + self.tile_size, outline = "#00FF00", stipple="gray50")
-    
+        
 
     # ***********************************************************************************************
 
@@ -1590,7 +1668,9 @@ Shift + Right-Click:
 
         
 
-    def addTileAtPos(self, x, y):
+    def addTileAtPos(self, f_x: float, f_y: float):
+        x = int(f_x)
+        y = int(f_y)
         
         i = self.selectedTileIndex
 
@@ -1627,12 +1707,12 @@ Shift + Right-Click:
         for p in self.board.Polyominoes:
             for tile in p.Tiles:
                 if self.board.coordToTile[tile.x][tile.y] != tile:
-                    print "ERROR: Tile at ", tile.x, ", ", tile.y, " is not in array properly \n",
+                    debug_print("ERROR: Tile at ", tile.x, ", ", tile.y, " is not in array properly \n", end=' ')
                     verified = False
 
         for tile in self.board.ConcreteTiles:
             if self.board.coordToTile[tile.x][tile.y] != tile:
-                print "ERROR: Tile at ", tile.x, ", ", tile.y, " is not in array properly \n",
+                debug_print("ERROR: Tile at ", tile.x, ", ", tile.y, " is not in array properly \n", end=' ')
                 verified = False
 
         # if verified:
@@ -1645,17 +1725,34 @@ Shift + Right-Click:
 
 
     def stepAllTiles(self, direction):
-        print "STEPPING", direction 
+        debug_print("STEPPING", direction) 
         dx = 0
         dy = 0
 
+        crosses_edge_north = False  
+        crosses_edge_south = False 
+        crosses_edge_west  = False 
+        crosses_edge_east  = False 
+
+        for y in range(self.board.Cols):
+            if self.board.coordToTile[0][y] is not None: crosses_edge_west = True 
+            if self.board.coordToTile[-1][y] is not None: crosses_edge_east = True 
+
+        for x in range(self.board.Rows):
+            if self.board.coordToTile[x][0] is not None: crosses_edge_north = True 
+            if self.board.coordToTile[x][-1] is not None: crosses_edge_south = True 
+
         if direction == "N":
+            if crosses_edge_north: return 
             dy = -1
         elif direction == "S":
+            if crosses_edge_south: return 
             dy = 1
         elif direction == "E":
+            if crosses_edge_east: return 
             dx = 1
         elif direction == "W":
+            if crosses_edge_west: return 
             dx = -1
 
         for p in self.board.Polyominoes:
@@ -1771,7 +1868,11 @@ Shift + Right-Click:
         self.tumbleGUI.setTilesFromEditor(self.board, self.glue_data, self.prevTileList, self.board.Cols, self.board.Rows)
 
     def saveTileConfig(self):
-        filename = tkFileDialog.asksaveasfilename()
+        filename = tkinter.filedialog.asksaveasfilename(defaultextension=".xml", filetypes=[("eXtensible Markup Language", ".xml")])
+        if not filename: 
+            return
+        
+
         tile_config = ET.Element("TileConfiguration")
         board_size = ET.SubElement(tile_config, "BoardSize")
         glue_func = ET.SubElement(tile_config, "GlueFunction")
@@ -1907,7 +2008,7 @@ Shift + Right-Click:
                     command = ET.SubElement(commands, "Command")
                     command.set("name", str(c[0]))
                     command.set("filename", str(c[1]))
-                    print "Name: ", c[0],", Filename: ", c[1]
+                    debug_print("Name: ", c[0],", Filename: ", c[1])
                         
         # print tile_config
         mydata = ET.tostring(tile_config)
@@ -1915,8 +2016,11 @@ Shift + Right-Click:
         if ".xml" not in filename:
             filename = filename + ".xml"
 
-        file = open(filename, "w")
+        file = open(filename, "wb")
         file.write(mydata)
+
+        self.newWindow.master.title(f"{filename.split('/')[-1]}")
+        self.newWindow.title(f"Editor - {self.parent.title()}")
 
 
 
@@ -1927,6 +2031,7 @@ Shift + Right-Click:
 
     def closeNewTileWindow(self):
         self.addTileWindow.destroy()
+        self.addTileWindow = None 
 
 
     class WindowResizeDialogue:
@@ -1955,12 +2060,12 @@ Shift + Right-Click:
             self.pressed_apply = False
 
             Label(self.w, text="Width:").pack()
-            self.bw_sbx=Spinbox(self.w, from_=10, to=100,width=5, increment=5, textvariable = self.bw)
+            self.bw_sbx=Spinbox(self.w, from_=10, to=1000,width=5, increment=5, textvariable = self.bw)
             # self.e1.insert(0, str(board_w))
             self.bw_sbx.pack()
 
             Label(self.w, text="Height:").pack()
-            self.bh_sbx = Spinbox(self.w, from_=10, to=100,width=5, increment=5, textvariable = self.bh)
+            self.bh_sbx = Spinbox(self.w, from_=10, to=1000,width=5, increment=5, textvariable = self.bh)
             # self.e2.insert(0, str(board_h))
             self.bh_sbx.pack()
 

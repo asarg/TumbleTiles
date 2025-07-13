@@ -3,14 +3,17 @@
 # 2018
 
 
+from __future__ import absolute_import
+from __future__ import print_function
 import copy
 import threading
 
-from Tkinter import *
-import ttk
-import tkFileDialog
-import tkMessageBox
-import tkColorChooser
+from tkinter import *
+from tkinter import messagebox
+import tkinter.ttk 
+import tkinter.filedialog
+import tkinter.messagebox
+import tkinter.colorchooser
 import xml.etree.ElementTree as ET
 import random
 import time
@@ -19,7 +22,7 @@ import tumbleEdit as TE
 
 import tt2svg as TT2SVG
 
-from getFile import getFile, parseFile
+from getFile import getFile, parseFile, FileType
 from boardgui import redrawCanvas, drawGrid, redrawTumbleTiles, deleteTumbleTiles, drawPILImage
 import os
 import sys
@@ -60,9 +63,10 @@ TILESIZE = 12
 VERSION = "2.0"
 LASTLOADEDFILE = ""
 LASTLOADEDSCRIPT = ""
-SCRIPTSPEED = .3
+SCRIPTSPEED = 1
 RECORDING = False
 SCRIPTSEQUENCE = ""
+
 
 
 # https://stackoverflow.com/questions/19861689/check-if-modifier-key-is-pressed-in-tkinter
@@ -79,42 +83,37 @@ MODS = {
 }
 
 
-class myThread (threading.Thread):
-    def __init__(self, threadID, name, counter, tg):
+class ScriptExecutorThread(threading.Thread):
+    def __init__(self, threadID, name, counter, tg, onstop=lambda: ...):
         threading.Thread.__init__(self)
         self.threadID = threadID
         self.name = name
         self.counter = counter
         self.tg = tg
         self.f = None
+        self.onstop = onstop
 
     def setScript(self, f):
         self.f = f
 
+    def run_once_(self):
+        for c in self.f:
+            if self.counter == 0:
+                break
+
+            time.sleep(self.counter / 1000)
+            
+            self.tg.MoveDirection(c)
+            
+
     def run(self):
         if self.tg.tkLoopScript.get():
-            while True:
-                if self.counter == 0:
-                    break
-
-                for x in range(0, len(self.f)):
-                    if self.counter == 0:
-                        break
-
-                    time.sleep(self.counter)
-                    self.tg.MoveDirection(self.f[x])
-                    print self.f[x], " - ",
-                    # self.tg.w.update_idletasks()
+            while self.tg.tkLoopScript.get() and self.counter != 0:
+                self.run_once_()
         else:
-            for x in range(0, len(self.f)):
-                if self.counter == 0:
-                    break
+            self.run_once_()
 
-                time.sleep(self.counter)
-                self.tg.MoveDirection(self.f[x])
-                print self.f[x], " - ",
-                # self.tg.w.update_idletasks()
-        self.tg.reinitialzeRunScript()
+        self.onstop()
 
 
 class MsgAbout:
@@ -156,6 +155,92 @@ class MsgAbout:
         self.t.wait_window(self.t)
 
 
+class ScriptSettings:
+    def __init__(self, parent):
+        global SCRIPTSPEED 
+
+        self.parent = parent 
+        self.top_level = Toplevel(self.parent)
+        self.top_level.resizable(False, False)
+        self.top_level.title("Script Settings")
+
+        self.tkSCRIPTSPEED = StringVar()
+        self.tkSCRIPTSPEED.set(str(SCRIPTSPEED))
+
+        self.script_speed_label = Label(
+            self.top_level,
+            text="Time per Step (ms)").grid(
+                row=0,
+                column=0,
+                sticky=W,
+                padx=5,
+                pady=5)
+        self.script_speed_input = Spinbox(
+            self.top_level,
+            from_=1,
+            to=1000,
+            width=5,
+            increment=0.1,
+            textvariable=self.tkSCRIPTSPEED).grid(
+                row=0,
+                column=1,
+                padx=5,
+                pady=5)
+        
+        # buttons
+        Button(
+            self.top_level,
+            text="Cancel",
+            command=self.top_level.destroy).grid(
+            row=1,
+            column=0,
+            padx=5,
+            pady=5)
+        Button(
+            self.top_level,
+            text="Apply",
+            command=self.apply).grid(
+            row=1,
+            column=1,
+            padx=5,
+            pady=5)
+
+        Label(
+            self.top_level, 
+            text="Note: Must reload script after changes.", 
+            wraplength=145, 
+            justify="left").grid(
+                row=2, 
+                column=0, 
+                columnspan=2, 
+                padx=5, 
+                pady=5, 
+                sticky=W)
+        
+        self.top_level.focus_set()
+        self.top_level.grab_set()
+        self.top_level.transient(self.parent)
+        self.top_level.wait_window(self.top_level)
+        
+    def config_error(self):
+        messagebox.showerror("Error", "Script speed must be a number between 1 and 1000")
+
+    def apply(self):
+        global SCRIPTSPEED
+        
+        try:
+            SCRIPTSPEED = float(self.tkSCRIPTSPEED.get())
+        except ValueError:
+            self.config_error()
+            return
+
+        if SCRIPTSPEED < 1 or SCRIPTSPEED > 1000:
+            self.config_error()
+            return
+
+        self.top_level.destroy()
+
+
 class Settings:
     def __init__(self, parent, logging, tumblegui):  # , fun):
         global TILESIZE
@@ -169,7 +254,15 @@ class Settings:
         #self.wm_attributes("-disabled", True)
         self.t.wm_title("Board Options")
         # self.toplevel_dialog.transient(self)
-        self.t.geometry('180x180')  # wxh
+        # self.t.geometry('180x180')  # wxh
+        self.parent.update_idletasks()
+        parentX = self.parent.winfo_x()
+        parentY = self.parent.winfo_y()
+        parentW = self.parent.winfo_width()
+        parentH = self.parent.winfo_height()
+        x = parentX + (parentW // 2) - (180 // 2)
+        y = parentY + (parentH // 2) - (180 // 2)
+        self.t.geometry(f'180x180+{x}+{y}')
 
         self.tkTILESIZE = StringVar()
         self.tkTILESIZE.set(str(TILESIZE))
@@ -315,6 +408,7 @@ class Settings:
 
 class VideoExport:
     def __init__(self, parent, tumblegui):  # , fun):
+        # TODO: Fix-dynamicize padding. It's atrocious. 
         global TILESIZE
 
         self.tumbleGUI = tumblegui
@@ -327,7 +421,7 @@ class VideoExport:
         #self.wm_attributes("-disabled", True)
         self.t.wm_title("Video Export")
         # self.toplevel_dialog.transient(self)
-        self.t.geometry('360x250') 
+        self.t.geometry('360x280') 
 
 
         self.tileRes=StringVar()                # Variable for Tile Resolution
@@ -360,7 +454,7 @@ class VideoExport:
         self.fileNameField = Entry(self.t, textvariable=self.fileName)
         self.videoSpeedField = Entry(self.t, textvariable=self.videoSpeed, width=5)
         self.lineWidthField = Entry(self.t, textvariable=self.lineWidth, width=5)
-        self.exportFileNameField = Entry(self.t, textvariable=self.exportFileNameText, width=5)
+        # self.exportFileNameField = Entry(self.t, textvariable=self.exportFileNameText, width=5)
         
         
 
@@ -381,7 +475,8 @@ class VideoExport:
         self.fileNameField.place(x=fieldStartX,y=80, width=130)
 
         self.exportFileNameLabel.place(x=labelStartX, y=130)
-        self.exportFileNameField.place(x=fieldStartX,y=130, width=130)
+        self.exportFileNameLabel.config(wraplength=360-labelStartX)
+        # self.exportFileNameField.place(x=fieldStartX,y=130, width=130)
 
         self.videoSpeedLabel.place(x=labelStartX, y=60)
         self.videoSpeedField.place(x=fieldStartX, y=60)
@@ -390,22 +485,22 @@ class VideoExport:
         browseButton.place(x=fieldStartX, y=100, height=20)
 
 
-        self.exportLabel.place(x=labelStartX, y=155)
+        self.exportLabel.place(x=labelStartX, y=175)
         # Create a progres bar to show status of video export
 
         self.progress_var = DoubleVar() 
-        self.progress=ttk.Progressbar(self.t,orient=HORIZONTAL,variable=self.progress_var,length=260,mode='determinate')
-        self.progress.place(x=50, y=175)
+        self.progress=tkinter.ttk.Progressbar(self.t,orient=HORIZONTAL,variable=self.progress_var,length=260,mode='determinate')
+        self.progress.place(x=50, y=195)
         
         # Place export button    
 
         exportButton = Button(self.t, text="Export", command=self.export)
-        exportButton.place(x=150, y=210)
+        exportButton.place(x=150, y=230)
 
 
         
     def openFileWindow(self):
-        fileName = getFile()
+        fileName = getFile(FileType.TXT)
 
         self.fileName.set(fileName)
         # self.fileNameField.delete(0,END)
@@ -455,27 +550,30 @@ class VideoExport:
         seqLen = len(sequence)  # total length used for progress bar
 
 
-        # If Videos folder does not exist, create it
-        if not os.path.exists("Videos"):
-            os.makedirs("Videos")
+        # # If Videos folder does not exist, create it
+        # if not os.path.exists("Videos"):
+        #     os.makedirs("Videos")
 
-        if self.exportFileNameText.get() == "": # If no file name was given create one
+        exportFile = tkinter.filedialog.asksaveasfilename(confirmoverwrite=True, defaultextension=".gif", filetypes=[("Graphics Interchange Format", ".gif")])
+        self.exportFileNameLabel.config(text=f"Output File Name: {exportFile}")
+
+        # if self.exportFileNameText.get() == "": # If no file name was given create one
         
-            x = 0
-            y = 0
-            z = 0
-            while os.path.exists("Videos/%s%s%s.gif" % (x, y, z)):
-                z = z + 1
-                if z == 10:
-                    z = 0
-                    y = y + 1
-                if y == 10:
-                    y = 0
-                    x = x + 1
+        #     x = 0
+        #     y = 0
+        #     z = 0
+        #     while os.path.exists("Videos/%s%s%s.gif" % (x, y, z)):
+        #         z = z + 1
+        #         if z == 10:
+        #             z = 0
+        #             y = y + 1
+        #         if y == 10:
+        #             y = 0
+        #             x = x + 1
 
-            exportFile = ("Videos/%s%s%s.gif" % (x, y, z))
-        else:
-            exportFile = "Videos/" + self.exportFileNameText.get() + ".gif"
+        #     exportFile = ("Videos/%s%s%s.gif" % (x, y, z))
+        # else:
+        #     exportFile = "Videos/" + self.exportFileNameText.get() + ".gif"
 
         for x in range(0, len(sequence)):   
 
@@ -483,7 +581,9 @@ class VideoExport:
             self.progress_var.set(float(x)/seqLen * 100)    # Update progress bar
             self.t.update()                                 # update toplevel window
            
+            
             self.tumbleGUI.MoveDirection(sequence[x], redraw= False) # Move the board in the specified direction
+            
 
             # Call function to get and image in memory of the current state of the board, passing it the tile resolution and the line width to use
             image = self.tumbleGUI.getImageOfBoard(self.tileResInt, lineWidthInt)
@@ -510,7 +610,7 @@ class VideoExport:
 class tumblegui:
     def __init__(self, root):
         global TILESIZE
-        self.thread1 = myThread(1, "Thread-1", 0, self)
+        self.thread1 = ScriptExecutorThread(1, "Thread-1", 0, self, self.reinitializeRunScript)
         self.stateTmpSaves = []
         self.polyTmpSaves = []
 
@@ -709,6 +809,8 @@ class tumblegui:
                 label="Export Video..",
                 command=self.openVideoExportWindow,
                 state=DISABLED)
+        self.scriptmenu.add_separator()
+        self.scriptmenu.add_command(label="Settings", command=self.scriptSettings)
 
         self.menubar.add_cascade(label="File", menu=self.filemenu)
         self.menubar.add_cascade(label="Settings", menu=self.settingsmenu)
@@ -833,7 +935,7 @@ class tumblegui:
         self.textcolor = "#000000"
 
         self.callGridDraw()
-        self.CreateInitial()
+        #self.CreateInitial()
         self.glue_data = []
 
     def TestThreadDisplay(self):
@@ -850,6 +952,10 @@ class tumblegui:
     def setSingleStep(self):
         TT.SINGLESTEP = self.tkSTEPVAR.get()
 
+    def scriptSettings(self):
+        ScriptSettings(self.root)
+        ...
+
     def recordScript(self):
         global RECORDING
         global SCRIPTSEQUENCE
@@ -860,27 +966,29 @@ class tumblegui:
             self.scriptmenu.entryconfigure(0, label='Stop Recording')
         elif RECORDING:
             self.scriptmenu.entryconfigure(0, label='Record Script')
-            filename = tkFileDialog.asksaveasfilename()
+            filename = tkinter.filedialog.asksaveasfilename(defaultextension=".txt", filetypes=[("Plain Text", ".txt")])
+            if not filename: return
             file = open(filename, 'w+')
             file.write(SCRIPTSEQUENCE)
             file.close()
             RECORDING = False
 
-    def reinitialzeRunScript(self):
+    def reinitializeRunScript(self):
         self.thread1.counter = 0
-        self.thread1 = myThread(1, "Thread-1", 0, self)
-        self.scriptmenu.entryconfigure(1, label='RunScript')
+        self.thread1 = ScriptExecutorThread(1, "Thread-1", 0, self, self.reinitializeRunScript)
+        self.scriptmenu.entryconfigure(1, label='Run Script')
 
     # Gets the path of the script from the gui file browser
     def loadScript(self):
         global LASTLOADEDSCRIPT
         if self.thread1.counter == 0:
-            filename = getFile()
+            filename = getFile(FileType.TXT)
+            if not filename: return
             LASTLOADEDSCRIPT = filename
             file = open(filename, "r")
             self.runScript(file)
         else:
-            self.reinitialzeRunScript()
+            self.reinitializeRunScript()
 
     # Returns a PIL image object of the board by calling the function in boardgui.py
     def getImageOfBoard(self, tileResInt, lineWidthInt):
@@ -900,21 +1008,27 @@ class tumblegui:
 
     # Call the sequence runner
     def runScript(self, file):
+        global SCRIPTSPEED
+
         self.scriptmenu.entryconfigure(1, label='Stop Script')
         script = file.readlines()[0].rstrip('\n')
-        self.thread1.counter = 0.0000001
+        #self.thread1.counter = 0.0000001
+        self.thread1.counter = SCRIPTSPEED
         self.thread1.setScript(script)
         self.thread1.start()
         # self.runSequence(script)
 
     # Steps through string in script and tumbles in that direction
 
+    # TODO: Integrate into sequence widget
     def runSequence(self, sequence):
         global SCRIPTSPEED
 
         for x in range(0, len(sequence)):
-            time.sleep(SCRIPTSPEED)
+            time.sleep(SCRIPTSPEED / 1000)
+            
             self.MoveDirection(sequence[x])
+            
             # print sequence[x], " - ",
 
             self.w.update_idletasks()
@@ -962,6 +1076,7 @@ class tumblegui:
         global RECORDING
         global SCRIPTSEQUENCE
 
+        
         if event.keysym == "Up":
             self.MoveDirection("N")
         elif event.keysym == "Right":
@@ -974,7 +1089,8 @@ class tumblegui:
             def clear(): return os.system('cls')
             clear()
             for x in self.listOfCommands:
-                print x[0], " ", x[1]
+                print(x[0], " ", x[1])
+        
 
 
         # if RECORDING:
@@ -1004,6 +1120,8 @@ class tumblegui:
             self.reloadFile()
         # print(event.keysym)
 
+        
+
     def callback(self, event):
         global TILESIZE
 
@@ -1011,21 +1129,29 @@ class tumblegui:
             #print "clicked at", event.x, event.y
             if event.y <= 2 * TILESIZE and event.x > 2 * \
                     TILESIZE and event.x < TT.BOARDWIDTH * TILESIZE - 2 * TILESIZE:
+                
                 self.MoveDirection("N")
+                
             elif event.y >= TT.BOARDHEIGHT * TILESIZE - 2 * TILESIZE and event.x > 2 * TILESIZE and event.x < TT.BOARDWIDTH * TILESIZE - 2 * TILESIZE:
+                
                 self.MoveDirection("S")
+                
             elif event.x >= TT.BOARDWIDTH * TILESIZE - 2 * TILESIZE and event.y > 2 * TILESIZE and event.y < TT.BOARDHEIGHT * TILESIZE - 2 * TILESIZE:
+                
                 self.MoveDirection("E")
+                
             elif event.x <= 2 * TILESIZE and event.y > 2 * TILESIZE and event.y < TT.BOARDHEIGHT * TILESIZE - 2 * TILESIZE:
+                
                 self.MoveDirection("W")
+                 
 
         except BaseException:
             pass
 
     def performSequence(self, i):
-        print "some Function: ", i
-        print "Command Name: ", self.listOfCommands[i][0]
-        print "File Name: ", self.listOfCommands[i][1]
+        print("some Function: ", i)
+        print("Command Name: ", self.listOfCommands[i][0])
+        print("File Name: ", self.listOfCommands[i][1])
         #file = open(self.listOfCommands[i][1], "r")
 
         self.scriptmenu.entryconfigure(1, label='Stop Script')
@@ -1084,19 +1210,19 @@ class tumblegui:
 
     def addSequence(self):
         if(self.newCommandFile.get() == "No File Selected"):
-            print "No File Seleceted"
+            print("No File Seleceted")
         elif(self.newCommandName.get().strip() == ""):
-            print "No Name Entered"
+            print("No Name Entered")
         else:
-            print "There was a file Selected: ", self.newCommandFile.get()
-            print "Command Name Entered: ", self.newCommandName.get()
+            print("There was a file Selected: ", self.newCommandFile.get())
+            print("Command Name Entered: ", self.newCommandName.get())
 
             filename = self.newCommandFile.get()
             file = open(filename, "r")
             script = file.readlines()[0].rstrip('\n')
             sequence = ""
             for x in range(0, len(script)):
-                print script[x], " - ",
+                print(script[x], " - ", end=' ')
                 sequence = sequence + script[x]
                 # self.tg.w.update_idletasks()
 
@@ -1240,7 +1366,7 @@ class tumblegui:
                     copy.deepcopy(self.board.Polyominoes))
                 self.CurrentState = self.maxStates - 1
             else:
-                print "Removing some states 1"
+                print("Removing some states 1")
                 self.ApplyUndo()
 
                 self.stateTmpSaves.append(
@@ -1254,7 +1380,7 @@ class tumblegui:
                 self.CurrentState = self.CurrentState + 1
 
             else:
-                print "Removing some states 2"
+                print("Removing some states 2")
                 self.ApplyUndo()
 
                 self.stateTmpSaves.append(
@@ -1264,9 +1390,9 @@ class tumblegui:
     def ApplyUndo(self):
         global RECORDING
         global SCRIPTSEQUENCE
-        print "Applying Undo"
+        print("Applying Undo")
         for x in range(0, len(self.stateTmpSaves) - self.CurrentState - 1):
-            print "x :", x
+            print("x :", x)
             self.stateTmpSaves.pop()
             if RECORDING:
                 SCRIPTSEQUENCE = SCRIPTSEQUENCE[:-1]
@@ -1278,11 +1404,11 @@ class tumblegui:
         else:
 
             self.CurrentState = self.CurrentState - 1
-            print "Current is, ", self.CurrentState, "after"
+            print("Current is, ", self.CurrentState, "after")
             #deleteTumbleTiles(self.board, self.board.Cols, self.board.Rows, self.w, TILESIZE, self.textcolor, self.gridcolor, self.tkDRAWGRID.get(), self.tkSHOWLOC.get())
             self.board.Polyominoes = copy.deepcopy(
                 self.stateTmpSaves[self.CurrentState])
-            print "undo - ", self.CurrentState
+            print("undo - ", self.CurrentState)
             self.callCanvasRedrawTumbleTiles()
 
     def Redo(self):
@@ -1293,7 +1419,7 @@ class tumblegui:
 
         else:
             self.CurrentState = self.CurrentState + 1
-            print "redo", self.CurrentState
+            print("redo", self.CurrentState)
             self.board.Polyominoes = copy.deepcopy(
                 self.stateTmpSaves[self.CurrentState])
             self.callCanvasRedrawTumbleTiles()
@@ -1338,6 +1464,7 @@ class tumblegui:
 
         if redraw:    
             self.callCanvasRedrawTumbleTiles()
+
     # except Exception as e:
      #   print e
       #  print sys.exc_info()[0]
@@ -1368,9 +1495,10 @@ class tumblegui:
     # Opens the GUI file browser
     def loadFile(self):
         global LASTLOADEDFILE
-        filename = getFile()
+        filename = getFile(FileType.XML)
         LASTLOADEDFILE = filename
         self.loadTileSet(filename)
+        # TODO: Replace hardcoded / with os file separator. Issue is at the getFile() level.
 
     # Will reload the last loaded file to enable quick testing
     def reloadFile(self):
@@ -1417,6 +1545,8 @@ class tumblegui:
         self.popWinSequences()
         self.callCanvasRedraw()
 
+        self.root.title(LASTLOADEDFILE.split('/')[-1])
+
     def callCanvasRedraw(self):
         global TILESIZE
         redrawCanvas(
@@ -1462,7 +1592,7 @@ class tumblegui:
 
     def changecanvas(self):
         try:
-            result = tkColorChooser.askcolor(title="Background Color")
+            result = tkinter.colorchooser.askcolor(title="Background Color")
             if result[0] is not None:
                 self.w.config(background=result[1])
         except BaseException:
@@ -1470,7 +1600,7 @@ class tumblegui:
 
     def changegridcolor(self):
         try:
-            result = tkColorChooser.askcolor(title="Grid Color")
+            result = tkinter.colorchooser.askcolor(title="Grid Color")
             if result[0] is not None:
                 self.gridcolor = result[1]
                 self.callCanvasRedraw()
@@ -1641,7 +1771,11 @@ class tumblegui:
         f.close()
 
     def createSvg(self):
-        filename = tkFileDialog.asksaveasfilename()
+        filename = tkinter.filedialog.asksaveasfilename(confirmoverwrite=True, defaultextension=".svg", filetypes=[("Scalable Vector Graphics", ".svg")])
+        if not filename: return
+        if not '.' in filename:
+            filename += ".svg"
+
         tile_config = ET.Element("TileConfiguration")
         board_size = ET.SubElement(tile_config, "BoardSize")
         glue_func = ET.SubElement(tile_config, "GlueFunction")
@@ -1653,7 +1787,7 @@ class tumblegui:
         p_tiles = ET.SubElement(tile_config, "PreviewTiles")
         if len(self.prevTileList) != 0:
             for td in self.prevTileList:
-                print(td.color)
+                print((td.color))
                 if td.glues == [] or len(td.glues) == 0:
                     td.glues = [0, 0, 0, 0]
 
@@ -1753,14 +1887,16 @@ class tumblegui:
 
         #print tile_config
         mydata = ET.tostring(tile_config)
-        file = open("tt2svg/tmp.xml", "w")
+        file = open("tt2svg/tmp.xml", "wb")
         file.write(mydata)
         file.close()
-        self.data2SVG(self.parseFile2("tt2svg/tmp.xml"), filename + ".svg")
+        
+        self.data2SVG(self.parseFile2("tt2svg/tmp.xml"), filename)
 
     def newBoard(self):
         del self.board.Polyominoes[:]
         self.board.LookUp = {}
+        self.root.title("New Board")
 
         self.board = TT.Board(TT.BOARDHEIGHT, TT.BOARDWIDTH)
         bh = TT.BOARDHEIGHT
@@ -1901,8 +2037,8 @@ class tumblegui:
                 if not LOGFILE.closed:
                     LOGFILE.close()
         except Exception as e:
-            print "Could not log"
-            print e
+            print("Could not log")
+            print(e)
 
     def Log(self, stlog):
         global LOGFILE
@@ -1966,4 +2102,5 @@ if __name__ == "__main__":
     # root.geometry('300x300')
     mainwin = tumblegui(root)
 
+    # TODO: For threading and mutexes: https://stackoverflow.com/a/54374873
     mainloop()

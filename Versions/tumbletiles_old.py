@@ -3,8 +3,13 @@
 #2018
 
 
+from __future__ import absolute_import
+from __future__ import print_function
 import copy
 import sys
+from six.moves import range
+from six.moves import zip
+from six.moves import input
 
 TEMP = 1
 GLUEFUNC = {'N':1, 'E':1, 'S':1, 'W':1,}
@@ -91,7 +96,7 @@ class Polyomino:
                 return False
         except Exception as e:
             #print "CANJOIN"
-            print sys.exc_info()[0]        
+            print(sys.exc_info()[0])        
         
     def Move(self, direction):
         dx = 0
@@ -147,8 +152,8 @@ class Board:
         self.SetGrid()
         for row in range(self.Rows): #self.Board:
             for col in range(self.Cols):#row:
-                print self.Board[row][col],
-            print "\n",
+                print(self.Board[row][col], end=' ')
+            print("\n", end=' ')
 
     def ClearGrid(self):
         for row in range(self.Rows):
@@ -210,7 +215,7 @@ class Board:
                                 #if they can bond
                                 if self.Polyominoes[we1in].CanJoin(self.Polyominoes[we2in]):
                                     #combine
-                                    print "This shouldn't be happening w/e"
+                                    print("This shouldn't be happening w/e")
                                     self.CombinePolys(we1in,we2in)
                                     Changed = True
                 #search n/s neighbors
@@ -227,11 +232,11 @@ class Board:
                                 #if they can bond
                                 if self.Polyominoes[ns1in].CanJoin(self.Polyominoes[ns2in]):
                                     #combine
-                                    print "This shouldn't be happening n/s"
+                                    print("This shouldn't be happening n/s")
                                     self.CombinePolys(ns1in,ns2in)
                                     Changed = True
         except Exception as e:
-            print sys.exc_info()[0]                     
+            print(sys.exc_info()[0])                     
                             
     def Tumble(self, direction):
         if direction == "N" or direction == "S" or direction == "E" or direction == "W":
@@ -239,7 +244,7 @@ class Board:
             while StepTaken == True:
                 StepTaken = self.Step(direction)
         else:
-            print "Someone doesn't know what they're doing"
+            print("Someone doesn't know what they're doing")
             
         self.ActivateGlues()
         self.SetGrid()
@@ -252,7 +257,7 @@ class Board:
                 StepTaken = self.Step(direction)
                 self.ActivateGlues()
         else:
-            print "Someone doesn't know what they're doing"
+            print("Someone doesn't know what they're doing")
           
         self.SetGrid()
         
@@ -285,7 +290,7 @@ class Board:
             for i in range(len(self.Polyominoes)):
                 self.Polyominoes[i].Move(direction)
             StepTaken = True
-        elif (direction == "E" or direction == "W") and zip(*self.Board)[wallindex].count(' ') == self.Rows:
+        elif (direction == "E" or direction == "W") and list(zip(*self.Board))[wallindex].count(' ') == self.Rows:
             for i in range(len(self.Polyominoes)):
                 self.Polyominoes[i].Move(direction)
             StepTaken = True
@@ -358,7 +363,7 @@ if __name__ =="__main__":
     response = 'A'
     while response != 'Q':
         board.GridDraw()
-        response = raw_input("\nDirection to tumble (N,E,S,W)?")
+        response = input("\nDirection to tumble (N,E,S,W)?")
         response = response.capitalize()
         if response != 'Q' and response !='P':
             board.Tumble(response)
